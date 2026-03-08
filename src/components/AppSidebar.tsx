@@ -32,6 +32,7 @@ const items = [
   { title: "Challenges", url: "/challenges", icon: Swords },
   { title: "Shop", url: "/shop", icon: ShoppingBag },
   { title: "Reports", url: "/reports", icon: BarChart3 },
+  { title: "Journal", url: "/journal", icon: BookOpen },
   { title: "Community", url: "/community", icon: Users },
   { title: "Leaderboard", url: "/leaderboard", icon: Trophy },
   { title: "Profile", url: "/profile", icon: User },
