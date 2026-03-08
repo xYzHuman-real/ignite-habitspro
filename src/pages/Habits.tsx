@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Flame, Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -6,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { type Habit, defaultHabits } from "@/lib/store";
+import { useState } from "react";
+import { useHabits, type Habit } from "@/lib/store";
 
 export default function Habits() {
-  const [habits, setHabits] = useState<Habit[]>(defaultHabits);
+  const [habits, setHabits] = useHabits();
   const [newHabit, setNewHabit] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -21,7 +21,7 @@ export default function Habits() {
               ...h,
               current: h.completedToday ? 0 : h.target,
               completedToday: !h.completedToday,
-              streak: !h.completedToday ? h.streak + 1 : h.streak - 1,
+              streak: !h.completedToday ? h.streak + 1 : Math.max(0, h.streak - 1),
             }
           : h
       )
@@ -49,7 +49,7 @@ export default function Habits() {
   };
 
   const totalCompleted = habits.filter((h) => h.completedToday).length;
-  const allCompleted = totalCompleted === habits.length;
+  const allCompleted = totalCompleted === habits.length && habits.length > 0;
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
