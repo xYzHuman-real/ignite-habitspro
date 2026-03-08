@@ -23,6 +23,7 @@ import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import NotFound from "./pages/NotFound";
+import { SplashScreen } from "@/components/SplashScreen";
 
 const queryClient = new QueryClient();
 
