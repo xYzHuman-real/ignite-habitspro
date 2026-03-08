@@ -143,11 +143,36 @@ export default function Profile() {
                 </div>
               </div>
 
-              {profile.streak_freezes > 0 && (
-                <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-                  <Shield className="h-4 w-4 text-primary" />
-                  <span>{profile.streak_freezes} streak freezes remaining</span>
+              {/* Points & Level Progress */}
+              <div className="mt-4 space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2">
+                    <Coins className="h-4 w-4 text-accent" />
+                    <span className="font-semibold">{profile.leaderboard_points} points</span>
+                  </div>
+                  {nextLevel && (
+                    <span className="text-xs text-muted-foreground">
+                      {nextLevel.minPoints - profile.leaderboard_points} pts to Lv.{nextLevel.level}
+                    </span>
+                  )}
                 </div>
+                <Progress value={progressToNext} className="h-2" />
+              </div>
+
+              <div className="mt-3 flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
+                {profile.streak_freezes > 0 && (
+                  <div className="flex items-center gap-1">
+                    <Shield className="h-4 w-4 text-primary" />
+                    <span>{profile.streak_freezes} streak freezes</span>
+                  </div>
+                )}
+                {todayLogin && (
+                  <div className="flex items-center gap-1">
+                    <Gift className="h-4 w-4 text-success" />
+                    <span>Daily reward claimed ✓</span>
+                  </div>
+                )}
+              </div>
               )}
             </>
           )}
