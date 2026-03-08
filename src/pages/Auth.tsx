@@ -52,9 +52,15 @@ export default function Auth() {
         setLoading(false);
         return;
       }
-      const { error } = await signUp(email, password, fullName);
-      if (error) toast({ title: "Signup failed", description: error.message, variant: "destructive" });
-      else toast({ title: "Account created!", description: "Check your email to verify." });
+      const { error, alreadyExists } = await signUp(email, password, fullName);
+      if (error) {
+        toast({ title: "Signup failed", description: error.message, variant: "destructive" });
+      } else if (alreadyExists) {
+        toast({ title: "Account already exists", description: "Please sign in instead.", variant: "destructive" });
+        setMode("login");
+      } else {
+        toast({ title: "Account created!", description: "Check your email to verify." });
+      }
     } else {
       const { error } = await signIn(email, password);
       if (error) toast({ title: "Login failed", description: error.message, variant: "destructive" });
