@@ -418,6 +418,56 @@ export type Database = {
         }
         Relationships: []
       }
+      journal_entries: {
+        Row: {
+          created_at: string
+          entry_date: string
+          gratitude: string | null
+          habit_id: string | null
+          id: string
+          improvements: string | null
+          mood: string
+          reflection: string
+          updated_at: string
+          user_id: string
+          wins: string | null
+        }
+        Insert: {
+          created_at?: string
+          entry_date?: string
+          gratitude?: string | null
+          habit_id?: string | null
+          id?: string
+          improvements?: string | null
+          mood?: string
+          reflection?: string
+          updated_at?: string
+          user_id: string
+          wins?: string | null
+        }
+        Update: {
+          created_at?: string
+          entry_date?: string
+          gratitude?: string | null
+          habit_id?: string | null
+          id?: string
+          improvements?: string | null
+          mood?: string
+          reflection?: string
+          updated_at?: string
+          user_id?: string
+          wins?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journal_entries_habit_id_fkey"
+            columns: ["habit_id"]
+            isOneToOne: false
+            referencedRelation: "habits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           action_url: string | null
