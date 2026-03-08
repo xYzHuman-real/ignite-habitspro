@@ -9,6 +9,7 @@ import {
   User,
   ShoppingBag,
   BarChart3,
+  BookOpen,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -31,6 +32,7 @@ const items = [
   { title: "Challenges", url: "/challenges", icon: Swords },
   { title: "Shop", url: "/shop", icon: ShoppingBag },
   { title: "Reports", url: "/reports", icon: BarChart3 },
+  { title: "Journal", url: "/journal", icon: BookOpen },
   { title: "Community", url: "/community", icon: Users },
   { title: "Leaderboard", url: "/leaderboard", icon: Trophy },
   { title: "Profile", url: "/profile", icon: User },
