@@ -99,12 +99,17 @@ export function useHabits() {
           count: 1,
         }, { onConflict: "user_id,activity_type,activity_date" });
 
-        // Sync profile stats
-        const { data: profileData } = await supabase.from("profiles").select("total_streak, habits_completed").eq("user_id", user.id).single();
+        // Sync profile stats + award 5 points per habit completion
+        const { data: profileData } = await supabase.from("profiles").select("total_streak, habits_completed, leaderboard_points").eq("user_id", user.id).single();
         if (profileData) {
+          const newPoints = profileData.leaderboard_points + 5;
+          const newLevel = getLevelForPoints(newPoints);
           await supabase.from("profiles").update({
             total_streak: Math.max(profileData.total_streak, newStreak),
             habits_completed: profileData.habits_completed + 1,
+            leaderboard_points: newPoints,
+            xp_level: newLevel.level,
+            title: newLevel.title,
           }).eq("user_id", user.id);
         }
       }
