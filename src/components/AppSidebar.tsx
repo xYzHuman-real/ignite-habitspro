@@ -34,6 +34,7 @@ const items = [
   { title: "Shop", url: "/shop", icon: ShoppingBag },
   { title: "Reports", url: "/reports", icon: BarChart3 },
   { title: "Journal", url: "/journal", icon: BookOpen },
+  { title: "Goals", url: "/goals", icon: Crosshair },
   { title: "Community", url: "/community", icon: Users },
   { title: "Leaderboard", url: "/leaderboard", icon: Trophy },
   { title: "Profile", url: "/profile", icon: User },
