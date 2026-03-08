@@ -164,7 +164,6 @@ export default function Challenges() {
                   </Button>
                 )}
               </div>
-              </div>
             ) : (
               <Button
                 size="sm"
