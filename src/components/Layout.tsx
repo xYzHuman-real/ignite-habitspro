@@ -4,10 +4,12 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { NotificationBell } from "@/components/NotificationBell";
 import { useTheme } from "@/lib/store";
 import { useStreakAlerts } from "@/lib/use-streak-alerts";
+import { usePushNotifications } from "@/lib/use-push-notifications";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { theme, toggle } = useTheme();
-  useStreakAlerts(); // Auto-generate streak-at-risk and reminder notifications
+  useStreakAlerts();
+  usePushNotifications();
 
   return (
     <SidebarProvider>
