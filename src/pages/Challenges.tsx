@@ -138,11 +138,31 @@ export default function Challenges() {
                   <span className="font-medium text-primary">{progressPct}%</span>
                 </div>
                 <Progress value={progressPct} className="h-2" />
-                {uc.completed && (
+                {uc.completed ? (
                   <div className="flex items-center gap-1.5 text-xs text-success font-medium">
                     <CheckCircle2 className="h-3.5 w-3.5" />
                     Completed!
                   </div>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full mt-1 border-primary/30 text-primary hover:bg-primary/10"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      checkIn({ userChallengeId: uc.id, currentProgress: uc.progress, targetDays: challenge.duration_days });
+                      toast({
+                        title: uc.progress + 1 >= challenge.duration_days ? "Challenge Complete! 🏆" : "Checked In! ✅",
+                        description: uc.progress + 1 >= challenge.duration_days
+                          ? `You completed "${challenge.name}" and earned ${challenge.points_reward} points!`
+                          : `Day ${uc.progress + 1}/${challenge.duration_days} done. Keep going!`,
+                      });
+                    }}
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
+                    Check In Today
+                  </Button>
+                )
                 )}
               </div>
             ) : (
