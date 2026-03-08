@@ -21,6 +21,17 @@ export default function Dashboard() {
   const { todos, isLoading: todosLoading } = useTodos();
   const { profile, isLoading: profileLoading } = useProfile();
 
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    if (!profileLoading && profile) {
+      const seen = localStorage.getItem("onboarding_completed");
+      if (!seen && profile.habits_completed === 0) {
+        setShowOnboarding(true);
+      }
+    }
+  }, [profileLoading, profile]);
+
   const completedHabits = habits.filter((h) => h.completed_today).length;
   const completedTodos = todos.filter((t) => t.completed).length;
   const maxStreak = habits.reduce((max, h) => Math.max(max, h.streak), 0);
