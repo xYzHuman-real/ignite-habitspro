@@ -17,6 +17,7 @@ import Shop from "./pages/Shop";
 import WeeklyReport from "./pages/WeeklyReport";
 import Journal from "./pages/Journal";
 import GoalsPage from "./pages/Goals";
+import Partners from "./pages/Partners";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
@@ -50,6 +51,7 @@ function ProtectedRoutes() {
         <Route path="/reports" element={<WeeklyReport />} />
         <Route path="/journal" element={<Journal />} />
         <Route path="/goals" element={<GoalsPage />} />
+        <Route path="/partners" element={<Partners />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
