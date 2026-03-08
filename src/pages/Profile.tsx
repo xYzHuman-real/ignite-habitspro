@@ -62,9 +62,12 @@ export default function Profile() {
     setEditing(false);
   };
 
-  const avatarText = profile.display_name ? profile.display_name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2) : "?";
+  const avatarText = profile.display_name ? profile.display_name.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2) : "?";
   const earnedBadges = allBadges.filter((b) => earnedBadgeIds.includes(b.id));
   const joinDate = format(new Date(profile.created_at), "MMM yyyy");
+  const currentLevel = getLevelForPoints(profile.leaderboard_points);
+  const nextLevel = getNextLevel(profile.leaderboard_points);
+  const progressToNext = getProgressToNext(profile.leaderboard_points);
 
   // Build heatmap from activity log
   const activityMap = new Map<string, number>();
