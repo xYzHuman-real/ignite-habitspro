@@ -55,6 +55,38 @@ export default function Challenges() {
     });
   };
 
+  const handleCheckIn = (uc: (typeof userChallenges)[0], challenge: (typeof challenges)[0]) => {
+    const today = new Date().toISOString().split("T")[0];
+    const lastDate = (uc as any).last_checkin_date;
+    if (lastDate === today) {
+      toast({ title: "Already Checked In ⏳", description: "You've already checked in today. Come back tomorrow!", variant: "destructive" });
+      return;
+    }
+    checkIn(
+      { userChallengeId: uc.id, currentProgress: uc.progress, targetDays: challenge.duration_days, lastCheckinDate: lastDate || null, challengeName: challenge.name },
+      {
+        onSuccess: () => {
+          const newProg = uc.progress + 1;
+          toast({
+            title: newProg >= challenge.duration_days ? "Challenge Complete! 🏆" : "Checked In! ✅",
+            description: newProg >= challenge.duration_days
+              ? `You completed "${challenge.name}" and earned ${challenge.points_reward} points!`
+              : `Day ${newProg}/${challenge.duration_days} done. Keep going!`,
+          });
+        },
+        onError: (err: Error) => {
+          if (err.message === "ALREADY_CHECKED_IN") {
+            toast({ title: "Already Checked In ⏳", description: "Come back tomorrow for your next check-in!", variant: "destructive" });
+          } else if (err.message === "INSUFFICIENT_FOCUS") {
+            toast({ title: "Focus Time Required 🎯", description: "Complete at least 1 hour of focus time today to check in for this challenge.", variant: "destructive" });
+          } else {
+            toast({ title: "Error", description: err.message, variant: "destructive" });
+          }
+        },
+      }
+    );
+  };
+
   if (challenges.length === 0) {
     return (
       <div className="max-w-4xl mx-auto space-y-6">
@@ -148,19 +180,14 @@ export default function Challenges() {
                     size="sm"
                     variant="outline"
                     className="w-full mt-1 border-primary/30 text-primary hover:bg-primary/10"
+                    disabled={(uc as any).last_checkin_date === new Date().toISOString().split("T")[0]}
                     onClick={(e) => {
                       e.stopPropagation();
-                      checkIn({ userChallengeId: uc.id, currentProgress: uc.progress, targetDays: challenge.duration_days });
-                      toast({
-                        title: uc.progress + 1 >= challenge.duration_days ? "Challenge Complete! 🏆" : "Checked In! ✅",
-                        description: uc.progress + 1 >= challenge.duration_days
-                          ? `You completed "${challenge.name}" and earned ${challenge.points_reward} points!`
-                          : `Day ${uc.progress + 1}/${challenge.duration_days} done. Keep going!`,
-                      });
+                      handleCheckIn(uc, challenge);
                     }}
                   >
                     <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
-                    Check In Today
+                    {(uc as any).last_checkin_date === new Date().toISOString().split("T")[0] ? "Done for Today ✓" : "Check In Today"}
                   </Button>
                 )}
               </div>
@@ -355,18 +382,11 @@ export default function Challenges() {
                   ) : (
                     <Button
                       className="w-full bg-gradient-primary text-primary-foreground"
-                      onClick={() => {
-                        checkIn({ userChallengeId: detailUc.id, currentProgress: detailUc.progress, targetDays: detail.duration_days });
-                        toast({
-                          title: detailUc.progress + 1 >= detail.duration_days ? "Challenge Complete! 🏆" : "Checked In! ✅",
-                          description: detailUc.progress + 1 >= detail.duration_days
-                            ? `You completed "${detail.name}" and earned ${detail.points_reward} points!`
-                            : `Day ${detailUc.progress + 1}/${detail.duration_days} done. Keep it up!`,
-                        });
-                      }}
+                      disabled={(detailUc as any).last_checkin_date === new Date().toISOString().split("T")[0]}
+                      onClick={() => handleCheckIn(detailUc, detail)}
                     >
                       <CheckCircle2 className="h-4 w-4 mr-2" />
-                      Check In for Today
+                      {(detailUc as any).last_checkin_date === new Date().toISOString().split("T")[0] ? "Done for Today ✓" : "Check In for Today"}
                     </Button>
                   )}
                 </div>

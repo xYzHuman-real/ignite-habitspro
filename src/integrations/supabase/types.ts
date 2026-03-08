@@ -529,6 +529,7 @@ export type Database = {
           completed_at: string | null
           id: string
           joined_at: string
+          last_checkin_date: string | null
           progress: number
           user_id: string
         }
@@ -538,6 +539,7 @@ export type Database = {
           completed_at?: string | null
           id?: string
           joined_at?: string
+          last_checkin_date?: string | null
           progress?: number
           user_id: string
         }
@@ -547,6 +549,7 @@ export type Database = {
           completed_at?: string | null
           id?: string
           joined_at?: string
+          last_checkin_date?: string | null
           progress?: number
           user_id?: string
         }

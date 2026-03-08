@@ -1,0 +1,1 @@
+ALTER TABLE public.user_challenges ADD COLUMN last_checkin_date date DEFAULT NULL;
