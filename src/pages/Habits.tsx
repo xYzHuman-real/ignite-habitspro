@@ -1,55 +1,61 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Flame, Check } from "lucide-react";
+import { Plus, Flame, Check, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useState } from "react";
-import { useHabits, type Habit } from "@/lib/store";
+import { useHabits } from "@/lib/supabase-hooks";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const TEMPLATES = [
+  { name: "Morning Routine", icon: "🌅", target: 1, difficulty: "medium" },
+  { name: "Study Session", icon: "📚", target: 1, difficulty: "hard" },
+  { name: "Exercise", icon: "💪", target: 1, difficulty: "medium" },
+  { name: "Meditation", icon: "🧘", target: 1, difficulty: "easy" },
+  { name: "Water Intake", icon: "💧", target: 8, difficulty: "easy" },
+  { name: "Reading", icon: "📖", target: 1, difficulty: "easy" },
+  { name: "Journaling", icon: "📝", target: 1, difficulty: "easy" },
+  { name: "No Social Media", icon: "📵", target: 1, difficulty: "hard" },
+];
 
 export default function Habits() {
-  const [habits, setHabits] = useHabits();
+  const { habits, isLoading, addHabit, toggleHabit, deleteHabit } = useHabits();
   const [newHabit, setNewHabit] = useState("");
+  const [difficulty, setDifficulty] = useState("medium");
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const toggleHabit = (id: string) => {
-    setHabits((prev) =>
-      prev.map((h) =>
-        h.id === id
-          ? {
-              ...h,
-              current: h.completedToday ? 0 : h.target,
-              completedToday: !h.completedToday,
-              streak: !h.completedToday ? h.streak + 1 : Math.max(0, h.streak - 1),
-            }
-          : h
-      )
-    );
-  };
-
-  const addHabit = () => {
+  const handleAdd = () => {
     if (!newHabit.trim()) return;
     const emojis = ["🎯", "⚡", "🌟", "🎨", "🎵", "🏃", "🍎"];
-    setHabits((prev) => [
-      ...prev,
-      {
-        id: Date.now().toString(),
-        name: newHabit,
-        icon: emojis[Math.floor(Math.random() * emojis.length)],
-        streak: 0,
-        completedToday: false,
-        history: [],
-        target: 1,
-        current: 0,
-      },
-    ]);
+    addHabit({
+      name: newHabit,
+      icon: emojis[Math.floor(Math.random() * emojis.length)],
+      target: 1,
+      difficulty,
+    });
     setNewHabit("");
     setDialogOpen(false);
   };
 
-  const totalCompleted = habits.filter((h) => h.completedToday).length;
+  const handleTemplate = (t: typeof TEMPLATES[0]) => {
+    addHabit(t);
+    setDialogOpen(false);
+  };
+
+  const totalCompleted = habits.filter((h) => h.completed_today).length;
   const allCompleted = totalCompleted === habits.length && habits.length > 0;
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4 max-w-3xl mx-auto">
+        <Skeleton className="h-12 w-48" />
+        {[1, 2, 3].map((i) => <Skeleton key={i} className="h-20" />)}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
@@ -58,7 +64,7 @@ export default function Habits() {
           <h1 className="text-3xl font-display font-bold">Habits</h1>
           <p className="text-muted-foreground">
             {totalCompleted}/{habits.length} completed today
-            {allCompleted && " — Streak +1! 🔥"}
+            {allCompleted && habits.length > 0 && " — Streak +1! 🔥"}
           </p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -71,14 +77,38 @@ export default function Habits() {
             <DialogHeader>
               <DialogTitle className="font-display">New Habit</DialogTitle>
             </DialogHeader>
-            <div className="flex gap-2 mt-2">
-              <Input
-                placeholder="e.g., Drink water"
-                value={newHabit}
-                onChange={(e) => setNewHabit(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && addHabit()}
-              />
-              <Button onClick={addHabit} className="bg-gradient-primary text-primary-foreground">Add</Button>
+            <div className="space-y-4 mt-2">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="e.g., Drink water"
+                  value={newHabit}
+                  onChange={(e) => setNewHabit(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+                  className="flex-1"
+                />
+                <Select value={difficulty} onValueChange={setDifficulty}>
+                  <SelectTrigger className="w-28">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="easy">Easy</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="hard">Hard</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button onClick={handleAdd} className="w-full bg-gradient-primary text-primary-foreground">Add Custom Habit</Button>
+
+              <div className="border-t pt-3">
+                <p className="text-sm font-medium text-muted-foreground mb-2">Or use a template:</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {TEMPLATES.map((t) => (
+                    <Button key={t.name} variant="outline" size="sm" onClick={() => handleTemplate(t)} className="justify-start gap-2 text-xs">
+                      <span>{t.icon}</span> {t.name}
+                    </Button>
+                  ))}
+                </div>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
@@ -94,6 +124,12 @@ export default function Habits() {
         </motion.div>
       )}
 
+      {habits.length === 0 && (
+        <Card className="p-8 text-center">
+          <p className="text-muted-foreground">No habits yet. Tap "Add Habit" to start building your routine! 🌱</p>
+        </Card>
+      )}
+
       <div className="space-y-3">
         <AnimatePresence>
           {habits.map((habit) => (
@@ -106,17 +142,21 @@ export default function Habits() {
             >
               <Card
                 className={`p-4 cursor-pointer transition-all hover:shadow-md ${
-                  habit.completedToday ? "border-success/30 bg-success/5" : ""
+                  habit.completed_today ? "border-success/30 bg-success/5" : ""
                 }`}
-                onClick={() => toggleHabit(habit.id)}
               >
                 <div className="flex items-center gap-4">
-                  <span className="text-2xl">{habit.icon}</span>
-                  <div className="flex-1 min-w-0">
+                  <span className="text-2xl cursor-pointer" onClick={() => toggleHabit(habit)}>{habit.icon}</span>
+                  <div className="flex-1 min-w-0" onClick={() => toggleHabit(habit)}>
                     <div className="flex items-center gap-2">
-                      <p className={`font-medium ${habit.completedToday ? "line-through text-muted-foreground" : ""}`}>
+                      <p className={`font-medium ${habit.completed_today ? "line-through text-muted-foreground" : ""}`}>
                         {habit.name}
                       </p>
+                      <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                        habit.difficulty === "hard" ? "bg-destructive/10 text-destructive" :
+                        habit.difficulty === "easy" ? "bg-success/10 text-success" :
+                        "bg-accent/30 text-accent-foreground"
+                      }`}>{habit.difficulty}</span>
                       <div className="flex items-center gap-1 text-xs text-streak-foreground bg-streak/20 px-2 py-0.5 rounded-full">
                         <Flame className="h-3 w-3 text-primary" />
                         {habit.streak}
@@ -124,14 +164,20 @@ export default function Habits() {
                     </div>
                     <Progress value={(habit.current / habit.target) * 100} className="h-1.5 mt-2" />
                   </div>
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                      habit.completedToday
-                        ? "bg-success text-success-foreground"
-                        : "border-2 border-muted-foreground/30"
-                    }`}
-                  >
-                    {habit.completedToday && <Check className="h-4 w-4" />}
+                  <div className="flex items-center gap-2">
+                    <div
+                      onClick={() => toggleHabit(habit)}
+                      className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                        habit.completed_today
+                          ? "bg-success text-success-foreground"
+                          : "border-2 border-muted-foreground/30"
+                      }`}
+                    >
+                      {habit.completed_today && <Check className="h-4 w-4" />}
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => deleteHabit(habit.id)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               </Card>

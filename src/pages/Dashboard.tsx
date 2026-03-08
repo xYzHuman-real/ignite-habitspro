@@ -2,7 +2,8 @@ import { motion } from "framer-motion";
 import { Flame, Target, CheckCircle2, TrendingUp } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { useHabits, useTodos, useProfile } from "@/lib/store";
+import { useHabits, useTodos, useProfile } from "@/lib/supabase-hooks";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const container = {
   hidden: {},
@@ -14,16 +15,27 @@ const item = {
 };
 
 export default function Dashboard() {
-  const [habits] = useHabits();
-  const [todos] = useTodos();
-  const { profile } = useProfile();
+  const { habits, isLoading: habitsLoading } = useHabits();
+  const { todos, isLoading: todosLoading } = useTodos();
+  const { profile, isLoading: profileLoading } = useProfile();
 
-  const completedHabits = habits.filter((h) => h.completedToday).length;
+  const completedHabits = habits.filter((h) => h.completed_today).length;
   const completedTodos = todos.filter((t) => t.completed).length;
   const maxStreak = habits.reduce((max, h) => Math.max(max, h.streak), 0);
   const weeklyScore = habits.length > 0 ? Math.round((completedHabits / habits.length) * 100) : 0;
 
-  const displayName = profile.name || "there";
+  const displayName = profile?.display_name || "there";
+
+  if (habitsLoading || todosLoading || profileLoading) {
+    return (
+      <div className="space-y-6 max-w-5xl mx-auto">
+        <Skeleton className="h-12 w-64" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-24" />)}
+        </div>
+      </div>
+    );
+  }
 
   const stats = [
     { label: "Best Streak", value: String(maxStreak), icon: Flame, gradient: "bg-gradient-accent", glow: "shadow-glow-accent" },
@@ -58,12 +70,14 @@ export default function Dashboard() {
       <motion.div variants={item} className="grid md:grid-cols-2 gap-6">
         <Card className="p-5 space-y-4">
           <h2 className="font-display font-semibold text-lg">Today's Habits</h2>
-          {habits.map((habit) => (
+          {habits.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4 text-center">No habits yet. Create one to get started!</p>
+          ) : habits.map((habit) => (
             <div key={habit.id} className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="text-xl">{habit.icon}</span>
                 <div>
-                  <p className={`text-sm font-medium ${habit.completedToday ? "line-through text-muted-foreground" : ""}`}>
+                  <p className={`text-sm font-medium ${habit.completed_today ? "line-through text-muted-foreground" : ""}`}>
                     {habit.name}
                   </p>
                   <p className="text-xs text-muted-foreground">{habit.streak} day streak</p>
@@ -71,7 +85,7 @@ export default function Dashboard() {
               </div>
               <div className="flex items-center gap-2">
                 <Progress value={(habit.current / habit.target) * 100} className="w-16 h-2" />
-                {habit.completedToday && <CheckCircle2 className="h-4 w-4 text-success" />}
+                {habit.completed_today && <CheckCircle2 className="h-4 w-4 text-success" />}
               </div>
             </div>
           ))}
@@ -79,7 +93,9 @@ export default function Dashboard() {
 
         <Card className="p-5 space-y-4">
           <h2 className="font-display font-semibold text-lg">To-Do List</h2>
-          {todos.map((todo) => (
+          {todos.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4 text-center">No tasks yet. Add one to stay productive!</p>
+          ) : todos.slice(0, 5).map((todo) => (
             <div key={todo.id} className="flex items-center gap-3">
               <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
                 todo.completed ? "bg-success border-success" : "border-muted-foreground"
@@ -98,31 +114,6 @@ export default function Dashboard() {
               </span>
             </div>
           ))}
-        </Card>
-      </motion.div>
-
-      <motion.div variants={item}>
-        <Card className="p-5">
-          <h2 className="font-display font-semibold text-lg mb-3">Weekly Progress</h2>
-          <div className="flex gap-2">
-            {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, i) => {
-              const progress = [100, 80, 100, 60, 90, 40, 0][i];
-              const isToday = i === 6;
-              return (
-                <div key={day} className="flex-1 text-center">
-                  <div className="h-24 bg-muted rounded-lg relative overflow-hidden mb-1">
-                    <motion.div
-                      initial={{ height: 0 }}
-                      animate={{ height: `${progress}%` }}
-                      transition={{ delay: 0.3 + i * 0.1, duration: 0.5 }}
-                      className={`absolute bottom-0 w-full rounded-lg ${progress === 100 ? "bg-gradient-success" : "bg-gradient-primary"}`}
-                    />
-                  </div>
-                  <span className={`text-xs ${isToday ? "font-bold text-primary" : "text-muted-foreground"}`}>{day}</span>
-                </div>
-              );
-            })}
-          </div>
         </Card>
       </motion.div>
     </motion.div>

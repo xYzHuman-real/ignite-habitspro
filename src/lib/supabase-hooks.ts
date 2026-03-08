@@ -1,0 +1,364 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
+
+// ---- Profile ----
+export function useProfile() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+
+  const { data: profile, isLoading } = useQuery({
+    queryKey: ["profile", user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase.from("profiles").select("*").eq("user_id", user.id).single();
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const updateProfile = useMutation({
+    mutationFn: async (updates: Record<string, unknown>) => {
+      if (!user) throw new Error("Not authenticated");
+      const { error } = await supabase.from("profiles").update(updates).eq("user_id", user.id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["profile", user?.id] }),
+  });
+
+  return { profile, isLoading, updateProfile: updateProfile.mutate };
+}
+
+// ---- Habits ----
+export function useHabits() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+
+  const { data: habits = [], isLoading } = useQuery({
+    queryKey: ["habits", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data } = await supabase.from("habits").select("*").eq("user_id", user.id).order("created_at");
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
+  const addHabit = useMutation({
+    mutationFn: async (habit: { name: string; icon: string; target: number; difficulty: string }) => {
+      if (!user) throw new Error("Not authenticated");
+      const { error } = await supabase.from("habits").insert({ ...habit, user_id: user.id });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["habits", user?.id] }),
+  });
+
+  const updateHabit = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Record<string, unknown> }) => {
+      const { error } = await supabase.from("habits").update(updates).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["habits", user?.id] }),
+  });
+
+  const deleteHabit = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("habits").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["habits", user?.id] }),
+  });
+
+  const toggleHabit = useMutation({
+    mutationFn: async (habit: { id: string; completed_today: boolean; current: number; target: number; streak: number; longest_streak: number }) => {
+      if (!user) throw new Error("Not authenticated");
+      const nowComplete = !habit.completed_today;
+      const newStreak = nowComplete ? habit.streak + 1 : Math.max(0, habit.streak - 1);
+      const newLongest = Math.max(habit.longest_streak, newStreak);
+
+      const { error } = await supabase.from("habits").update({
+        completed_today: nowComplete,
+        current: nowComplete ? habit.target : 0,
+        streak: newStreak,
+        longest_streak: newLongest,
+      }).eq("id", habit.id);
+      if (error) throw error;
+
+      if (nowComplete) {
+        await supabase.from("habit_completions").upsert({
+          user_id: user.id,
+          habit_id: habit.id,
+          completed_date: new Date().toISOString().split("T")[0],
+        }, { onConflict: "habit_id,completed_date" });
+
+        await supabase.from("activity_log").upsert({
+          user_id: user.id,
+          activity_type: "habit_completion",
+          activity_date: new Date().toISOString().split("T")[0],
+          count: 1,
+        }, { onConflict: "user_id,activity_type,activity_date" });
+      }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["habits", user?.id] }),
+  });
+
+  return { habits, isLoading, addHabit: addHabit.mutate, updateHabit: updateHabit.mutate, deleteHabit: deleteHabit.mutate, toggleHabit: toggleHabit.mutate };
+}
+
+// ---- Todos ----
+export function useTodos() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+
+  const { data: todos = [], isLoading } = useQuery({
+    queryKey: ["todos", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data } = await supabase.from("todos").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
+  const addTodo = useMutation({
+    mutationFn: async (todo: { text: string; priority: string }) => {
+      if (!user) throw new Error("Not authenticated");
+      const { error } = await supabase.from("todos").insert({ ...todo, user_id: user.id });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["todos", user?.id] }),
+  });
+
+  const toggleTodo = useMutation({
+    mutationFn: async ({ id, completed }: { id: string; completed: boolean }) => {
+      const { error } = await supabase.from("todos").update({ completed: !completed }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["todos", user?.id] }),
+  });
+
+  const deleteTodo = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("todos").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["todos", user?.id] }),
+  });
+
+  return { todos, isLoading, addTodo: addTodo.mutate, toggleTodo: toggleTodo.mutate, deleteTodo: deleteTodo.mutate };
+}
+
+// ---- Pomodoro Sessions ----
+export function usePomodoroSessions() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+
+  const { data: sessions = [] } = useQuery({
+    queryKey: ["pomodoro_sessions", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const today = new Date().toISOString().split("T")[0];
+      const { data } = await supabase
+        .from("pomodoro_sessions")
+        .select("*")
+        .eq("user_id", user.id)
+        .gte("created_at", today);
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
+  const addSession = useMutation({
+    mutationFn: async (session: { duration_minutes: number; session_type: string }) => {
+      if (!user) throw new Error("Not authenticated");
+      const { error } = await supabase.from("pomodoro_sessions").insert({ ...session, user_id: user.id });
+      if (error) throw error;
+
+      await supabase.from("activity_log").upsert({
+        user_id: user.id,
+        activity_type: "pomodoro_session",
+        activity_date: new Date().toISOString().split("T")[0],
+        count: 1,
+      }, { onConflict: "user_id,activity_type,activity_date" });
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["pomodoro_sessions", user?.id] }),
+  });
+
+  return { sessions, addSession: addSession.mutate };
+}
+
+// ---- Leaderboard ----
+export function useLeaderboard() {
+  return useQuery({
+    queryKey: ["leaderboard"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, avatar_url, total_streak, leaderboard_points, habits_completed")
+        .order("leaderboard_points", { ascending: false })
+        .limit(20);
+      return data || [];
+    },
+  });
+}
+
+// ---- Community Groups ----
+export function useCommunityGroups() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+
+  const { data: groups = [] } = useQuery({
+    queryKey: ["community_groups"],
+    queryFn: async () => {
+      const { data } = await supabase.from("community_groups").select("*").order("member_count", { ascending: false });
+      return data || [];
+    },
+  });
+
+  const { data: memberships = [] } = useQuery({
+    queryKey: ["community_memberships", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data } = await supabase.from("community_memberships").select("group_id").eq("user_id", user.id);
+      return (data || []).map((m) => m.group_id);
+    },
+    enabled: !!user,
+  });
+
+  const joinGroup = useMutation({
+    mutationFn: async (groupId: string) => {
+      if (!user) throw new Error("Not authenticated");
+      const { error } = await supabase.from("community_memberships").insert({ user_id: user.id, group_id: groupId });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["community_groups"] });
+      qc.invalidateQueries({ queryKey: ["community_memberships", user?.id] });
+    },
+  });
+
+  const leaveGroup = useMutation({
+    mutationFn: async (groupId: string) => {
+      if (!user) throw new Error("Not authenticated");
+      const { error } = await supabase.from("community_memberships").delete().eq("user_id", user.id).eq("group_id", groupId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["community_groups"] });
+      qc.invalidateQueries({ queryKey: ["community_memberships", user?.id] });
+    },
+  });
+
+  return { groups, memberships, joinGroup: joinGroup.mutate, leaveGroup: leaveGroup.mutate };
+}
+
+// ---- Badges ----
+export function useBadges() {
+  const { user } = useAuth();
+
+  const { data: allBadges = [] } = useQuery({
+    queryKey: ["badges"],
+    queryFn: async () => {
+      const { data } = await supabase.from("badges").select("*");
+      return data || [];
+    },
+  });
+
+  const { data: earnedBadgeIds = [] } = useQuery({
+    queryKey: ["user_badges", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data } = await supabase.from("user_badges").select("badge_id").eq("user_id", user.id);
+      return (data || []).map((b) => b.badge_id);
+    },
+    enabled: !!user,
+  });
+
+  return { allBadges, earnedBadgeIds };
+}
+
+// ---- Activity Log ----
+export function useActivityLog() {
+  const { user } = useAuth();
+
+  const { data: activities = [] } = useQuery({
+    queryKey: ["activity_log", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const threeMonthsAgo = new Date();
+      threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+      const { data } = await supabase
+        .from("activity_log")
+        .select("activity_date, count")
+        .eq("user_id", user.id)
+        .gte("activity_date", threeMonthsAgo.toISOString().split("T")[0]);
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
+  return { activities };
+}
+
+// ---- Challenges ----
+export function useChallenges() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+
+  const { data: challenges = [] } = useQuery({
+    queryKey: ["challenges"],
+    queryFn: async () => {
+      const { data } = await supabase.from("challenges").select("*");
+      return data || [];
+    },
+  });
+
+  const { data: userChallenges = [] } = useQuery({
+    queryKey: ["user_challenges", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data } = await supabase.from("user_challenges").select("*").eq("user_id", user.id);
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
+  const joinChallenge = useMutation({
+    mutationFn: async (challengeId: string) => {
+      if (!user) throw new Error("Not authenticated");
+      const { error } = await supabase.from("user_challenges").insert({ user_id: user.id, challenge_id: challengeId });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["user_challenges", user?.id] }),
+  });
+
+  return { challenges, userChallenges, joinChallenge: joinChallenge.mutate };
+}
+
+// ---- Followers ----
+export function useFollowers() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+
+  const { data: followerCount = 0 } = useQuery({
+    queryKey: ["follower_count", user?.id],
+    queryFn: async () => {
+      if (!user) return 0;
+      const { count } = await supabase.from("followers").select("*", { count: "exact", head: true }).eq("following_id", user.id);
+      return count || 0;
+    },
+    enabled: !!user,
+  });
+
+  const { data: followingCount = 0 } = useQuery({
+    queryKey: ["following_count", user?.id],
+    queryFn: async () => {
+      if (!user) return 0;
+      const { count } = await supabase.from("followers").select("*", { count: "exact", head: true }).eq("follower_id", user.id);
+      return count || 0;
+    },
+    enabled: !!user,
+  });
+
+  return { followerCount, followingCount };
+}

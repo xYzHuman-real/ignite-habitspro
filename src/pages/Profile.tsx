@@ -1,27 +1,55 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { CalendarDays, Flame, Target, UserPlus, Users, Edit3, Check } from "lucide-react";
+import { motion } from "framer-motion";
+import { CalendarDays, Flame, UserPlus, Edit3, Check, LogOut, Shield } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useProfile } from "@/lib/store";
+import { useProfile, useBadges, useActivityLog, useFollowers } from "@/lib/supabase-hooks";
+import { useAuth } from "@/lib/auth";
+import { Skeleton } from "@/components/ui/skeleton";
+import { format } from "date-fns";
 
 export default function Profile() {
-  const { profile: p, updateProfile } = useProfile();
-  const [editing, setEditing] = useState(!p.name);
-  const [form, setForm] = useState({ name: p.name, username: p.username, bio: p.bio });
+  const { signOut } = useAuth();
+  const { profile, isLoading, updateProfile } = useProfile();
+  const { allBadges, earnedBadgeIds } = useBadges();
+  const { activities } = useActivityLog();
+  const { followerCount, followingCount } = useFollowers();
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({ display_name: "", username: "", bio: "" });
+
+  if (isLoading || !profile) {
+    return (
+      <div className="max-w-2xl mx-auto space-y-6">
+        <Skeleton className="h-48" />
+        <Skeleton className="h-32" />
+      </div>
+    );
+  }
+
+  const startEdit = () => {
+    setForm({ display_name: profile.display_name, username: profile.username || "", bio: profile.bio || "" });
+    setEditing(true);
+  };
 
   const saveProfile = () => {
-    if (!form.name.trim()) return;
-    const initials = form.name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
-    updateProfile({ ...form, avatar: initials });
+    if (!form.display_name.trim()) return;
+    updateProfile(form);
     setEditing(false);
   };
 
-  const avatarText = p.avatar || "?";
+  const avatarText = profile.display_name ? profile.display_name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2) : "?";
+  const earnedBadges = allBadges.filter((b) => earnedBadgeIds.includes(b.id));
+  const joinDate = format(new Date(profile.created_at), "MMM yyyy");
+
+  // Build heatmap from activity log
+  const activityMap = new Map<string, number>();
+  activities.forEach((a) => {
+    activityMap.set(a.activity_date, (activityMap.get(a.activity_date) || 0) + a.count);
+  });
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -29,13 +57,16 @@ export default function Profile() {
         <Card className="p-6">
           {editing ? (
             <div className="space-y-4">
-              <h2 className="font-display font-bold text-xl">Set Up Your Profile</h2>
-              <Input placeholder="Your Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+              <h2 className="font-display font-bold text-xl">Edit Profile</h2>
+              <Input placeholder="Your Name" value={form.display_name} onChange={(e) => setForm({ ...form, display_name: e.target.value })} />
               <Input placeholder="@username" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} />
               <Textarea placeholder="Write a short bio..." value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} rows={2} />
-              <Button onClick={saveProfile} className="bg-gradient-primary text-primary-foreground">
-                <Check className="h-4 w-4 mr-1" /> Save Profile
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={saveProfile} className="bg-gradient-primary text-primary-foreground">
+                  <Check className="h-4 w-4 mr-1" /> Save
+                </Button>
+                <Button variant="outline" onClick={() => setEditing(false)}>Cancel</Button>
+              </div>
             </div>
           ) : (
             <>
@@ -46,18 +77,15 @@ export default function Profile() {
                   </AvatarFallback>
                 </Avatar>
                 <div className="text-center sm:text-left flex-1">
-                  <h1 className="text-2xl font-display font-bold">{p.name}</h1>
-                  <p className="text-muted-foreground text-sm">{p.username || "No username set"}</p>
-                  <p className="text-sm mt-1">{p.bio || "No bio yet"}</p>
-                  <div className="flex gap-4 mt-3 justify-center sm:justify-start">
-                    <Button size="sm" variant="outline" onClick={() => { setForm({ name: p.name, username: p.username, bio: p.bio }); setEditing(true); }}>
+                  <h1 className="text-2xl font-display font-bold">{profile.display_name || "Set up your profile"}</h1>
+                  <p className="text-muted-foreground text-sm">{profile.username ? `@${profile.username}` : "No username set"}</p>
+                  <p className="text-sm mt-1">{profile.bio || "No bio yet"}</p>
+                  <div className="flex gap-2 mt-3 justify-center sm:justify-start flex-wrap">
+                    <Button size="sm" variant="outline" onClick={startEdit}>
                       <Edit3 className="h-4 w-4 mr-1" /> Edit Profile
                     </Button>
-                    <Button size="sm" className="bg-gradient-primary text-primary-foreground">
-                      <UserPlus className="h-4 w-4 mr-1" /> Follow
-                    </Button>
-                    <Button size="sm" variant="outline">
-                      <Users className="h-4 w-4 mr-1" /> Message
+                    <Button size="sm" variant="outline" className="text-destructive hover:text-destructive" onClick={signOut}>
+                      <LogOut className="h-4 w-4 mr-1" /> Sign Out
                     </Button>
                   </div>
                 </div>
@@ -67,38 +95,50 @@ export default function Profile() {
 
               <div className="grid grid-cols-4 gap-4 text-center">
                 <div>
-                  <p className="text-2xl font-display font-bold">{p.followers}</p>
+                  <p className="text-2xl font-display font-bold">{followerCount}</p>
                   <p className="text-xs text-muted-foreground">Followers</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-display font-bold">{p.following}</p>
+                  <p className="text-2xl font-display font-bold">{followingCount}</p>
                   <p className="text-xs text-muted-foreground">Following</p>
                 </div>
                 <div>
                   <p className="text-2xl font-display font-bold flex items-center justify-center gap-1">
-                    {p.totalStreak} <Flame className="h-5 w-5 text-primary" />
+                    {profile.total_streak} <Flame className="h-5 w-5 text-primary" />
                   </p>
                   <p className="text-xs text-muted-foreground">Day Streak</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-display font-bold">{p.habitsCompleted}</p>
+                  <p className="text-2xl font-display font-bold">{profile.habits_completed}</p>
                   <p className="text-xs text-muted-foreground">Completed</p>
                 </div>
               </div>
+
+              {profile.streak_freezes > 0 && (
+                <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
+                  <Shield className="h-4 w-4 text-primary" />
+                  <span>{profile.streak_freezes} streak freezes remaining</span>
+                </div>
+              )}
             </>
           )}
         </Card>
       </motion.div>
 
-      {!editing && p.badges.length > 0 && (
+      {!editing && earnedBadges.length > 0 && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <Card className="p-5">
             <h2 className="font-display font-semibold text-lg mb-3">Badges</h2>
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-              {p.badges.map((badge) => (
-                <div key={badge.name} className="flex flex-col items-center gap-1 p-3 rounded-xl bg-muted/50 hover:bg-muted transition-colors">
+              {earnedBadges.map((badge) => (
+                <div key={badge.id} className="flex flex-col items-center gap-1 p-3 rounded-xl bg-muted/50 hover:bg-muted transition-colors">
                   <span className="text-2xl">{badge.icon}</span>
                   <span className="text-xs text-center text-muted-foreground">{badge.name}</span>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                    badge.tier === "gold" ? "bg-accent/30 text-accent-foreground" :
+                    badge.tier === "silver" ? "bg-muted text-muted-foreground" :
+                    "bg-primary/10 text-primary"
+                  }`}>{badge.tier}</span>
                 </div>
               ))}
             </div>
@@ -112,14 +152,18 @@ export default function Profile() {
             <h2 className="font-display font-semibold text-lg mb-3">Activity</h2>
             <div className="grid grid-cols-7 gap-1">
               {Array.from({ length: 49 }).map((_, i) => {
-                const intensity = Math.random();
+                const date = new Date();
+                date.setDate(date.getDate() - (48 - i));
+                const dateStr = date.toISOString().split("T")[0];
+                const count = activityMap.get(dateStr) || 0;
                 return (
                   <div
                     key={i}
+                    title={`${dateStr}: ${count} activities`}
                     className={`aspect-square rounded-sm ${
-                      intensity > 0.8 ? "bg-gradient-primary" :
-                      intensity > 0.5 ? "bg-primary/60" :
-                      intensity > 0.2 ? "bg-primary/30" :
+                      count >= 4 ? "bg-gradient-primary" :
+                      count >= 3 ? "bg-primary/60" :
+                      count >= 1 ? "bg-primary/30" :
                       "bg-muted"
                     }`}
                   />
@@ -127,7 +171,7 @@ export default function Profile() {
               })}
             </div>
             <div className="flex items-center justify-between mt-3 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1"><CalendarDays className="h-3 w-3" /> Joined {p.joinDate}</span>
+              <span className="flex items-center gap-1"><CalendarDays className="h-3 w-3" /> Joined {joinDate}</span>
               <div className="flex items-center gap-1">
                 Less <div className="w-3 h-3 rounded-sm bg-muted" /> <div className="w-3 h-3 rounded-sm bg-primary/30" /> <div className="w-3 h-3 rounded-sm bg-primary/60" /> <div className="w-3 h-3 rounded-sm bg-gradient-primary" /> More
               </div>
