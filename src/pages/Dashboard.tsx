@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useHabits, useTodos, useProfile } from "@/lib/supabase-hooks";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Onboarding } from "@/components/Onboarding";
 
 const container = {
   hidden: {},
