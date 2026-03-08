@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
+import { Capacitor } from "@capacitor/core";
 import { Mail, Lock, User, Eye, EyeOff, Flame } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ export default function Auth() {
   const [fullName, setFullName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const isNativeApp = useMemo(() => Capacitor.isNativePlatform(), []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,7 +117,7 @@ export default function Auth() {
             </Button>
           </form>
 
-          {mode !== "reset" && (
+          {mode !== "reset" && !isNativeApp && (
             <>
               <div className="relative">
                 <Separator />
