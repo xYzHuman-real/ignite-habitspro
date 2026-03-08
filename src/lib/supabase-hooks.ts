@@ -404,6 +404,16 @@ export function useChallenges() {
               badge_id: challenge.badge_reward,
             }, { onConflict: "user_id,badge_id" });
           }
+
+          // Notify on challenge completion
+          await supabase.from("notifications").insert({
+            user_id: user.id,
+            type: "challenge_complete",
+            title: "🏆 Challenge Complete!",
+            message: `You finished "${challenge.name}" and earned ${challenge.points_reward} points!`,
+            icon: "🏆",
+            action_url: "/challenges",
+          });
         }
       }
     },
