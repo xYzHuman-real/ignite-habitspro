@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { CalendarDays, Flame, UserPlus, Edit3, Check, LogOut, Shield, Coins, Gift, Trash2 } from "lucide-react";
+import { CalendarDays, Flame, UserPlus, Edit3, Check, LogOut, Shield, Coins, Gift, Trash2, Download } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ export default function Profile() {
   const { toast } = useToast();
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [form, setForm] = useState({ display_name: "", username: "", bio: "" });
 
   // Auto-claim daily login on page visit
@@ -79,6 +80,65 @@ export default function Profile() {
       toast({ title: "Failed to delete account", description: e.message, variant: "destructive" });
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const toCsv = (headers: string[], rows: Record<string, any>[]) => {
+    const lines = [headers.join(",")];
+    rows.forEach((r) => {
+      lines.push(headers.map((h) => {
+        const val = String(r[h] ?? "").replace(/"/g, '""');
+        return `"${val}"`;
+      }).join(","));
+    });
+    return lines.join("\n");
+  };
+
+  const downloadFile = (content: string, filename: string) => {
+    const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportData = async () => {
+    setExporting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const [habitsRes, journalRes, goalsRes, todosRes, completionsRes] = await Promise.all([
+        supabase.from("habits").select("*").eq("user_id", user.id),
+        supabase.from("journal_entries").select("*").eq("user_id", user.id),
+        supabase.from("goals").select("*").eq("user_id", user.id),
+        supabase.from("todos").select("*").eq("user_id", user.id),
+        supabase.from("habit_completions").select("*").eq("user_id", user.id),
+      ]);
+
+      if (habitsRes.data?.length) {
+        downloadFile(toCsv(["name", "icon", "difficulty", "streak", "longest_streak", "target", "current", "reminder_enabled", "reminder_time", "created_at"], habitsRes.data), "habits.csv");
+      }
+      if (completionsRes.data?.length) {
+        downloadFile(toCsv(["habit_id", "completed_date", "created_at"], completionsRes.data), "habit_completions.csv");
+      }
+      if (journalRes.data?.length) {
+        downloadFile(toCsv(["entry_date", "mood", "reflection", "gratitude", "wins", "improvements"], journalRes.data), "journal.csv");
+      }
+      if (goalsRes.data?.length) {
+        downloadFile(toCsv(["title", "description", "target_value", "current_value", "unit", "completed", "deadline", "created_at"], goalsRes.data), "goals.csv");
+      }
+      if (todosRes.data?.length) {
+        downloadFile(toCsv(["text", "priority", "completed", "created_at"], todosRes.data), "todos.csv");
+      }
+
+      toast({ title: "Export complete!", description: "Your data has been downloaded as CSV files." });
+    } catch (e: any) {
+      toast({ title: "Export failed", description: e.message, variant: "destructive" });
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -249,6 +309,21 @@ export default function Profile() {
                 Less <div className="w-3 h-3 rounded-sm bg-muted" /> <div className="w-3 h-3 rounded-sm bg-primary/30" /> <div className="w-3 h-3 rounded-sm bg-primary/60" /> <div className="w-3 h-3 rounded-sm bg-gradient-primary" /> More
               </div>
             </div>
+          </Card>
+        </motion.div>
+      )}
+
+      {!editing && (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+          <Card className="p-5">
+            <h2 className="font-display font-semibold text-lg mb-1">Your Data</h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Download all your habits, journal entries, goals, and todos as CSV files.
+            </p>
+            <Button variant="outline" size="sm" onClick={handleExportData} disabled={exporting}>
+              <Download className="h-4 w-4 mr-1" />
+              {exporting ? "Exporting..." : "Export All Data"}
+            </Button>
           </Card>
         </motion.div>
       )}
