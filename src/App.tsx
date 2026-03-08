@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import Habits from "./pages/Habits";
 import TimerPage from "./pages/TimerPage";
 import Todos from "./pages/Todos";
+import Challenges from "./pages/Challenges";
 import Community from "./pages/Community";
 import Leaderboard from "./pages/Leaderboard";
 import Profile from "./pages/Profile";
