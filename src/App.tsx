@@ -15,6 +15,7 @@ import Leaderboard from "./pages/Leaderboard";
 import Profile from "./pages/Profile";
 import Shop from "./pages/Shop";
 import WeeklyReport from "./pages/WeeklyReport";
+import Journal from "./pages/Journal";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
