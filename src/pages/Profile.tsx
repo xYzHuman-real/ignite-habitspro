@@ -83,6 +83,65 @@ export default function Profile() {
     }
   };
 
+  const toCsv = (headers: string[], rows: Record<string, any>[]) => {
+    const lines = [headers.join(",")];
+    rows.forEach((r) => {
+      lines.push(headers.map((h) => {
+        const val = String(r[h] ?? "").replace(/"/g, '""');
+        return `"${val}"`;
+      }).join(","));
+    });
+    return lines.join("\n");
+  };
+
+  const downloadFile = (content: string, filename: string) => {
+    const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportData = async () => {
+    setExporting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const [habitsRes, journalRes, goalsRes, todosRes, completionsRes] = await Promise.all([
+        supabase.from("habits").select("*").eq("user_id", user.id),
+        supabase.from("journal_entries").select("*").eq("user_id", user.id),
+        supabase.from("goals").select("*").eq("user_id", user.id),
+        supabase.from("todos").select("*").eq("user_id", user.id),
+        supabase.from("habit_completions").select("*").eq("user_id", user.id),
+      ]);
+
+      if (habitsRes.data?.length) {
+        downloadFile(toCsv(["name", "icon", "difficulty", "streak", "longest_streak", "target", "current", "reminder_enabled", "reminder_time", "created_at"], habitsRes.data), "habits.csv");
+      }
+      if (completionsRes.data?.length) {
+        downloadFile(toCsv(["habit_id", "completed_date", "created_at"], completionsRes.data), "habit_completions.csv");
+      }
+      if (journalRes.data?.length) {
+        downloadFile(toCsv(["entry_date", "mood", "reflection", "gratitude", "wins", "improvements"], journalRes.data), "journal.csv");
+      }
+      if (goalsRes.data?.length) {
+        downloadFile(toCsv(["title", "description", "target_value", "current_value", "unit", "completed", "deadline", "created_at"], goalsRes.data), "goals.csv");
+      }
+      if (todosRes.data?.length) {
+        downloadFile(toCsv(["text", "priority", "completed", "created_at"], todosRes.data), "todos.csv");
+      }
+
+      toast({ title: "Export complete!", description: "Your data has been downloaded as CSV files." });
+    } catch (e: any) {
+      toast({ title: "Export failed", description: e.message, variant: "destructive" });
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const avatarText = profile.display_name ? profile.display_name.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2) : "?";
   const earnedBadges = allBadges.filter((b) => earnedBadgeIds.includes(b.id));
   const joinDate = format(new Date(profile.created_at), "MMM yyyy");
