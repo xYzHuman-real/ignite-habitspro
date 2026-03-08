@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.71ca33e8806545b2b28254bac8cd27f9',
+  appId: 'app.lovable.ignitehabitspro',
   appName: 'ignite-habitspro',
   webDir: 'dist',
   server: {
