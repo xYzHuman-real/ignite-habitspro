@@ -123,6 +123,10 @@ export default function Auth() {
                 />
                 <label htmlFor="privacy" className="text-xs text-muted-foreground leading-tight cursor-pointer">
                   I agree to the{" "}
+                  <Link to="/terms-of-service" className="text-primary hover:underline" target="_blank">
+                    Terms of Service
+                  </Link>{" "}
+                  and{" "}
                   <Link to="/privacy-policy" className="text-primary hover:underline" target="_blank">
                     Privacy Policy
                   </Link>
