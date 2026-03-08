@@ -5,31 +5,31 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useTodos, type Todo } from "@/lib/store";
+import { useTodos } from "@/lib/supabase-hooks";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Todos() {
-  const [todos, setTodos] = useTodos();
+  const { todos, isLoading, addTodo, toggleTodo, deleteTodo } = useTodos();
   const [newTodo, setNewTodo] = useState("");
-  const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
+  const [priority, setPriority] = useState("medium");
 
-  const addTodo = () => {
+  const handleAdd = () => {
     if (!newTodo.trim()) return;
-    setTodos((prev) => [
-      { id: Date.now().toString(), text: newTodo, completed: false, priority },
-      ...prev,
-    ]);
+    addTodo({ text: newTodo, priority });
     setNewTodo("");
   };
 
-  const toggleTodo = (id: string) => {
-    setTodos((prev) => prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)));
-  };
-
-  const deleteTodo = (id: string) => {
-    setTodos((prev) => prev.filter((t) => t.id !== id));
-  };
-
   const completed = todos.filter((t) => t.completed).length;
+
+  if (isLoading) {
+    return (
+      <div className="max-w-2xl mx-auto space-y-4">
+        <Skeleton className="h-12 w-48" />
+        <Skeleton className="h-14" />
+        {[1, 2, 3].map((i) => <Skeleton key={i} className="h-14" />)}
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -44,10 +44,10 @@ export default function Todos() {
             placeholder="Add a new task..."
             value={newTodo}
             onChange={(e) => setNewTodo(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && addTodo()}
+            onKeyDown={(e) => e.key === "Enter" && handleAdd()}
             className="flex-1"
           />
-          <Select value={priority} onValueChange={(v) => setPriority(v as Todo["priority"])}>
+          <Select value={priority} onValueChange={setPriority}>
             <SelectTrigger className="w-28">
               <SelectValue />
             </SelectTrigger>
@@ -57,11 +57,17 @@ export default function Todos() {
               <SelectItem value="high">High</SelectItem>
             </SelectContent>
           </Select>
-          <Button onClick={addTodo} className="bg-gradient-primary text-primary-foreground">
+          <Button onClick={handleAdd} className="bg-gradient-primary text-primary-foreground">
             <Plus className="h-4 w-4" />
           </Button>
         </div>
       </Card>
+
+      {todos.length === 0 && (
+        <Card className="p-8 text-center">
+          <p className="text-muted-foreground">No tasks yet. Add one above to get started! ✅</p>
+        </Card>
+      )}
 
       <div className="space-y-2">
         <AnimatePresence>
@@ -75,7 +81,7 @@ export default function Todos() {
             >
               <Card className={`p-3 flex items-center gap-3 transition-all ${todo.completed ? "opacity-60" : ""}`}>
                 <button
-                  onClick={() => toggleTodo(todo.id)}
+                  onClick={() => toggleTodo({ id: todo.id, completed: todo.completed })}
                   className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors shrink-0 ${
                     todo.completed ? "bg-success border-success" : "border-muted-foreground/30 hover:border-primary"
                   }`}
