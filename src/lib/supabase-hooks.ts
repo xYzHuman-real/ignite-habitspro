@@ -97,6 +97,15 @@ export function useHabits() {
           activity_date: new Date().toISOString().split("T")[0],
           count: 1,
         }, { onConflict: "user_id,activity_type,activity_date" });
+
+        // Sync profile stats
+        const { data: profileData } = await supabase.from("profiles").select("total_streak, habits_completed").eq("user_id", user.id).single();
+        if (profileData) {
+          await supabase.from("profiles").update({
+            total_streak: Math.max(profileData.total_streak, newStreak),
+            habits_completed: profileData.habits_completed + 1,
+          }).eq("user_id", user.id);
+        }
       }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["habits", user?.id] }),
