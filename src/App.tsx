@@ -20,6 +20,7 @@ import GoalsPage from "./pages/Goals";
 import Partners from "./pages/Partners";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
