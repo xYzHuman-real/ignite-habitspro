@@ -39,6 +39,7 @@ function ProtectedRoutes() {
         <Route path="/habits" element={<Habits />} />
         <Route path="/timer" element={<TimerPage />} />
         <Route path="/todos" element={<Todos />} />
+        <Route path="/challenges" element={<Challenges />} />
         <Route path="/community" element={<Community />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="/profile" element={<Profile />} />
