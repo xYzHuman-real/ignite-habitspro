@@ -26,6 +26,7 @@ export default function Profile() {
   const { claimDaily, todayLogin, isClaiming } = useDailyLogin();
   const { toast } = useToast();
   const [editing, setEditing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [form, setForm] = useState({ display_name: "", username: "", bio: "" });
 
   // Auto-claim daily login on page visit
