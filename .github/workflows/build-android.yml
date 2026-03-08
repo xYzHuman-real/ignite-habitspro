@@ -36,6 +36,49 @@ jobs:
       - name: Add Android platform
         run: npx cap add android
 
+      - name: Add google-services.json
+        run: |
+          cat << 'EOF' > android/app/google-services.json
+          {
+            "project_info": {
+              "project_number": "334318731697",
+              "project_id": "ignite-habitspro",
+              "storage_bucket": "ignite-habitspro.firebasestorage.app"
+            },
+            "client": [
+              {
+                "client_info": {
+                  "mobilesdk_app_id": "1:334318731697:android:de283b73fa3a6e3a7afd90",
+                  "android_client_info": {
+                    "package_name": "app.lovable.ignitehabitspro"
+                  }
+                },
+                "oauth_client": [],
+                "api_key": [
+                  {
+                    "current_key": "AIzaSyBWICsus9Yn6X9D7Giqy7OdR89mnjarKjE"
+                  }
+                ],
+                "services": {
+                  "appinvite_service": {
+                    "other_platform_oauth_client": []
+                  }
+                }
+              }
+            ],
+            "configuration_version": "1"
+          }
+          EOF
+
+      - name: Add Firebase dependencies to Android
+        run: |
+          # Add Google Services plugin to project-level build.gradle
+          sed -i '/dependencies {/a\        classpath "com.google.gms:google-services:4.4.2"' android/build.gradle
+          # Apply plugin in app-level build.gradle
+          sed -i '/^apply plugin: .com.android.application./a\apply plugin: "com.google.gms.google-services"' android/app/build.gradle
+          # Add Firebase messaging dependency
+          sed -i '/dependencies {/a\    implementation "com.google.firebase:firebase-messaging:24.0.0"' android/app/build.gradle
+
       - name: Sync Capacitor
         run: npx cap sync android
 
