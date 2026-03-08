@@ -51,6 +51,7 @@ function ProtectedRoutes() {
         <Route path="/reports" element={<WeeklyReport />} />
         <Route path="/journal" element={<Journal />} />
         <Route path="/goals" element={<GoalsPage />} />
+        <Route path="/partners" element={<Partners />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
