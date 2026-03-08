@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Flame, Target, CheckCircle2, TrendingUp } from "lucide-react";
+import { Flame, Target, CheckCircle2, TrendingUp, Share2 } from "lucide-react";
+import { ShareProgress } from "@/components/ShareProgress";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useHabits, useTodos, useProfile } from "@/lib/supabase-hooks";
