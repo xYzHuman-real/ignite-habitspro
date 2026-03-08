@@ -55,6 +55,38 @@ export default function Challenges() {
     });
   };
 
+  const handleCheckIn = (uc: (typeof userChallenges)[0], challenge: (typeof challenges)[0]) => {
+    const today = new Date().toISOString().split("T")[0];
+    const lastDate = (uc as any).last_checkin_date;
+    if (lastDate === today) {
+      toast({ title: "Already Checked In ⏳", description: "You've already checked in today. Come back tomorrow!", variant: "destructive" });
+      return;
+    }
+    checkIn(
+      { userChallengeId: uc.id, currentProgress: uc.progress, targetDays: challenge.duration_days, lastCheckinDate: lastDate || null, challengeName: challenge.name },
+      {
+        onSuccess: () => {
+          const newProg = uc.progress + 1;
+          toast({
+            title: newProg >= challenge.duration_days ? "Challenge Complete! 🏆" : "Checked In! ✅",
+            description: newProg >= challenge.duration_days
+              ? `You completed "${challenge.name}" and earned ${challenge.points_reward} points!`
+              : `Day ${newProg}/${challenge.duration_days} done. Keep going!`,
+          });
+        },
+        onError: (err: Error) => {
+          if (err.message === "ALREADY_CHECKED_IN") {
+            toast({ title: "Already Checked In ⏳", description: "Come back tomorrow for your next check-in!", variant: "destructive" });
+          } else if (err.message === "INSUFFICIENT_FOCUS") {
+            toast({ title: "Focus Time Required 🎯", description: "Complete at least 1 hour of focus time today to check in for this challenge.", variant: "destructive" });
+          } else {
+            toast({ title: "Error", description: err.message, variant: "destructive" });
+          }
+        },
+      }
+    );
+  };
+
   if (challenges.length === 0) {
     return (
       <div className="max-w-4xl mx-auto space-y-6">
