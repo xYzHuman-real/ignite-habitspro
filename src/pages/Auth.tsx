@@ -2,11 +2,13 @@ import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Capacitor } from "@capacitor/core";
 import { Mail, Lock, User, Eye, EyeOff, Flame } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 
@@ -21,6 +23,7 @@ export default function Auth() {
   const [fullName, setFullName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const isNativeApp = useMemo(() => Capacitor.isNativePlatform(), []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,6 +41,11 @@ export default function Auth() {
     if (mode === "signup") {
       if (!fullName.trim()) {
         toast({ title: "Name required", variant: "destructive" });
+        setLoading(false);
+        return;
+      }
+      if (!acceptedPrivacy) {
+        toast({ title: "Please accept the Privacy Policy", variant: "destructive" });
         setLoading(false);
         return;
       }
@@ -103,6 +111,22 @@ export default function Auth() {
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
+              </div>
+            )}
+
+            {mode === "signup" && (
+              <div className="flex items-start space-x-2">
+                <Checkbox
+                  id="privacy"
+                  checked={acceptedPrivacy}
+                  onCheckedChange={(checked) => setAcceptedPrivacy(checked === true)}
+                />
+                <label htmlFor="privacy" className="text-xs text-muted-foreground leading-tight cursor-pointer">
+                  I agree to the{" "}
+                  <Link to="/privacy-policy" className="text-primary hover:underline" target="_blank">
+                    Privacy Policy
+                  </Link>
+                </label>
               </div>
             )}
 
