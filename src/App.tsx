@@ -22,6 +22,7 @@ import Partners from "./pages/Partners";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 import NotFound from "./pages/NotFound";
 import { SplashScreen } from "@/components/SplashScreen";
 
