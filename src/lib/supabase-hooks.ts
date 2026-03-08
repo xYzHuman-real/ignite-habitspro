@@ -345,19 +345,42 @@ export function useChallenges() {
   });
 
   const checkIn = useMutation({
-    mutationFn: async ({ userChallengeId, currentProgress, targetDays }: { userChallengeId: string; currentProgress: number; targetDays: number }) => {
+    mutationFn: async ({ userChallengeId, currentProgress, targetDays, lastCheckinDate, challengeName }: { 
+      userChallengeId: string; currentProgress: number; targetDays: number; lastCheckinDate: string | null; challengeName: string;
+    }) => {
       if (!user) throw new Error("Not authenticated");
+
+      // Prevent same-day double check-in
+      const today = new Date().toISOString().split("T")[0];
+      if (lastCheckinDate === today) {
+        throw new Error("ALREADY_CHECKED_IN");
+      }
+
+      // For study-related challenges, validate focus timer usage today
+      const isStudyChallenge = challengeName.toLowerCase().includes("study") || challengeName.toLowerCase().includes("focus") || challengeName.toLowerCase().includes("pomodoro");
+      if (isStudyChallenge) {
+        const { data: todaySessions } = await supabase
+          .from("pomodoro_sessions")
+          .select("duration_minutes")
+          .eq("user_id", user.id)
+          .gte("created_at", today);
+        const totalMinutes = (todaySessions || []).reduce((sum, s) => sum + s.duration_minutes, 0);
+        if (totalMinutes < 60) {
+          throw new Error("INSUFFICIENT_FOCUS");
+        }
+      }
+
       const newProgress = currentProgress + 1;
       const isComplete = newProgress >= targetDays;
       const { error } = await supabase.from("user_challenges").update({
         progress: newProgress,
         completed: isComplete,
         completed_at: isComplete ? new Date().toISOString() : null,
+        last_checkin_date: today,
       }).eq("id", userChallengeId);
       if (error) throw error;
 
       if (isComplete) {
-        // Award points to profile
         const challenge = challenges.find((c) => {
           const uc = userChallenges.find((u) => u.id === userChallengeId);
           return uc && c.id === uc.challenge_id;
@@ -369,7 +392,6 @@ export function useChallenges() {
               leaderboard_points: profile.leaderboard_points + challenge.points_reward,
             }).eq("user_id", user.id);
           }
-          // Award badge if applicable
           if (challenge.badge_reward) {
             await supabase.from("user_badges").upsert({
               user_id: user.id,
