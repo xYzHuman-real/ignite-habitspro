@@ -139,7 +139,7 @@ export default function Shop() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="all">All</TabsTrigger>
-          {categories.map((cat) => (
+          {categories.map((cat: string) => (
             <TabsTrigger key={cat} value={cat} className="flex items-center gap-1">
               {categoryIcons[cat]} {categoryLabels[cat] || cat}
             </TabsTrigger>

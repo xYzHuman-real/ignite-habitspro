@@ -43,6 +43,7 @@ function ProtectedRoutes() {
         <Route path="/challenges" element={<Challenges />} />
         <Route path="/community" element={<Community />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
+        <Route path="/shop" element={<Shop />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
