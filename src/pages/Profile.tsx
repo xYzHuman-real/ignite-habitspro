@@ -102,7 +102,12 @@ export default function Profile() {
                 </Avatar>
                 <div className="text-center sm:text-left flex-1">
                   <h1 className="text-2xl font-display font-bold">{profile.display_name || "Set up your profile"}</h1>
-                  <p className="text-muted-foreground text-sm">{profile.username ? `@${profile.username}` : "No username set"}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <p className="text-muted-foreground text-sm">{profile.username ? `@${profile.username}` : "No username set"}</p>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                      {currentLevel.icon} Lv.{currentLevel.level} {(profile as any).title || currentLevel.title}
+                    </span>
+                  </div>
                   <p className="text-sm mt-1">{profile.bio || "No bio yet"}</p>
                   <div className="flex gap-2 mt-3 justify-center sm:justify-start flex-wrap">
                     <Button size="sm" variant="outline" onClick={startEdit}>
