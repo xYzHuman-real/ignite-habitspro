@@ -50,13 +50,19 @@ export function useJournal(date?: string) {
       if (!user) throw new Error("Not authenticated");
 
       // Upsert based on user_id + entry_date + habit_id
-      const { data: existing } = await supabase
+      let query = supabase
         .from("journal_entries")
         .select("id")
         .eq("user_id", user.id)
-        .eq("entry_date", targetDate)
-        .is("habit_id", entry.habit_id || null)
-        .single();
+        .eq("entry_date", targetDate);
+
+      if (entry.habit_id) {
+        query = query.eq("habit_id", entry.habit_id);
+      } else {
+        query = query.is("habit_id", null);
+      }
+
+      const { data: existing } = await query.single();
 
       if (existing) {
         const { error } = await supabase
