@@ -1,16 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { CalendarDays, Flame, UserPlus, Edit3, Check, LogOut, Shield } from "lucide-react";
+import { CalendarDays, Flame, UserPlus, Edit3, Check, LogOut, Shield, Coins, Gift } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useProfile, useBadges, useActivityLog, useFollowers } from "@/lib/supabase-hooks";
+import { Progress } from "@/components/ui/progress";
+import { useProfile, useBadges, useActivityLog, useFollowers, useDailyLogin } from "@/lib/supabase-hooks";
 import { useAuth } from "@/lib/auth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
+import { getLevelForPoints, getNextLevel, getProgressToNext } from "@/lib/xp-levels";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Profile() {
   const { signOut } = useAuth();
@@ -18,8 +21,26 @@ export default function Profile() {
   const { allBadges, earnedBadgeIds } = useBadges();
   const { activities } = useActivityLog();
   const { followerCount, followingCount } = useFollowers();
+  const { claimDaily, todayLogin, isClaiming } = useDailyLogin();
+  const { toast } = useToast();
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ display_name: "", username: "", bio: "" });
+
+  // Auto-claim daily login on page visit
+  useEffect(() => {
+    if (profile && !todayLogin) {
+      claimDaily(undefined, {
+        onSuccess: (result: any) => {
+          if (result) {
+            toast({
+              title: `Daily Reward! 🎁 +${result.bonus} pts`,
+              description: `Login streak: ${result.streak} day${result.streak > 1 ? "s" : ""}!`,
+            });
+          }
+        },
+      });
+    }
+  }, [profile, todayLogin]);
 
   if (isLoading || !profile) {
     return (
@@ -41,9 +62,12 @@ export default function Profile() {
     setEditing(false);
   };
 
-  const avatarText = profile.display_name ? profile.display_name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2) : "?";
+  const avatarText = profile.display_name ? profile.display_name.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2) : "?";
   const earnedBadges = allBadges.filter((b) => earnedBadgeIds.includes(b.id));
   const joinDate = format(new Date(profile.created_at), "MMM yyyy");
+  const currentLevel = getLevelForPoints(profile.leaderboard_points);
+  const nextLevel = getNextLevel(profile.leaderboard_points);
+  const progressToNext = getProgressToNext(profile.leaderboard_points);
 
   // Build heatmap from activity log
   const activityMap = new Map<string, number>();
@@ -78,7 +102,12 @@ export default function Profile() {
                 </Avatar>
                 <div className="text-center sm:text-left flex-1">
                   <h1 className="text-2xl font-display font-bold">{profile.display_name || "Set up your profile"}</h1>
-                  <p className="text-muted-foreground text-sm">{profile.username ? `@${profile.username}` : "No username set"}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <p className="text-muted-foreground text-sm">{profile.username ? `@${profile.username}` : "No username set"}</p>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                      {currentLevel.icon} Lv.{currentLevel.level} {(profile as any).title || currentLevel.title}
+                    </span>
+                  </div>
                   <p className="text-sm mt-1">{profile.bio || "No bio yet"}</p>
                   <div className="flex gap-2 mt-3 justify-center sm:justify-start flex-wrap">
                     <Button size="sm" variant="outline" onClick={startEdit}>
@@ -114,12 +143,36 @@ export default function Profile() {
                 </div>
               </div>
 
-              {profile.streak_freezes > 0 && (
-                <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-                  <Shield className="h-4 w-4 text-primary" />
-                  <span>{profile.streak_freezes} streak freezes remaining</span>
+              {/* Points & Level Progress */}
+              <div className="mt-4 space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2">
+                    <Coins className="h-4 w-4 text-accent" />
+                    <span className="font-semibold">{profile.leaderboard_points} points</span>
+                  </div>
+                  {nextLevel && (
+                    <span className="text-xs text-muted-foreground">
+                      {nextLevel.minPoints - profile.leaderboard_points} pts to Lv.{nextLevel.level}
+                    </span>
+                  )}
                 </div>
-              )}
+                <Progress value={progressToNext} className="h-2" />
+              </div>
+
+              <div className="mt-3 flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
+                {profile.streak_freezes > 0 && (
+                  <div className="flex items-center gap-1">
+                    <Shield className="h-4 w-4 text-primary" />
+                    <span>{profile.streak_freezes} streak freezes</span>
+                  </div>
+                )}
+                {todayLogin && (
+                  <div className="flex items-center gap-1">
+                    <Gift className="h-4 w-4 text-success" />
+                    <span>Daily reward claimed ✓</span>
+                  </div>
+                )}
+              </div>
             </>
           )}
         </Card>

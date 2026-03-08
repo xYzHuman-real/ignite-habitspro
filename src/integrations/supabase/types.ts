@@ -116,6 +116,7 @@ export type Database = {
           end_date: string | null
           icon: string
           id: string
+          min_points_required: number
           name: string
           points_reward: number
           start_date: string | null
@@ -128,6 +129,7 @@ export type Database = {
           end_date?: string | null
           icon?: string
           id?: string
+          min_points_required?: number
           name: string
           points_reward?: number
           start_date?: string | null
@@ -140,6 +142,7 @@ export type Database = {
           end_date?: string | null
           icon?: string
           id?: string
+          min_points_required?: number
           name?: string
           points_reward?: number
           start_date?: string | null
@@ -241,6 +244,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      daily_logins: {
+        Row: {
+          created_at: string
+          id: string
+          login_date: string
+          points_earned: number
+          streak: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          login_date?: string
+          points_earned?: number
+          streak?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          login_date?: string
+          points_earned?: number
+          streak?: number
+          user_id?: string
+        }
+        Relationships: []
       }
       followers: {
         Row: {
@@ -426,10 +456,12 @@ export type Database = {
           leaderboard_points: number
           pomodoro_sessions_count: number
           streak_freezes: number
+          title: string
           total_streak: number
           updated_at: string
           user_id: string
           username: string | null
+          xp_level: number
         }
         Insert: {
           avatar_url?: string | null
@@ -441,10 +473,12 @@ export type Database = {
           leaderboard_points?: number
           pomodoro_sessions_count?: number
           streak_freezes?: number
+          title?: string
           total_streak?: number
           updated_at?: string
           user_id: string
           username?: string | null
+          xp_level?: number
         }
         Update: {
           avatar_url?: string | null
@@ -456,12 +490,82 @@ export type Database = {
           leaderboard_points?: number
           pomodoro_sessions_count?: number
           streak_freezes?: number
+          title?: string
           total_streak?: number
           updated_at?: string
           user_id?: string
           username?: string | null
+          xp_level?: number
         }
         Relationships: []
+      }
+      shop_items: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          icon: string
+          id: string
+          item_type: string
+          item_value: string
+          name: string
+          price: number
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description: string
+          icon?: string
+          id?: string
+          item_type?: string
+          item_value?: string
+          name: string
+          price?: number
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          icon?: string
+          id?: string
+          item_type?: string
+          item_value?: string
+          name?: string
+          price?: number
+        }
+        Relationships: []
+      }
+      shop_purchases: {
+        Row: {
+          id: string
+          item_id: string
+          price_paid: number
+          purchased_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          item_id: string
+          price_paid: number
+          purchased_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          item_id?: string
+          price_paid?: number
+          purchased_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_purchases_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "shop_items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       todos: {
         Row: {

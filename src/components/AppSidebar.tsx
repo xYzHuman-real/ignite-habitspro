@@ -7,6 +7,7 @@ import {
   Users,
   Trophy,
   User,
+  ShoppingBag,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -27,6 +28,7 @@ const items = [
   { title: "Timer", url: "/timer", icon: Timer },
   { title: "To-Do List", url: "/todos", icon: ListTodo },
   { title: "Challenges", url: "/challenges", icon: Swords },
+  { title: "Shop", url: "/shop", icon: ShoppingBag },
   { title: "Community", url: "/community", icon: Users },
   { title: "Leaderboard", url: "/leaderboard", icon: Trophy },
   { title: "Profile", url: "/profile", icon: User },

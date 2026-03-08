@@ -7,9 +7,10 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { useChallenges, useBadges } from "@/lib/supabase-hooks";
+import { useChallenges, useBadges, useProfile } from "@/lib/supabase-hooks";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { Lock } from "lucide-react";
 
 const container = {
   hidden: {},
@@ -29,6 +30,7 @@ const difficultyColors: Record<string, string> = {
 export default function Challenges() {
   const { challenges, userChallenges, joinChallenge, checkIn } = useChallenges();
   const { allBadges } = useBadges();
+  const { profile } = useProfile();
   const { toast } = useToast();
   const [selectedChallenge, setSelectedChallenge] = useState<string | null>(null);
 
@@ -99,6 +101,23 @@ export default function Challenges() {
       </div>
     );
   }
+
+  const PremiumJoinButton = ({ challenge, profile, onJoin }: { challenge: any; profile: any; onJoin: (id: string, name: string) => void }) => {
+    const minPts = challenge.min_points_required || 0;
+    const userPts = profile?.leaderboard_points || 0;
+    const locked = minPts > 0 && userPts < minPts;
+    return (
+      <Button
+        size="sm"
+        className={locked ? "w-full" : "w-full bg-gradient-primary text-primary-foreground"}
+        variant={locked ? "outline" : "default"}
+        disabled={locked}
+        onClick={(e) => { e.stopPropagation(); onJoin(challenge.id, challenge.name); }}
+      >
+        {locked ? <span className="flex items-center gap-1"><Lock className="h-3.5 w-3.5" />{minPts} pts required</span> : "Join Challenge"}
+      </Button>
+    );
+  };
 
   const ChallengeCard = ({
     challenge,
@@ -192,16 +211,7 @@ export default function Challenges() {
                 )}
               </div>
             ) : (
-              <Button
-                size="sm"
-                className="w-full bg-gradient-primary text-primary-foreground"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleJoin(challenge.id, challenge.name);
-                }}
-              >
-                Join Challenge
-              </Button>
+              <PremiumJoinButton challenge={challenge} profile={profile} onJoin={handleJoin} />
             )}
           </div>
         </Card>
@@ -391,15 +401,7 @@ export default function Challenges() {
                   )}
                 </div>
               ) : (
-                <Button
-                  className="w-full bg-gradient-primary text-primary-foreground"
-                  onClick={() => {
-                    handleJoin(detail.id, detail.name);
-                    setSelectedChallenge(null);
-                  }}
-                >
-                  Join This Challenge
-                </Button>
+                <PremiumJoinButton challenge={detail} profile={profile} onJoin={(id, name) => { handleJoin(id, name); setSelectedChallenge(null); }} />
               )}
             </div>
           </DialogContent>
