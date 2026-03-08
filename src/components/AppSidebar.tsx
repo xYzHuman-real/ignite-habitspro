@@ -7,6 +7,7 @@ import {
   Users,
   Trophy,
   User,
+  Handshake,
   ShoppingBag,
   BarChart3,
   BookOpen,
