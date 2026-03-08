@@ -102,6 +102,23 @@ export default function Challenges() {
     );
   }
 
+  const PremiumJoinButton = ({ challenge, profile, onJoin }: { challenge: any; profile: any; onJoin: (id: string, name: string) => void }) => {
+    const minPts = challenge.min_points_required || 0;
+    const userPts = profile?.leaderboard_points || 0;
+    const locked = minPts > 0 && userPts < minPts;
+    return (
+      <Button
+        size="sm"
+        className={locked ? "w-full" : "w-full bg-gradient-primary text-primary-foreground"}
+        variant={locked ? "outline" : "default"}
+        disabled={locked}
+        onClick={(e) => { e.stopPropagation(); onJoin(challenge.id, challenge.name); }}
+      >
+        {locked ? <span className="flex items-center gap-1"><Lock className="h-3.5 w-3.5" />{minPts} pts required</span> : "Join Challenge"}
+      </Button>
+    );
+  };
+
   const ChallengeCard = ({
     challenge,
     joined,
