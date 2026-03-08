@@ -27,7 +27,7 @@ const difficultyColors: Record<string, string> = {
 };
 
 export default function Challenges() {
-  const { challenges, userChallenges, joinChallenge } = useChallenges();
+  const { challenges, userChallenges, joinChallenge, checkIn } = useChallenges();
   const { allBadges } = useBadges();
   const { toast } = useToast();
   const [selectedChallenge, setSelectedChallenge] = useState<string | null>(null);
