@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { getLevelForPoints, getDailyLoginBonus } from "@/lib/xp-levels";
 
 // ---- Profile ----
 export function useProfile() {
