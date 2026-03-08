@@ -21,8 +21,26 @@ export default function Profile() {
   const { allBadges, earnedBadgeIds } = useBadges();
   const { activities } = useActivityLog();
   const { followerCount, followingCount } = useFollowers();
+  const { claimDaily, todayLogin, isClaiming } = useDailyLogin();
+  const { toast } = useToast();
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ display_name: "", username: "", bio: "" });
+
+  // Auto-claim daily login on page visit
+  useEffect(() => {
+    if (profile && !todayLogin) {
+      claimDaily(undefined, {
+        onSuccess: (result: any) => {
+          if (result) {
+            toast({
+              title: `Daily Reward! 🎁 +${result.bonus} pts`,
+              description: `Login streak: ${result.streak} day${result.streak > 1 ? "s" : ""}!`,
+            });
+          }
+        },
+      });
+    }
+  }, [profile, todayLogin]);
 
   if (isLoading || !profile) {
     return (
