@@ -1,9 +1,11 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Flame, Target, CheckCircle2, TrendingUp } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useHabits, useTodos, useProfile } from "@/lib/supabase-hooks";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Onboarding } from "@/components/Onboarding";
 
 const container = {
   hidden: {},
@@ -18,6 +20,17 @@ export default function Dashboard() {
   const { habits, isLoading: habitsLoading } = useHabits();
   const { todos, isLoading: todosLoading } = useTodos();
   const { profile, isLoading: profileLoading } = useProfile();
+
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    if (!profileLoading && profile) {
+      const seen = localStorage.getItem("onboarding_completed");
+      if (!seen && profile.habits_completed === 0) {
+        setShowOnboarding(true);
+      }
+    }
+  }, [profileLoading, profile]);
 
   const completedHabits = habits.filter((h) => h.completed_today).length;
   const completedTodos = todos.filter((t) => t.completed).length;
@@ -44,7 +57,16 @@ export default function Dashboard() {
     { label: "Daily Score", value: `${weeklyScore}%`, icon: TrendingUp, gradient: "bg-gradient-primary", glow: "shadow-glow-primary" },
   ];
 
+  const handleOnboardingComplete = () => {
+    localStorage.setItem("onboarding_completed", "true");
+    setShowOnboarding(false);
+  };
+
   return (
+    <>
+      {showOnboarding && (
+        <Onboarding displayName={displayName} onComplete={handleOnboardingComplete} />
+      )}
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6 max-w-5xl mx-auto">
       <motion.div variants={item}>
         <h1 className="text-3xl font-display font-bold">
@@ -117,5 +139,6 @@ export default function Dashboard() {
         </Card>
       </motion.div>
     </motion.div>
+    </>
   );
 }
