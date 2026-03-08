@@ -374,7 +374,7 @@ export function useChallenges() {
             await supabase.from("user_badges").upsert({
               user_id: user.id,
               badge_id: challenge.badge_reward,
-            }, { onConflict: "user_id,badge_id" }).throwOnError().catch(() => {});
+            }, { onConflict: "user_id,badge_id" });
           }
         }
       }
