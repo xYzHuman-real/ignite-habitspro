@@ -382,18 +382,11 @@ export default function Challenges() {
                   ) : (
                     <Button
                       className="w-full bg-gradient-primary text-primary-foreground"
-                      onClick={() => {
-                        checkIn({ userChallengeId: detailUc.id, currentProgress: detailUc.progress, targetDays: detail.duration_days });
-                        toast({
-                          title: detailUc.progress + 1 >= detail.duration_days ? "Challenge Complete! 🏆" : "Checked In! ✅",
-                          description: detailUc.progress + 1 >= detail.duration_days
-                            ? `You completed "${detail.name}" and earned ${detail.points_reward} points!`
-                            : `Day ${detailUc.progress + 1}/${detail.duration_days} done. Keep it up!`,
-                        });
-                      }}
+                      disabled={(detailUc as any).last_checkin_date === new Date().toISOString().split("T")[0]}
+                      onClick={() => handleCheckIn(detailUc, detail)}
                     >
                       <CheckCircle2 className="h-4 w-4 mr-2" />
-                      Check In for Today
+                      {(detailUc as any).last_checkin_date === new Date().toISOString().split("T")[0] ? "Done for Today ✓" : "Check In for Today"}
                     </Button>
                   )}
                 </div>
