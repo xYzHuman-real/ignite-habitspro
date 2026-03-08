@@ -1,6 +1,20 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
-// Theme
+// ---- localStorage helpers ----
+function loadJSON<T>(key: string, fallback: T): T {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function saveJSON(key: string, value: unknown) {
+  localStorage.setItem(key, JSON.stringify(value));
+}
+
+// ---- Theme ----
 export function useTheme() {
   const [theme, setTheme] = useState<"light" | "dark">(() => {
     if (typeof window !== "undefined") {
@@ -20,27 +34,55 @@ export function useTheme() {
   return { theme, toggle };
 }
 
-// Habits
+// ---- Daily reset logic ----
+function checkAndResetDaily() {
+  const today = new Date().toDateString();
+  const lastDate = localStorage.getItem("habitflow_last_date");
+  if (lastDate !== today) {
+    // New day: reset completedToday on habits, keep streaks
+    const habits = loadJSON<Habit[]>("habitflow_habits", defaultHabits);
+    const resetHabits = habits.map((h) => ({
+      ...h,
+      completedToday: false,
+      current: 0,
+    }));
+    saveJSON("habitflow_habits", resetHabits);
+    localStorage.setItem("habitflow_last_date", today);
+  }
+}
+
+// ---- Habits ----
 export interface Habit {
   id: string;
   name: string;
   icon: string;
   streak: number;
   completedToday: boolean;
-  history: string[]; // dates completed
-  target: number; // daily target count
+  history: string[];
+  target: number;
   current: number;
 }
 
 export const defaultHabits: Habit[] = [
-  { id: "1", name: "Meditation", icon: "🧘", streak: 12, completedToday: false, history: [], target: 1, current: 0 },
-  { id: "2", name: "Exercise", icon: "💪", streak: 7, completedToday: true, history: [], target: 1, current: 1 },
-  { id: "3", name: "Reading", icon: "📚", streak: 23, completedToday: false, history: [], target: 1, current: 0 },
-  { id: "4", name: "Water Intake", icon: "💧", streak: 5, completedToday: false, history: [], target: 8, current: 3 },
-  { id: "5", name: "Journaling", icon: "📝", streak: 15, completedToday: true, history: [], target: 1, current: 1 },
+  { id: "1", name: "Meditation", icon: "🧘", streak: 0, completedToday: false, history: [], target: 1, current: 0 },
+  { id: "2", name: "Exercise", icon: "💪", streak: 0, completedToday: false, history: [], target: 1, current: 0 },
+  { id: "3", name: "Reading", icon: "📚", streak: 0, completedToday: false, history: [], target: 1, current: 0 },
+  { id: "4", name: "Water Intake", icon: "💧", streak: 0, completedToday: false, history: [], target: 8, current: 0 },
+  { id: "5", name: "Journaling", icon: "📝", streak: 0, completedToday: false, history: [], target: 1, current: 0 },
 ];
 
-// Todos
+export function useHabits() {
+  checkAndResetDaily();
+  const [habits, setHabits] = useState<Habit[]>(() => loadJSON("habitflow_habits", defaultHabits));
+
+  useEffect(() => {
+    saveJSON("habitflow_habits", habits);
+  }, [habits]);
+
+  return [habits, setHabits] as const;
+}
+
+// ---- Todos ----
 export interface Todo {
   id: string;
   text: string;
@@ -49,14 +91,24 @@ export interface Todo {
 }
 
 export const defaultTodos: Todo[] = [
-  { id: "1", text: "Complete morning routine", completed: true, priority: "high" },
+  { id: "1", text: "Complete morning routine", completed: false, priority: "high" },
   { id: "2", text: "Review weekly goals", completed: false, priority: "medium" },
   { id: "3", text: "Prepare healthy lunch", completed: false, priority: "low" },
   { id: "4", text: "30 min workout session", completed: false, priority: "high" },
   { id: "5", text: "Read 20 pages", completed: false, priority: "medium" },
 ];
 
-// Leaderboard
+export function useTodos() {
+  const [todos, setTodos] = useState<Todo[]>(() => loadJSON("habitflow_todos", defaultTodos));
+
+  useEffect(() => {
+    saveJSON("habitflow_todos", todos);
+  }, [todos]);
+
+  return [todos, setTodos] as const;
+}
+
+// ---- Leaderboard ----
 export interface LeaderboardUser {
   rank: number;
   name: string;
@@ -70,14 +122,14 @@ export const leaderboardData: LeaderboardUser[] = [
   { rank: 1, name: "Sarah Chen", avatar: "SC", streak: 89, points: 12450, habits: 8 },
   { rank: 2, name: "Alex Rivera", avatar: "AR", streak: 72, points: 10830, habits: 6 },
   { rank: 3, name: "Jordan Lee", avatar: "JL", streak: 65, points: 9750, habits: 7 },
-  { rank: 4, name: "You", avatar: "YO", streak: 52, points: 8200, habits: 5 },
+  { rank: 4, name: "You", avatar: "YO", streak: 0, points: 0, habits: 5 },
   { rank: 5, name: "Maya Patel", avatar: "MP", streak: 48, points: 7600, habits: 5 },
   { rank: 6, name: "Chris Wong", avatar: "CW", streak: 41, points: 6900, habits: 4 },
   { rank: 7, name: "Emma Davis", avatar: "ED", streak: 35, points: 5800, habits: 6 },
   { rank: 8, name: "Tom Brooks", avatar: "TB", streak: 28, points: 4500, habits: 3 },
 ];
 
-// Community
+// ---- Community ----
 export interface CommunityGroup {
   id: string;
   name: string;
@@ -88,15 +140,15 @@ export interface CommunityGroup {
 }
 
 export const communityGroups: CommunityGroup[] = [
-  { id: "1", name: "Morning Warriors", members: 2340, description: "Early risers crushing their goals", icon: "🌅", joined: true },
-  { id: "2", name: "Fitness Freaks", members: 5120, description: "Daily exercise accountability", icon: "🏋️", joined: true },
+  { id: "1", name: "Morning Warriors", members: 2340, description: "Early risers crushing their goals", icon: "🌅", joined: false },
+  { id: "2", name: "Fitness Freaks", members: 5120, description: "Daily exercise accountability", icon: "🏋️", joined: false },
   { id: "3", name: "Mindful Minds", members: 1890, description: "Meditation & mental wellness", icon: "🧠", joined: false },
   { id: "4", name: "Book Club", members: 3200, description: "Read together, grow together", icon: "📖", joined: false },
-  { id: "5", name: "Hydration Nation", members: 980, description: "Stay hydrated, stay healthy", icon: "💦", joined: true },
+  { id: "5", name: "Hydration Nation", members: 980, description: "Stay hydrated, stay healthy", icon: "💦", joined: false },
   { id: "6", name: "Code & Create", members: 4100, description: "Build coding habits daily", icon: "💻", joined: false },
 ];
 
-// Profile
+// ---- Profile ----
 export interface UserProfile {
   name: string;
   username: string;
@@ -110,22 +162,29 @@ export interface UserProfile {
   badges: { name: string; icon: string }[];
 }
 
-export const userProfile: UserProfile = {
-  name: "Alex Johnson",
-  username: "@alexj",
-  bio: "Building better habits, one day at a time 🔥",
-  avatar: "AJ",
-  followers: 284,
-  following: 156,
-  totalStreak: 52,
-  habitsCompleted: 1247,
-  joinDate: "Jan 2025",
-  badges: [
-    { name: "7-Day Streak", icon: "🔥" },
-    { name: "30-Day Streak", icon: "⭐" },
-    { name: "Early Bird", icon: "🌅" },
-    { name: "Hydration Master", icon: "💧" },
-    { name: "Social Butterfly", icon: "🦋" },
-    { name: "Consistency King", icon: "👑" },
-  ],
+export const defaultProfile: UserProfile = {
+  name: "",
+  username: "",
+  bio: "",
+  avatar: "",
+  followers: 0,
+  following: 0,
+  totalStreak: 0,
+  habitsCompleted: 0,
+  joinDate: new Date().toLocaleDateString("en-US", { month: "short", year: "numeric" }),
+  badges: [],
 };
+
+export function useProfile() {
+  const [profile, setProfile] = useState<UserProfile>(() => loadJSON("habitflow_profile", defaultProfile));
+
+  useEffect(() => {
+    saveJSON("habitflow_profile", profile);
+  }, [profile]);
+
+  const updateProfile = useCallback((updates: Partial<UserProfile>) => {
+    setProfile((prev) => ({ ...prev, ...updates }));
+  }, []);
+
+  return { profile, updateProfile };
+}
