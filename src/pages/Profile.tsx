@@ -65,6 +65,23 @@ export default function Profile() {
     setEditing(false);
   };
 
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await supabase.functions.invoke("delete-account", {
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      if (res.error) throw res.error;
+      await supabase.auth.signOut();
+      toast({ title: "Account deleted", description: "Your account and all data have been permanently removed." });
+    } catch (e: any) {
+      toast({ title: "Failed to delete account", description: e.message, variant: "destructive" });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const avatarText = profile.display_name ? profile.display_name.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2) : "?";
   const earnedBadges = allBadges.filter((b) => earnedBadgeIds.includes(b.id));
   const joinDate = format(new Date(profile.created_at), "MMM yyyy");
