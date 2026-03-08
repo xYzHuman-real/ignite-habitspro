@@ -117,7 +117,7 @@ export default function Auth() {
             </Button>
           </form>
 
-          {mode !== "reset" && (
+          {mode !== "reset" && !isNativeApp && (
             <>
               <div className="relative">
                 <Separator />
