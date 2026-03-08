@@ -193,17 +193,29 @@ export default function Challenges() {
                   </Button>
                 )}
               </div>
-            ) : (
-              <Button
-                size="sm"
-                className="w-full bg-gradient-primary text-primary-foreground"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleJoin(challenge.id, challenge.name);
-                }}
-              >
-                Join Challenge
-              </Button>
+            ) : (() => {
+                const minPts = (challenge as any).min_points_required || 0;
+                const userPts = profile?.leaderboard_points || 0;
+                const locked = minPts > 0 && userPts < minPts;
+                return (
+                  <Button
+                    size="sm"
+                    className={locked ? "w-full" : "w-full bg-gradient-primary text-primary-foreground"}
+                    variant={locked ? "outline" : "default"}
+                    disabled={locked}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleJoin(challenge.id, challenge.name);
+                    }}
+                  >
+                    {locked ? (
+                      <><Lock className="h-3.5 w-3.5 mr-1" /> {minPts} pts required</>
+                    ) : (
+                      "Join Challenge"
+                    )}
+                  </Button>
+                );
+              })()
             )}
           </div>
         </Card>
