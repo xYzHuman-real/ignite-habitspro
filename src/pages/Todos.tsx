@@ -5,10 +5,10 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { type Todo, defaultTodos } from "@/lib/store";
+import { useTodos, type Todo } from "@/lib/store";
 
 export default function Todos() {
-  const [todos, setTodos] = useState<Todo[]>(defaultTodos);
+  const [todos, setTodos] = useTodos();
   const [newTodo, setNewTodo] = useState("");
   const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
 

@@ -2,14 +2,7 @@ import { motion } from "framer-motion";
 import { Flame, Target, CheckCircle2, TrendingUp } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { defaultHabits, defaultTodos } from "@/lib/store";
-
-const stats = [
-  { label: "Current Streak", value: "52", icon: Flame, gradient: "bg-gradient-accent", glow: "shadow-glow-accent" },
-  { label: "Habits Today", value: "2/5", icon: Target, gradient: "bg-gradient-primary", glow: "shadow-glow-primary" },
-  { label: "Tasks Done", value: "1/5", icon: CheckCircle2, gradient: "bg-gradient-success", glow: "" },
-  { label: "Weekly Score", value: "87%", icon: TrendingUp, gradient: "bg-gradient-primary", glow: "shadow-glow-primary" },
-];
+import { useHabits, useTodos, useProfile } from "@/lib/store";
 
 const container = {
   hidden: {},
@@ -21,16 +14,33 @@ const item = {
 };
 
 export default function Dashboard() {
-  const completedHabits = defaultHabits.filter((h) => h.completedToday).length;
-  const completedTodos = defaultTodos.filter((t) => t.completed).length;
+  const [habits] = useHabits();
+  const [todos] = useTodos();
+  const { profile } = useProfile();
+
+  const completedHabits = habits.filter((h) => h.completedToday).length;
+  const completedTodos = todos.filter((t) => t.completed).length;
+  const maxStreak = habits.reduce((max, h) => Math.max(max, h.streak), 0);
+  const weeklyScore = habits.length > 0 ? Math.round((completedHabits / habits.length) * 100) : 0;
+
+  const displayName = profile.name || "there";
+
+  const stats = [
+    { label: "Best Streak", value: String(maxStreak), icon: Flame, gradient: "bg-gradient-accent", glow: "shadow-glow-accent" },
+    { label: "Habits Today", value: `${completedHabits}/${habits.length}`, icon: Target, gradient: "bg-gradient-primary", glow: "shadow-glow-primary" },
+    { label: "Tasks Done", value: `${completedTodos}/${todos.length}`, icon: CheckCircle2, gradient: "bg-gradient-success", glow: "" },
+    { label: "Daily Score", value: `${weeklyScore}%`, icon: TrendingUp, gradient: "bg-gradient-primary", glow: "shadow-glow-primary" },
+  ];
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6 max-w-5xl mx-auto">
       <motion.div variants={item}>
         <h1 className="text-3xl font-display font-bold">
-          Good morning, Alex! <span className="inline-block animate-streak-fire">🔥</span>
+          Hey, {displayName}! <span className="inline-block animate-streak-fire">🔥</span>
         </h1>
-        <p className="text-muted-foreground mt-1">Keep your momentum going. You're on a 52-day streak!</p>
+        <p className="text-muted-foreground mt-1">
+          {maxStreak > 0 ? `Keep your momentum going. Best streak: ${maxStreak} days!` : "Start building your streaks today!"}
+        </p>
       </motion.div>
 
       <motion.div variants={item} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -48,7 +58,7 @@ export default function Dashboard() {
       <motion.div variants={item} className="grid md:grid-cols-2 gap-6">
         <Card className="p-5 space-y-4">
           <h2 className="font-display font-semibold text-lg">Today's Habits</h2>
-          {defaultHabits.map((habit) => (
+          {habits.map((habit) => (
             <div key={habit.id} className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="text-xl">{habit.icon}</span>
@@ -69,7 +79,7 @@ export default function Dashboard() {
 
         <Card className="p-5 space-y-4">
           <h2 className="font-display font-semibold text-lg">To-Do List</h2>
-          {defaultTodos.map((todo) => (
+          {todos.map((todo) => (
             <div key={todo.id} className="flex items-center gap-3">
               <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
                 todo.completed ? "bg-success border-success" : "border-muted-foreground"
