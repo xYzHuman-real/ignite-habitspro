@@ -344,7 +344,49 @@ export function useChallenges() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["user_challenges", user?.id] }),
   });
 
-  return { challenges, userChallenges, joinChallenge: joinChallenge.mutate };
+  const checkIn = useMutation({
+    mutationFn: async ({ userChallengeId, currentProgress, targetDays }: { userChallengeId: string; currentProgress: number; targetDays: number }) => {
+      if (!user) throw new Error("Not authenticated");
+      const newProgress = currentProgress + 1;
+      const isComplete = newProgress >= targetDays;
+      const { error } = await supabase.from("user_challenges").update({
+        progress: newProgress,
+        completed: isComplete,
+        completed_at: isComplete ? new Date().toISOString() : null,
+      }).eq("id", userChallengeId);
+      if (error) throw error;
+
+      if (isComplete) {
+        // Award points to profile
+        const challenge = challenges.find((c) => {
+          const uc = userChallenges.find((u) => u.id === userChallengeId);
+          return uc && c.id === uc.challenge_id;
+        });
+        if (challenge) {
+          const { data: profile } = await supabase.from("profiles").select("leaderboard_points").eq("user_id", user.id).single();
+          if (profile) {
+            await supabase.from("profiles").update({
+              leaderboard_points: profile.leaderboard_points + challenge.points_reward,
+            }).eq("user_id", user.id);
+          }
+          // Award badge if applicable
+          if (challenge.badge_reward) {
+            await supabase.from("user_badges").upsert({
+              user_id: user.id,
+              badge_id: challenge.badge_reward,
+            }, { onConflict: "user_id,badge_id" });
+          }
+        }
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["user_challenges", user?.id] });
+      qc.invalidateQueries({ queryKey: ["profile", user?.id] });
+      qc.invalidateQueries({ queryKey: ["user_badges", user?.id] });
+    },
+  });
+
+  return { challenges, userChallenges, joinChallenge: joinChallenge.mutate, checkIn: checkIn.mutate };
 }
 
 // ---- Followers ----
