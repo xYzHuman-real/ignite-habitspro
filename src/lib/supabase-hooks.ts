@@ -108,7 +108,10 @@ export function useHabits() {
         }
       }
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["habits", user?.id] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["habits", user?.id] });
+      qc.invalidateQueries({ queryKey: ["profile", user?.id] });
+    },
   });
 
   return { habits, isLoading, addHabit: addHabit.mutate, updateHabit: updateHabit.mutate, deleteHabit: deleteHabit.mutate, toggleHabit: toggleHabit.mutate };
