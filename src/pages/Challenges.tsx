@@ -401,15 +401,7 @@ export default function Challenges() {
                   )}
                 </div>
               ) : (
-                <Button
-                  className="w-full bg-gradient-primary text-primary-foreground"
-                  onClick={() => {
-                    handleJoin(detail.id, detail.name);
-                    setSelectedChallenge(null);
-                  }}
-                >
-                  Join This Challenge
-                </Button>
+                <PremiumJoinButton challenge={detail} profile={profile} onJoin={(id, name) => { handleJoin(id, name); setSelectedChallenge(null); }} />
               )}
             </div>
           </DialogContent>
