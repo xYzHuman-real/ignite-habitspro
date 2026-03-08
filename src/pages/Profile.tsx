@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { getLevelForPoints, getNextLevel, getProgressToNext } from "@/lib/xp-levels";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Profile() {
   const { signOut } = useAuth();
