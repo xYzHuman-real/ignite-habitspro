@@ -27,6 +27,7 @@ export default function Profile() {
   const { toast } = useToast();
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [form, setForm] = useState({ display_name: "", username: "", bio: "" });
 
   // Auto-claim daily login on page visit
