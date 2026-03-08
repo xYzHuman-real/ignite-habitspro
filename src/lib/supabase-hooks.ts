@@ -439,3 +439,102 @@ export function useFollowers() {
 
   return { followerCount, followingCount };
 }
+
+// ---- Shop ----
+export function useShopItems() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+
+  const { data: shopItems = [] } = useQuery({
+    queryKey: ["shop_items"],
+    queryFn: async () => {
+      const { data } = await supabase.from("shop_items").select("*").order("price");
+      return data || [];
+    },
+  });
+
+  const purchaseItem = useMutation({
+    mutationFn: async ({ itemId, price, itemType, itemValue }: { itemId: string; price: number; itemType: string; itemValue: string }) => {
+      if (!user) throw new Error("Not authenticated");
+
+      // Get current points
+      const { data: profile } = await supabase.from("profiles").select("leaderboard_points, streak_freezes, title").eq("user_id", user.id).single();
+      if (!profile || profile.leaderboard_points < price) throw new Error("Not enough points");
+
+      // Deduct points
+      await supabase.from("profiles").update({
+        leaderboard_points: profile.leaderboard_points - price,
+        ...(itemType === "streak_freeze" ? { streak_freezes: profile.streak_freezes + parseInt(itemValue) } : {}),
+        ...(itemType === "title" ? { title: itemValue } : {}),
+      }).eq("user_id", user.id);
+
+      // Record purchase
+      await supabase.from("shop_purchases").insert({ user_id: user.id, item_id: itemId, price_paid: price });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["profile", user?.id] });
+      qc.invalidateQueries({ queryKey: ["shop_items"] });
+    },
+  });
+
+  return { shopItems, purchaseItem: purchaseItem.mutate, isPurchasing: purchaseItem.isPending };
+}
+
+// ---- Daily Login ----
+export function useDailyLogin() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+
+  const claimDaily = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error("Not authenticated");
+      const today = new Date().toISOString().split("T")[0];
+
+      // Check if already claimed today
+      const { data: existing } = await supabase.from("daily_logins").select("id").eq("user_id", user.id).eq("login_date", today).single();
+      if (existing) return null; // already claimed
+
+      // Get yesterday's login for streak
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split("T")[0];
+      const { data: yesterdayLogin } = await supabase.from("daily_logins").select("streak").eq("user_id", user.id).eq("login_date", yesterdayStr).single();
+
+      const newStreak = yesterdayLogin ? yesterdayLogin.streak + 1 : 1;
+      const bonus = getDailyLoginBonus(newStreak);
+
+      await supabase.from("daily_logins").insert({ user_id: user.id, login_date: today, streak: newStreak, points_earned: bonus });
+
+      // Add points to profile and update level
+      const { data: profile } = await supabase.from("profiles").select("leaderboard_points").eq("user_id", user.id).single();
+      if (profile) {
+        const newPoints = profile.leaderboard_points + bonus;
+        const newLevel = getLevelForPoints(newPoints);
+        await supabase.from("profiles").update({
+          leaderboard_points: newPoints,
+          xp_level: newLevel.level,
+          title: newLevel.title,
+        }).eq("user_id", user.id);
+      }
+
+      return { streak: newStreak, bonus };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["profile", user?.id] });
+      qc.invalidateQueries({ queryKey: ["daily_login", user?.id] });
+    },
+  });
+
+  const { data: todayLogin } = useQuery({
+    queryKey: ["daily_login", user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const today = new Date().toISOString().split("T")[0];
+      const { data } = await supabase.from("daily_logins").select("*").eq("user_id", user.id).eq("login_date", today).single();
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  return { claimDaily: claimDaily.mutate, todayLogin, isClaiming: claimDaily.isPending };
+}
