@@ -19,6 +19,7 @@ type Mode = "login" | "signup" | "reset";
 export default function Auth() {
   const { signIn, signUp, signInWithGoogle, resetPassword } = useAuth();
   const { toast } = useToast();
+  const { theme, toggle } = useTheme();
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
