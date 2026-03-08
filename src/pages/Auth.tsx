@@ -21,6 +21,7 @@ export default function Auth() {
   const [fullName, setFullName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const isNativeApp = useMemo(() => Capacitor.isNativePlatform(), []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
