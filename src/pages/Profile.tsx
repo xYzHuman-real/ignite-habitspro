@@ -315,6 +315,21 @@ export default function Profile() {
 
       {!editing && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+          <Card className="p-5">
+            <h2 className="font-display font-semibold text-lg mb-1">Your Data</h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Download all your habits, journal entries, goals, and todos as CSV files.
+            </p>
+            <Button variant="outline" size="sm" onClick={handleExportData} disabled={exporting}>
+              <Download className="h-4 w-4 mr-1" />
+              {exporting ? "Exporting..." : "Export All Data"}
+            </Button>
+          </Card>
+        </motion.div>
+      )}
+
+      {!editing && (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
           <Card className="p-5 border-destructive/30">
             <h2 className="font-display font-semibold text-lg mb-1 text-destructive">Danger Zone</h2>
             <p className="text-sm text-muted-foreground mb-4">
