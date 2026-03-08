@@ -44,6 +44,11 @@ export default function Auth() {
         setLoading(false);
         return;
       }
+      if (!acceptedPrivacy) {
+        toast({ title: "Please accept the Privacy Policy", variant: "destructive" });
+        setLoading(false);
+        return;
+      }
       const { error } = await signUp(email, password, fullName);
       if (error) toast({ title: "Signup failed", description: error.message, variant: "destructive" });
       else toast({ title: "Account created!", description: "Check your email to verify." });
