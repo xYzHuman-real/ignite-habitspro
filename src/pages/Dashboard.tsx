@@ -69,13 +69,24 @@ export default function Dashboard() {
         <Onboarding displayName={displayName} onComplete={handleOnboardingComplete} />
       )}
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6 max-w-5xl mx-auto">
-      <motion.div variants={item}>
-        <h1 className="text-3xl font-display font-bold">
-          Hey, {displayName}! <span className="inline-block animate-streak-fire">🔥</span>
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          {maxStreak > 0 ? `Keep your momentum going. Best streak: ${maxStreak} days!` : "Start building your streaks today!"}
-        </p>
+      <motion.div variants={item} className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-display font-bold">
+            Hey, {displayName}! <span className="inline-block animate-streak-fire">🔥</span>
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            {maxStreak > 0 ? `Keep your momentum going. Best streak: ${maxStreak} days!` : "Start building your streaks today!"}
+          </p>
+        </div>
+        <ShareProgress
+          displayName={displayName}
+          streak={maxStreak}
+          habitsCompleted={completedHabits}
+          totalHabits={habits.length}
+          dailyScore={weeklyScore}
+          level={profile?.xp_level || 1}
+          points={profile?.leaderboard_points || 0}
+        />
       </motion.div>
 
       <motion.div variants={item} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
