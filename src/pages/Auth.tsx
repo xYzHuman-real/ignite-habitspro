@@ -114,6 +114,22 @@ export default function Auth() {
               </div>
             )}
 
+            {mode === "signup" && (
+              <div className="flex items-start space-x-2">
+                <Checkbox
+                  id="privacy"
+                  checked={acceptedPrivacy}
+                  onCheckedChange={(checked) => setAcceptedPrivacy(checked === true)}
+                />
+                <label htmlFor="privacy" className="text-xs text-muted-foreground leading-tight cursor-pointer">
+                  I agree to the{" "}
+                  <Link to="/privacy-policy" className="text-primary hover:underline" target="_blank">
+                    Privacy Policy
+                  </Link>
+                </label>
+              </div>
+            )}
+
             {mode === "login" && (
               <button type="button" onClick={() => setMode("reset")} className="text-xs text-primary hover:underline">
                 Forgot password?
