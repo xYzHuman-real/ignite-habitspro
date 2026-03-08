@@ -1,0 +1,140 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
+
+export function usePartners() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+
+  // All partnerships (pending + accepted) with profile info
+  const { data: partnerships = [], isLoading } = useQuery({
+    queryKey: ["partnerships", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data } = await supabase
+        .from("accountability_partners")
+        .select("*")
+        .or(`requester_id.eq.${user.id},partner_id.eq.${user.id}`);
+      if (!data || data.length === 0) return [];
+
+      // Collect partner user ids
+      const partnerIds = data.map((p) =>
+        p.requester_id === user.id ? p.partner_id : p.requester_id
+      );
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, avatar_url, total_streak, leaderboard_points, habits_completed")
+        .in("user_id", partnerIds);
+
+      return data.map((p) => {
+        const partnerId = p.requester_id === user.id ? p.partner_id : p.requester_id;
+        const profile = (profiles || []).find((pr) => pr.user_id === partnerId);
+        return { ...p, partner_profile: profile, is_requester: p.requester_id === user.id };
+      });
+    },
+    enabled: !!user,
+  });
+
+  const sendRequest = useMutation({
+    mutationFn: async (partnerUsername: string) => {
+      if (!user) throw new Error("Not authenticated");
+      // Find user by username or display_name
+      const { data: target } = await supabase
+        .from("profiles")
+        .select("user_id")
+        .or(`username.ilike.${partnerUsername},display_name.ilike.${partnerUsername}`)
+        .neq("user_id", user.id)
+        .limit(1)
+        .single();
+      if (!target) throw new Error("USER_NOT_FOUND");
+
+      // Check if partnership already exists
+      const existing = partnerships.find(
+        (p) =>
+          (p.requester_id === user.id && p.partner_id === target.user_id) ||
+          (p.partner_id === user.id && p.requester_id === target.user_id)
+      );
+      if (existing) throw new Error("ALREADY_EXISTS");
+
+      const { error } = await supabase.from("accountability_partners").insert({
+        requester_id: user.id,
+        partner_id: target.user_id,
+      });
+      if (error) throw error;
+
+      // Send notification
+      await supabase.from("notifications").insert({
+        user_id: target.user_id,
+        type: "partner_request",
+        title: "🤝 Partner Request",
+        message: `Someone wants to be your accountability partner!`,
+        icon: "🤝",
+        action_url: "/partners",
+      });
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["partnerships", user?.id] }),
+  });
+
+  const respondRequest = useMutation({
+    mutationFn: async ({ id, accept }: { id: string; accept: boolean }) => {
+      if (accept) {
+        const { error } = await supabase
+          .from("accountability_partners")
+          .update({ status: "accepted" })
+          .eq("id", id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("accountability_partners")
+          .delete()
+          .eq("id", id);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["partnerships", user?.id] }),
+  });
+
+  const removePartner = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("accountability_partners").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["partnerships", user?.id] }),
+  });
+
+  const nudgePartner = useMutation({
+    mutationFn: async ({ partnerId, partnerName }: { partnerId: string; partnerName: string }) => {
+      if (!user) throw new Error("Not authenticated");
+      await supabase.from("notifications").insert({
+        user_id: partnerId,
+        type: "nudge",
+        title: "👋 Nudge!",
+        message: `Your accountability partner is checking in — don't break your streak!`,
+        icon: "👋",
+        action_url: "/habits",
+      });
+    },
+    onSuccess: () => {},
+  });
+
+  const accepted = partnerships.filter((p) => p.status === "accepted");
+  const pendingIncoming = partnerships.filter(
+    (p) => p.status === "pending" && !p.is_requester
+  );
+  const pendingOutgoing = partnerships.filter(
+    (p) => p.status === "pending" && p.is_requester
+  );
+
+  return {
+    accepted,
+    pendingIncoming,
+    pendingOutgoing,
+    isLoading,
+    sendRequest: sendRequest.mutate,
+    isSending: sendRequest.isPending,
+    sendError: sendRequest.error,
+    respondRequest: respondRequest.mutate,
+    removePartner: removePartner.mutate,
+    nudgePartner: nudgePartner.mutate,
+  };
+}
