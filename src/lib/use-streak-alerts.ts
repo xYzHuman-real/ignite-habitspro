@@ -2,6 +2,22 @@ import { useEffect, useRef } from "react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 
+// Send push notification via edge function
+async function sendPush(userId: string, title: string, body: string, actionUrl?: string) {
+  try {
+    await supabase.functions.invoke("send-push", {
+      body: {
+        user_id: userId,
+        title,
+        body,
+        data: actionUrl ? { action_url: actionUrl } : {},
+      },
+    });
+  } catch (e) {
+    console.error("Failed to send push notification:", e);
+  }
+}
+
 /**
  * Auto-generates notifications for:
  * 1. Streak-at-risk alerts (habits not completed today)
@@ -29,7 +45,7 @@ export function useStreakAlerts() {
         .gte("created_at", today)
         .limit(1);
 
-      if (todayNotifs && todayNotifs.length > 0) return; // Already notified today
+      if (todayNotifs && todayNotifs.length > 0) return;
 
       // Get habits with active streaks that aren't completed today
       const { data: habits } = await supabase
@@ -45,26 +61,32 @@ export function useStreakAlerts() {
       // Streak-at-risk alerts
       if (atRiskHabits.length > 0) {
         const topHabit = atRiskHabits.reduce((a, b) => (a.streak > b.streak ? a : b));
+        const title = "🔥 Streak at Risk!";
+        const message = `Your ${topHabit.name} streak (${topHabit.streak} days) is at risk! Complete it today to keep going.`;
         await supabase.from("notifications").insert({
           user_id: user.id,
           type: "streak_alert",
-          title: "🔥 Streak at Risk!",
-          message: `Your ${topHabit.name} streak (${topHabit.streak} days) is at risk! Complete it today to keep going.`,
+          title,
+          message,
           icon: "🔥",
           action_url: "/habits",
         });
+        await sendPush(user.id, title, message, "/habits");
       }
 
       // Daily habit reminder
       if (incompleteHabits.length > 0) {
+        const title = "📋 Daily Habits Reminder";
+        const message = `You have ${incompleteHabits.length} habit${incompleteHabits.length > 1 ? "s" : ""} to complete today. Let's go!`;
         await supabase.from("notifications").insert({
           user_id: user.id,
           type: "habit_reminder",
-          title: "📋 Daily Habits Reminder",
-          message: `You have ${incompleteHabits.length} habit${incompleteHabits.length > 1 ? "s" : ""} to complete today. Let's go!`,
+          title,
+          message,
           icon: "📋",
           action_url: "/habits",
         });
+        await sendPush(user.id, title, message, "/habits");
       }
 
       // Check challenge progress
@@ -77,19 +99,21 @@ export function useStreakAlerts() {
       if (userChallenges && userChallenges.length > 0) {
         const uncheckdToday = userChallenges.filter((uc: any) => uc.last_checkin_date !== today);
         if (uncheckdToday.length > 0) {
+          const title = "🏆 Challenge Check-in";
+          const message = `You have ${uncheckdToday.length} active challenge${uncheckdToday.length > 1 ? "s" : ""} waiting for today's check-in!`;
           await supabase.from("notifications").insert({
             user_id: user.id,
             type: "challenge_reminder",
-            title: "🏆 Challenge Check-in",
-            message: `You have ${uncheckdToday.length} active challenge${uncheckdToday.length > 1 ? "s" : ""} waiting for today's check-in!`,
+            title,
+            message,
             icon: "🏆",
             action_url: "/challenges",
           });
+          await sendPush(user.id, title, message, "/challenges");
         }
       }
     };
 
-    // Delay slightly to not block initial render
     const timer = setTimeout(checkAndNotify, 3000);
     return () => clearTimeout(timer);
   }, [user]);
