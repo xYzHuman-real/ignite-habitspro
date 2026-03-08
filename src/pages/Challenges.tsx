@@ -162,8 +162,8 @@ export default function Challenges() {
                     <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
                     Check In Today
                   </Button>
-                )
                 )}
+              </div>
               </div>
             ) : (
               <Button
