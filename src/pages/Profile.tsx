@@ -484,8 +484,10 @@ export default function Profile() {
             </AlertDialog>
           </Card>
         </motion.div>
+      )}
 
-        {/* Customer Support */}
+      {/* Customer Support */}
+      {!editing && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
           <Card className="p-5">
             <div className="flex items-center gap-2 mb-3">
