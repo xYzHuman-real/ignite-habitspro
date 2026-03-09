@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Flame, UserPlus, UserMinus, Trophy, Target, CalendarDays, Coins } from "lucide-react";
+import { ArrowLeft, Flame, UserPlus, UserMinus, Trophy, Target, CalendarDays, Coins, EyeOff } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
