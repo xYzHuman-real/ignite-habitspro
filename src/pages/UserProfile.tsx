@@ -46,6 +46,9 @@ export default function UserProfile() {
   });
 
   const isOwnProfile = user?.id === userId;
+  const showAvatar = isOwnProfile || (profile as any)?.show_avatar !== false;
+  const showStats = isOwnProfile || (profile as any)?.show_stats !== false;
+  const showProfile = isOwnProfile || (profile as any)?.show_profile !== false;
 
   if (isLoading || !profile) {
     return (
