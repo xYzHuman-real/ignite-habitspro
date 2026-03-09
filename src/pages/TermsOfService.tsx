@@ -116,8 +116,8 @@ export default function TermsOfService() {
             <h2 className="text-xl font-semibold mb-3">12. Contact Us</h2>
             <p className="text-muted-foreground leading-relaxed">
               If you have any questions about these Terms, please contact us at{" "}
-              <a href="mailto:support@ignitehabitpro.app" className="text-primary hover:underline">
-                support@ignitehabitpro.app
+              <a href="mailto:support.ignitehabitproapp@gmail.com" className="text-primary hover:underline">
+                support.ignitehabitproapp@gmail.com
               </a>.
             </p>
           </section>
