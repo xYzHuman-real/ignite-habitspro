@@ -106,17 +106,12 @@ export function useHabits() {
     mutationFn: async (habit: { id: string; completed_today: boolean; current: number; target: number; streak: number; longest_streak: number }) => {
       if (!user) throw new Error("Not authenticated");
 
-      // Multi-target habits: increment current, complete when reaching target
-      // Single-target habits (target=1): toggle as before
-      // If already completed, reset
+      // If already completed, reset (un-complete)
       if (habit.completed_today) {
-        // Un-complete: reset
-        const newStreak = Math.max(0, habit.streak - 1);
         const { error } = await supabase.from("habits").update({
           completed_today: false,
           current: 0,
-          streak: newStreak,
-          longest_streak: habit.longest_streak,
+          // Don't change streak on un-complete to avoid confusion
         }).eq("id", habit.id);
         if (error) throw error;
         return;
@@ -124,14 +119,11 @@ export function useHabits() {
 
       const newCurrent = habit.current + 1;
       const nowComplete = newCurrent >= habit.target;
-      const newStreak = nowComplete ? habit.streak + 1 : habit.streak;
-      const newLongest = Math.max(habit.longest_streak, newStreak);
 
+      // Update the habit's completion status (but don't change streak yet)
       const { error } = await supabase.from("habits").update({
         completed_today: nowComplete,
         current: newCurrent,
-        streak: newStreak,
-        longest_streak: newLongest,
       }).eq("id", habit.id);
       if (error) throw error;
 
@@ -152,15 +144,36 @@ export function useHabits() {
           count: 1,
         }, { onConflict: "user_id,activity_type,activity_date" });
 
-        // Sync profile stats + award 5 points per habit completion
-        const { data: profileData } = await supabase.from("profiles").select("total_streak, habits_completed, leaderboard_points").eq("user_id", user.id).single();
+        // Check if ALL habits are now completed for today
+        const { data: allHabits } = await supabase.from("habits").select("id, completed_today, streak, longest_streak").eq("user_id", user.id);
+        const allCompleted = allHabits && allHabits.length > 0 && allHabits.every((h) => h.id === habit.id ? true : h.completed_today);
+
+        if (allCompleted && allHabits) {
+          // Increase streak for ALL habits
+          await Promise.all(
+            allHabits.map((h) => {
+              const newStreak = h.id === habit.id ? habit.streak + 1 : h.streak + 1;
+              const newLongest = Math.max(h.longest_streak, newStreak);
+              return supabase.from("habits").update({
+                streak: newStreak,
+                longest_streak: newLongest,
+              }).eq("id", h.id);
+            })
+          );
+        }
+
+        // Award 5 points per habit completion (add to both leaderboard_points and coins)
+        const { data: profileData } = await supabase.from("profiles").select("total_streak, habits_completed, leaderboard_points, coins").eq("user_id", user.id).single();
         if (profileData) {
           const newPoints = profileData.leaderboard_points + 5;
+          const newCoins = (profileData.coins || 0) + 5;
           const newLevel = getLevelForPoints(newPoints);
+          const maxStreak = allHabits ? Math.max(...allHabits.map(h => h.id === habit.id ? habit.streak + 1 : h.streak)) : habit.streak + 1;
           await supabase.from("profiles").update({
-            total_streak: Math.max(profileData.total_streak, newStreak),
+            total_streak: Math.max(profileData.total_streak, maxStreak),
             habits_completed: profileData.habits_completed + 1,
             leaderboard_points: newPoints,
+            coins: newCoins,
             xp_level: newLevel.level,
             title: newLevel.title,
           }).eq("user_id", user.id);
