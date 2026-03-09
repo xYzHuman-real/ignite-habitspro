@@ -15,6 +15,7 @@ import Community from "./pages/Community";
 import Leaderboard from "./pages/Leaderboard";
 import Profile from "./pages/Profile";
 import Shop from "./pages/Shop";
+import UserProfile from "./pages/UserProfile";
 import WeeklyReport from "./pages/WeeklyReport";
 import Journal from "./pages/Journal";
 import GoalsPage from "./pages/Goals";
@@ -56,6 +57,7 @@ function ProtectedRoutes() {
         <Route path="/journal" element={<Journal />} />
         <Route path="/goals" element={<GoalsPage />} />
         <Route path="/partners" element={<Partners />} />
+        <Route path="/user/:userId" element={<UserProfile />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

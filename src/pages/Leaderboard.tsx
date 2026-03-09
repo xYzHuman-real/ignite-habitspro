@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Trophy, Flame, Target, UserPlus, UserMinus } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -6,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { useLeaderboard, useFollowers } from "@/lib/supabase-hooks";
 import { useAuth } from "@/lib/auth";
 import { Skeleton } from "@/components/ui/skeleton";
-import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -49,6 +49,7 @@ function FollowButton({ userId }: { userId: string }) {
 export default function Leaderboard() {
   const { data: users = [], isLoading } = useLeaderboard();
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   if (isLoading) {
     return (
@@ -97,7 +98,7 @@ export default function Leaderboard() {
             const heights = ["h-24", "h-32", "h-20"];
             const medals = ["🥈", "🥇", "🥉"];
             return (
-              <motion.div key={u.rank} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.15 }} className="flex flex-col items-center">
+              <motion.div key={u.rank} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.15 }} className="flex flex-col items-center cursor-pointer" onClick={() => navigate(`/user/${u.userId}`)}>
                 <span className="text-2xl mb-2">{medals[i]}</span>
                 <Avatar className={`${i === 1 ? "w-16 h-16" : "w-12 h-12"} border-2 ${i === 1 ? "border-accent shadow-glow-accent" : "border-border"}`}>
                   {u.avatarUrl && <AvatarImage src={u.avatarUrl} alt={u.name} />}
@@ -118,7 +119,7 @@ export default function Leaderboard() {
       <div className="space-y-2">
         {rest.map((u, i) => (
           <motion.div key={u.rank} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 + i * 0.05 }}>
-            <Card className={`p-3 flex items-center gap-4 ${u.isMe ? "border-primary/40 bg-primary/5" : ""}`}>
+            <Card className={`p-3 flex items-center gap-4 cursor-pointer hover:bg-muted/50 transition-colors ${u.isMe ? "border-primary/40 bg-primary/5" : ""}`} onClick={() => navigate(`/user/${u.userId}`)}>
               <span className="w-8 text-center font-display font-bold text-muted-foreground">#{u.rank}</span>
               <Avatar className="w-10 h-10">
                 {u.avatarUrl && <AvatarImage src={u.avatarUrl} alt={u.name} />}
