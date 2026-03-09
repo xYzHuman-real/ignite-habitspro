@@ -41,8 +41,19 @@ export default function Partners() {
   };
 
   const handleNudge = (partnerId: string, name: string) => {
-    nudgePartner({ partnerId, partnerName: name });
-    toast.success(`Nudge sent to ${name}! 👋`);
+    nudgePartner(
+      { partnerId, partnerName: name },
+      {
+        onSuccess: () => toast.success(`Nudge sent to ${name}! 👋`),
+        onError: (err: Error) => {
+          if (err.message === "COOLDOWN") {
+            toast.error("You can only nudge once per hour. Try again later! ⏳");
+          } else {
+            toast.error("Failed to send nudge");
+          }
+        },
+      }
+    );
   };
 
   if (isLoading) {
