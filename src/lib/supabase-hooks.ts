@@ -105,13 +105,31 @@ export function useHabits() {
   const toggleHabit = useMutation({
     mutationFn: async (habit: { id: string; completed_today: boolean; current: number; target: number; streak: number; longest_streak: number }) => {
       if (!user) throw new Error("Not authenticated");
-      const nowComplete = !habit.completed_today;
-      const newStreak = nowComplete ? habit.streak + 1 : Math.max(0, habit.streak - 1);
+
+      // Multi-target habits: increment current, complete when reaching target
+      // Single-target habits (target=1): toggle as before
+      // If already completed, reset
+      if (habit.completed_today) {
+        // Un-complete: reset
+        const newStreak = Math.max(0, habit.streak - 1);
+        const { error } = await supabase.from("habits").update({
+          completed_today: false,
+          current: 0,
+          streak: newStreak,
+          longest_streak: habit.longest_streak,
+        }).eq("id", habit.id);
+        if (error) throw error;
+        return;
+      }
+
+      const newCurrent = habit.current + 1;
+      const nowComplete = newCurrent >= habit.target;
+      const newStreak = nowComplete ? habit.streak + 1 : habit.streak;
       const newLongest = Math.max(habit.longest_streak, newStreak);
 
       const { error } = await supabase.from("habits").update({
         completed_today: nowComplete,
-        current: nowComplete ? habit.target : 0,
+        current: newCurrent,
         streak: newStreak,
         longest_streak: newLongest,
       }).eq("id", habit.id);

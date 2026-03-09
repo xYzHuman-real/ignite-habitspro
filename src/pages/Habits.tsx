@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Flame, Check, Trash2 } from "lucide-react";
+import { Plus, Flame, Check, Trash2, Minus } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -27,16 +27,19 @@ export default function Habits() {
   const [difficulty, setDifficulty] = useState("medium");
   const [dialogOpen, setDialogOpen] = useState(false);
 
+  const [customTarget, setCustomTarget] = useState(1);
+
   const handleAdd = () => {
     if (!newHabit.trim()) return;
     const emojis = ["🎯", "⚡", "🌟", "🎨", "🎵", "🏃", "🍎"];
     addHabit({
       name: newHabit,
       icon: emojis[Math.floor(Math.random() * emojis.length)],
-      target: 1,
+      target: customTarget,
       difficulty,
     });
     setNewHabit("");
+    setCustomTarget(1);
     setDialogOpen(false);
   };
 
@@ -86,16 +89,31 @@ export default function Habits() {
                   onKeyDown={(e) => e.key === "Enter" && handleAdd()}
                   className="flex-1"
                 />
-                <Select value={difficulty} onValueChange={setDifficulty}>
-                  <SelectTrigger className="w-28">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="easy">Easy</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="hard">Hard</SelectItem>
-                  </SelectContent>
-                </Select>
+              </div>
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <label className="text-xs text-muted-foreground mb-1 block">Daily Target</label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={99}
+                    value={customTarget}
+                    onChange={(e) => setCustomTarget(Math.max(1, parseInt(e.target.value) || 1))}
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="text-xs text-muted-foreground mb-1 block">Difficulty</label>
+                  <Select value={difficulty} onValueChange={setDifficulty}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="easy">Easy</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="hard">Hard</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <Button onClick={handleAdd} className="w-full bg-gradient-primary text-primary-foreground">Add Custom Habit</Button>
 
@@ -146,8 +164,8 @@ export default function Habits() {
                 }`}
               >
                 <div className="flex items-center gap-4">
-                  <span className="text-2xl cursor-pointer" onClick={() => toggleHabit(habit)}>{habit.icon}</span>
-                  <div className="flex-1 min-w-0" onClick={() => toggleHabit(habit)}>
+                  <span className="text-2xl cursor-pointer" onClick={() => !habit.completed_today && toggleHabit(habit)}>{habit.icon}</span>
+                  <div className="flex-1 min-w-0" onClick={() => !habit.completed_today && toggleHabit(habit)}>
                     <div className="flex items-center gap-2">
                       <p className={`font-medium ${habit.completed_today ? "line-through text-muted-foreground" : ""}`}>
                         {habit.name}
@@ -162,19 +180,45 @@ export default function Habits() {
                         {habit.streak}
                       </div>
                     </div>
-                    <Progress value={(habit.current / habit.target) * 100} className="h-1.5 mt-2" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div
-                      onClick={() => toggleHabit(habit)}
-                      className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                        habit.completed_today
-                          ? "bg-success text-success-foreground"
-                          : "border-2 border-muted-foreground/30"
-                      }`}
-                    >
-                      {habit.completed_today && <Check className="h-4 w-4" />}
+                    <div className="flex items-center gap-2 mt-2">
+                      <Progress value={(habit.current / habit.target) * 100} className="h-1.5 flex-1" />
+                      {habit.target > 1 && (
+                        <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
+                          {habit.current}/{habit.target}
+                        </span>
+                      )}
                     </div>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    {habit.target > 1 && !habit.completed_today ? (
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        className="h-8 w-8 rounded-full"
+                        onClick={() => toggleHabit(habit)}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    ) : (
+                      <div
+                        onClick={() => toggleHabit(habit)}
+                        className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer ${
+                          habit.completed_today
+                            ? "bg-success text-success-foreground"
+                            : "border-2 border-muted-foreground/30"
+                        }`}
+                      >
+                        {habit.completed_today && <Check className="h-4 w-4" />}
+                      </div>
+                    )}
+                    {habit.completed_today && habit.target > 1 && (
+                      <div
+                        onClick={() => toggleHabit(habit)}
+                        className="w-8 h-8 rounded-full flex items-center justify-center bg-success text-success-foreground cursor-pointer"
+                      >
+                        <Check className="h-4 w-4" />
+                      </div>
+                    )}
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => deleteHabit(habit.id)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
