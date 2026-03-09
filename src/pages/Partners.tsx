@@ -179,7 +179,7 @@ export default function Partners() {
                 {pendingIncoming.map((p) => (
                   <div key={p.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
                     <Avatar className="h-10 w-10">
-                      {p.partner_profile?.avatar_url && <AvatarImage src={p.partner_profile.avatar_url} alt={p.partner_profile?.display_name || "Partner"} />}
+                      {p.partner_profile?.show_avatar !== false && p.partner_profile?.avatar_url && <AvatarImage src={p.partner_profile.avatar_url} alt={p.partner_profile?.display_name || "Partner"} />}
                       <AvatarFallback className="bg-gradient-primary text-primary-foreground text-sm font-bold">
                         {(p.partner_profile?.display_name || "?")[0]}
                       </AvatarFallback>
