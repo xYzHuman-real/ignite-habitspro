@@ -253,14 +253,14 @@ export default function Partners() {
                   <Card className="overflow-hidden">
                     <div className="p-5">
                       <div className="flex items-start gap-4">
-                        <Avatar className="h-12 w-12">
+                        <Avatar className="h-12 w-12 cursor-pointer" onClick={() => navigate(`/user/${partnerId}`)}>
                           <AvatarFallback className="bg-gradient-primary text-primary-foreground font-bold text-lg">
                             {name[0]}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="font-display font-semibold text-lg">{name}</h3>
+                            <h3 className="font-display font-semibold text-lg cursor-pointer hover:text-primary transition-colors" onClick={() => navigate(`/user/${partnerId}`)}>{name}</h3>
                             <Badge variant="outline" className="text-xs">
                               🤝 Shared Streak: {p.shared_streak}
                             </Badge>
