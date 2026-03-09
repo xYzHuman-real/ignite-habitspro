@@ -420,7 +420,6 @@ export function useChallenges() {
           const requiredHours = requiredMinutes / 60;
           throw new Error(`INSUFFICIENT_FOCUS:${requiredHours}`);
         }
-        }
       }
 
       const newProgress = currentProgress + 1;
