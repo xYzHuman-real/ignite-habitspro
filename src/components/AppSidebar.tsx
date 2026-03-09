@@ -55,7 +55,7 @@ export function AppSidebar() {
             H
           </div>
           {!collapsed && (
-            <span className="font-display font-bold text-lg">HabitFlow</span>
+            <span className="font-display font-bold text-lg">Ignite HabitPro</span>
           )}
         </div>
         <SidebarGroup>
