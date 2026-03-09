@@ -151,68 +151,27 @@ export default function TimerPage() {
         {(["focus", "shortBreak", "longBreak"] as const).map((m) => (
           <Button
             key={m}
-            variant={mode === m && !showSounds ? "default" : "outline"}
+            variant={mode === m ? "default" : "outline"}
             size="sm"
-            onClick={() => { switchMode(m); setShowSounds(false); }}
-            className={mode === m && !showSounds ? "bg-gradient-primary text-primary-foreground" : ""}
+            onClick={() => switchMode(m)}
+            className={mode === m ? "bg-gradient-primary text-primary-foreground" : ""}
           >
             {PRESET_MODES[m].label}
           </Button>
         ))}
         <Button
-          variant={mode === "custom" && !showSounds ? "default" : "outline"}
+          variant={mode === "custom" ? "default" : "outline"}
           size="sm"
-          onClick={() => { switchMode("custom"); setShowSounds(false); }}
-          className={mode === "custom" && !showSounds ? "bg-gradient-primary text-primary-foreground" : ""}
+          onClick={() => switchMode("custom")}
+          className={mode === "custom" ? "bg-gradient-primary text-primary-foreground" : ""}
         >
           <Timer className="h-3.5 w-3.5 mr-1" /> Custom
         </Button>
-        <Button
-          variant={showSounds ? "default" : "outline"}
-          size="sm"
-          onClick={() => setShowSounds(!showSounds)}
-          className={showSounds ? "bg-gradient-primary text-primary-foreground" : ""}
-        >
-          <Music className="h-3.5 w-3.5 mr-1" /> Sounds
-          {soundIdx > 0 && !showSounds && (
-            <span className="ml-1 w-2 h-2 rounded-full bg-success inline-block" />
-          )}
-        </Button>
       </div>
-
-      {/* Sounds panel */}
-      <AnimatePresence>
-        {showSounds && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden"
-          >
-            <Card className="p-4">
-              <p className="text-sm font-medium text-muted-foreground mb-3">🎵 Choose ambient sound:</p>
-              <div className="grid grid-cols-2 gap-2">
-                {SOUNDS.map((s, i) => (
-                  <Button
-                    key={s.name}
-                    variant={soundIdx === i ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => toggleSound(i)}
-                    className={`justify-start ${soundIdx === i ? "bg-gradient-primary text-primary-foreground" : ""}`}
-                  >
-                    {soundIdx === i && i > 0 ? <Volume2 className="h-3.5 w-3.5 mr-1.5" /> : i > 0 ? <VolumeX className="h-3.5 w-3.5 mr-1.5" /> : null}
-                    {s.name}
-                  </Button>
-                ))}
-              </div>
-            </Card>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Custom time input */}
       <AnimatePresence>
-        {mode === "custom" && !isRunning && !showSounds && (
+        {mode === "custom" && !isRunning && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
@@ -300,6 +259,49 @@ export default function TimerPage() {
             <RotateCcw className="h-5 w-5" />
           </Button>
         </div>
+
+        {/* Sounds toggle */}
+        {isFocusMode && (
+          <div className="w-full space-y-3">
+            <Button
+              variant={showSounds ? "default" : "outline"}
+              size="sm"
+              onClick={() => setShowSounds(!showSounds)}
+              className={`w-full ${showSounds ? "bg-gradient-primary text-primary-foreground" : ""}`}
+            >
+              <Music className="h-3.5 w-3.5 mr-1.5" />
+              {soundIdx > 0 ? `🎵 ${SOUNDS[soundIdx].name}` : "Sounds"}
+              {soundIdx > 0 && !showSounds && (
+                <span className="ml-1.5 w-2 h-2 rounded-full bg-success inline-block" />
+              )}
+            </Button>
+            <AnimatePresence>
+              {showSounds && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="overflow-hidden"
+                >
+                  <div className="grid grid-cols-2 gap-2">
+                    {SOUNDS.map((s, i) => (
+                      <Button
+                        key={s.name}
+                        variant={soundIdx === i ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => toggleSound(i)}
+                        className={`justify-start ${soundIdx === i ? "bg-gradient-primary text-primary-foreground" : ""}`}
+                      >
+                        {soundIdx === i && i > 0 ? <Volume2 className="h-3.5 w-3.5 mr-1.5" /> : i > 0 ? <VolumeX className="h-3.5 w-3.5 mr-1.5" /> : null}
+                        {s.name}
+                      </Button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
       </Card>
 
       <Card className="p-4 text-center space-y-3">
