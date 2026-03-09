@@ -256,7 +256,7 @@ export default function Partners() {
                     <div className="p-5">
                       <div className="flex items-start gap-4">
                         <Avatar className="h-12 w-12 cursor-pointer" onClick={() => navigate(`/user/${partnerId}`)}>
-                          {profile?.avatar_url && <AvatarImage src={profile.avatar_url} alt={name} />}
+                          {profile?.show_avatar !== false && profile?.avatar_url && <AvatarImage src={profile.avatar_url} alt={name} />}
                           <AvatarFallback className="bg-gradient-primary text-primary-foreground font-bold text-lg">
                             {name[0]}
                           </AvatarFallback>
