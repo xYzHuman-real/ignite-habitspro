@@ -23,7 +23,7 @@ export function usePartners() {
       );
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("user_id, display_name, avatar_url, total_streak, leaderboard_points, habits_completed")
+        .select("user_id, display_name, avatar_url, total_streak, leaderboard_points, habits_completed, show_avatar, show_stats")
         .in("user_id", partnerIds);
 
       return data.map((p) => {
