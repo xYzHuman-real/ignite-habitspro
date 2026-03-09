@@ -34,7 +34,17 @@ export default function Dashboard() {
   }, [profileLoading, profile]);
 
   const completedHabits = habits.filter((h) => h.completed_today).length;
-  const completedTodos = todos.filter((t) => t.completed).length;
+
+  // Filter todos to only today's (using local date, not UTC)
+  const now = new Date();
+  const todayLocal = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const todayTodos = todos.filter((t) => {
+    const d = new Date(t.created_at);
+    const local = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    return local === todayLocal;
+  });
+
+  const completedTodos = todayTodos.filter((t) => t.completed).length;
   const maxStreak = habits.reduce((max, h) => Math.max(max, h.streak), 0);
   const weeklyScore = habits.length > 0 ? Math.round((completedHabits / habits.length) * 100) : 0;
 
@@ -54,7 +64,7 @@ export default function Dashboard() {
   const stats = [
     { label: "Best Streak", value: String(maxStreak), icon: Flame, gradient: "bg-gradient-accent", glow: "shadow-glow-accent" },
     { label: "Habits Today", value: `${completedHabits}/${habits.length}`, icon: Target, gradient: "bg-gradient-primary", glow: "shadow-glow-primary" },
-    { label: "Tasks Done", value: `${completedTodos}/${todos.length}`, icon: CheckCircle2, gradient: "bg-gradient-success", glow: "" },
+    { label: "Tasks Done", value: `${completedTodos}/${todayTodos.length}`, icon: CheckCircle2, gradient: "bg-gradient-success", glow: "" },
     { label: "Daily Score", value: `${weeklyScore}%`, icon: TrendingUp, gradient: "bg-gradient-primary", glow: "shadow-glow-primary" },
   ];
 
@@ -127,9 +137,9 @@ export default function Dashboard() {
 
         <Card className="p-5 space-y-4">
           <h2 className="font-display font-semibold text-lg">To-Do List</h2>
-          {todos.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4 text-center">No tasks yet. Add one to stay productive!</p>
-          ) : todos.slice(0, 5).map((todo) => (
+          {todayTodos.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4 text-center">No tasks for today. Add one to stay productive!</p>
+          ) : todayTodos.slice(0, 5).map((todo) => (
             <div key={todo.id} className="flex items-center gap-3">
               <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
                 todo.completed ? "bg-success border-success" : "border-muted-foreground"
