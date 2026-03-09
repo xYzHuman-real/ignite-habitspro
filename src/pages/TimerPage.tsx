@@ -171,7 +171,7 @@ export default function TimerPage() {
 
       {/* Custom time input */}
       <AnimatePresence>
-        {mode === "custom" && !isRunning && !showSounds && (
+        {mode === "custom" && !isRunning && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
