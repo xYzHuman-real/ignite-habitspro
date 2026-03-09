@@ -137,14 +137,16 @@ export default function Shop() {
 
       {/* Shop Items */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="all">All</TabsTrigger>
-          {categories.map((cat: string) => (
-            <TabsTrigger key={cat} value={cat} className="flex items-center gap-1">
-              {categoryIcons[cat]} {categoryLabels[cat] || cat}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+        <div className="overflow-x-auto -mx-1 px-1 touch-pan-x" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <TabsList className="w-max">
+            <TabsTrigger value="all">All</TabsTrigger>
+            {categories.map((cat: string) => (
+              <TabsTrigger key={cat} value={cat} className="flex items-center gap-1">
+                {categoryIcons[cat]} {categoryLabels[cat] || cat}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
 
         <TabsContent value={activeTab}>
           {filteredItems.length === 0 ? (
