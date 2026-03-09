@@ -34,6 +34,7 @@ export default function TimerPage() {
   const [isRunning, setIsRunning] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
   const [soundIdx, setSoundIdx] = useState(0);
+  const [showSounds, setShowSounds] = useState(false);
   const intervalRef = useRef<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const { sessions, addSession } = usePomodoroSessions();
