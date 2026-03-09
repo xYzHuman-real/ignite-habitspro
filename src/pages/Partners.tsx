@@ -268,17 +268,19 @@ export default function Partners() {
                               🤝 Shared Streak: {p.shared_streak}
                             </Badge>
                           </div>
-                          <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <Flame className="h-3.5 w-3.5 text-primary" /> {profile?.total_streak || 0} streak
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Trophy className="h-3.5 w-3.5 text-accent" /> {profile?.leaderboard_points || 0} pts
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Target className="h-3.5 w-3.5" /> {profile?.habits_completed || 0} done
-                            </span>
-                          </div>
+                          {profile?.show_stats !== false && (
+                            <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                <Flame className="h-3.5 w-3.5 text-primary" /> {profile?.total_streak || 0} streak
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Trophy className="h-3.5 w-3.5 text-accent" /> {profile?.leaderboard_points || 0} pts
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Target className="h-3.5 w-3.5" /> {profile?.habits_completed || 0} done
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </div>
                       <Separator className="my-4" />
