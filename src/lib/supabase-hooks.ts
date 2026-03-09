@@ -586,13 +586,17 @@ export function useShopItems() {
     mutationFn: async ({ itemId, price, itemType, itemValue }: { itemId: string; price: number; itemType: string; itemValue: string }) => {
       if (!user) throw new Error("Not authenticated");
 
-      // Get current points
-      const { data: profile } = await supabase.from("profiles").select("leaderboard_points, streak_freezes, title").eq("user_id", user.id).single();
-      if (!profile || profile.leaderboard_points < price) throw new Error("Not enough points");
+      // Get current coins (shop currency) - NOT leaderboard_points
+      const { data: profile } = await supabase.from("profiles").select("coins, leaderboard_points, streak_freezes, title").eq("user_id", user.id).single();
+      if (!profile) throw new Error("Profile not found");
+      
+      // Use coins for purchases, NOT leaderboard_points
+      const availableCoins = profile.coins || 0;
+      if (availableCoins < price) throw new Error("Not enough coins");
 
-      // Deduct points
+      // Deduct coins only - leaderboard_points and XP stay the same
       await supabase.from("profiles").update({
-        leaderboard_points: profile.leaderboard_points - price,
+        coins: availableCoins - price,
         ...(itemType === "streak_freeze" ? { streak_freezes: profile.streak_freezes + parseInt(itemValue) } : {}),
         ...(itemType === "title" ? { title: itemValue } : {}),
       }).eq("user_id", user.id);
