@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Handshake, Send, UserPlus, Bell, Trash2, Check, X, Flame, Trophy, Target, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,67 @@ import { Separator } from "@/components/ui/separator";
 import { usePartners } from "@/lib/use-partners";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+
+function NudgeCooldownButton({ partnerId, partnerName, onNudge }: {
+  partnerId: string;
+  partnerName: string;
+  onNudge: (partnerId: string, name: string) => void;
+}) {
+  const [cooldownEnd, setCooldownEnd] = useState<number | null>(() => {
+    const stored = localStorage.getItem(`nudge_cooldown_${partnerId}`);
+    if (stored) {
+      const end = parseInt(stored, 10);
+      if (end > Date.now()) return end;
+      localStorage.removeItem(`nudge_cooldown_${partnerId}`);
+    }
+    return null;
+  });
+  const [remaining, setRemaining] = useState(0);
+
+  useEffect(() => {
+    if (!cooldownEnd) { setRemaining(0); return; }
+    const tick = () => {
+      const left = Math.max(0, cooldownEnd - Date.now());
+      setRemaining(left);
+      if (left <= 0) {
+        setCooldownEnd(null);
+        localStorage.removeItem(`nudge_cooldown_${partnerId}`);
+      }
+    };
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [cooldownEnd, partnerId]);
+
+  const handleNudge = () => {
+    const end = Date.now() + 60 * 60 * 1000; // 1 hour
+    localStorage.setItem(`nudge_cooldown_${partnerId}`, String(end));
+    setCooldownEnd(end);
+    onNudge(partnerId, partnerName);
+  };
+
+  const inCooldown = remaining > 0;
+  const mins = Math.floor(remaining / 60000);
+  const secs = Math.floor((remaining % 60000) / 1000);
+
+  return (
+    <Button
+      size="sm"
+      variant="outline"
+      onClick={handleNudge}
+      disabled={inCooldown}
+      className="flex-1"
+    >
+      {inCooldown ? (
+        <span className="flex items-center gap-1">
+          <Clock className="h-3.5 w-3.5" /> {mins}:{secs.toString().padStart(2, "0")}
+        </span>
+      ) : (
+        "👋 Nudge"
+      )}
+    </Button>
+  );
+}
 
 export default function Partners() {
   const {
@@ -179,6 +240,7 @@ export default function Partners() {
             {accepted.map((p, i) => {
               const profile = p.partner_profile;
               const name = profile?.display_name || "Partner";
+              const partnerId = profile?.user_id || "";
               return (
                 <motion.div
                   key={p.id}
@@ -216,14 +278,11 @@ export default function Partners() {
                       </div>
                       <Separator className="my-4" />
                       <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleNudge(profile?.user_id || "", name)}
-                          className="flex-1"
-                        >
-                          👋 Nudge
-                        </Button>
+                        <NudgeCooldownButton
+                          partnerId={partnerId}
+                          partnerName={name}
+                          onNudge={handleNudge}
+                        />
                         <Button
                           size="sm"
                           variant="ghost"
