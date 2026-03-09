@@ -34,7 +34,17 @@ export default function Dashboard() {
   }, [profileLoading, profile]);
 
   const completedHabits = habits.filter((h) => h.completed_today).length;
-  const completedTodos = todos.filter((t) => t.completed).length;
+
+  // Filter todos to only today's (using local date, not UTC)
+  const now = new Date();
+  const todayLocal = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const todayTodos = todos.filter((t) => {
+    const d = new Date(t.created_at);
+    const local = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    return local === todayLocal;
+  });
+
+  const completedTodos = todayTodos.filter((t) => t.completed).length;
   const maxStreak = habits.reduce((max, h) => Math.max(max, h.streak), 0);
   const weeklyScore = habits.length > 0 ? Math.round((completedHabits / habits.length) * 100) : 0;
 
