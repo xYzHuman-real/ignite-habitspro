@@ -44,7 +44,7 @@ function NudgeCooldownButton({ partnerId, partnerName, onNudge }: {
   }, [cooldownEnd, partnerId]);
 
   const handleNudge = () => {
-    const end = Date.now() + 60 * 60 * 1000; // 1 hour
+    const end = Date.now() + 60 * 60 * 1000;
     localStorage.setItem(`nudge_cooldown_${partnerId}`, String(end));
     setCooldownEnd(end);
     onNudge(partnerId, partnerName);
@@ -117,6 +117,11 @@ export default function Partners() {
         },
       }
     );
+  };
+
+  const handleCancelRequest = (id: string) => {
+    respondRequest({ id, accept: false });
+    toast.success("Request cancelled");
   };
 
   if (isLoading) {
@@ -220,7 +225,17 @@ export default function Partners() {
                   <AvatarFallback className="text-xs">{(p.partner_profile?.display_name || "?")[0]}</AvatarFallback>
                 </Avatar>
                 <span className="flex-1 text-sm truncate">{p.partner_profile?.display_name || "Unknown"}</span>
-                <Badge variant="outline" className="text-muted-foreground">Pending</Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-muted-foreground">Pending</Badge>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 px-2 text-destructive hover:text-destructive"
+                    onClick={() => handleCancelRequest(p.id)}
+                  >
+                    <X className="h-3.5 w-3.5 mr-1" /> Cancel
+                  </Button>
+                </div>
               </div>
             ))}
           </CardContent>

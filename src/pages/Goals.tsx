@@ -81,7 +81,9 @@ export default function Goals() {
     const isComplete = newVal >= goal.target_value;
     updateGoal({ id: goal.id, updates: { current_value: newVal, completed: isComplete } }, {
       onSuccess: () => {
-        if (isComplete) toast({ title: "🎉 Goal Complete!", description: `You reached your target for "${goal.title}"!` });
+        if (isComplete) {
+          toast({ title: "🎉 Goal Complete!", description: `You reached your target for "${goal.title}"!`, duration: 3000 });
+        }
       },
     });
   };

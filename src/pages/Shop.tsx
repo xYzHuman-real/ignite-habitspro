@@ -46,7 +46,7 @@ export default function Shop() {
     );
   }
 
-  const points = profile.leaderboard_points;
+  const points = profile.coins || 0; // Use coins for shop, not leaderboard_points
   const currentLevel = getLevelForPoints(points);
   const nextLevel = getNextLevel(points);
   const progressToNext = getProgressToNext(points);

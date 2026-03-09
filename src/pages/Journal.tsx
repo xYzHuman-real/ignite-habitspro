@@ -343,6 +343,30 @@ export default function Journal() {
         {/* History Tab */}
         <TabsContent value="history">
           <motion.div variants={item} className="space-y-3">
+            {/* Show today's entry status first */}
+            {(() => {
+              const todayStr = new Date().toISOString().split("T")[0];
+              const todayEntry = recentEntries.find((e: any) => e.entry_date === todayStr);
+              if (!todayEntry) {
+                return (
+                  <Card className="p-5 text-center border-accent/30 bg-accent/5">
+                    <p className="text-sm font-medium text-accent-foreground">
+                      📝 Today's journal has not been written yet. Please write your entry.
+                    </p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="mt-3"
+                      onClick={() => { setSelectedDate(todayStr); setActiveTab("daily"); }}
+                    >
+                      Write Today's Entry
+                    </Button>
+                  </Card>
+                );
+              }
+              return null;
+            })()}
+
             {recentEntries.length === 0 ? (
               <Card className="p-8 text-center">
                 <BookOpen className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />

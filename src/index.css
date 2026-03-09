@@ -115,6 +115,21 @@
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-body);
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  /* Allow selection in editable fields */
+  input, textarea, [contenteditable="true"] {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  /* Prevent copy in inputs but allow paste */
+  input:not([data-allow-copy]),
+  textarea:not([data-allow-copy]) {
+    /* Copy is prevented via JS oncopy handler */
   }
 
   h1, h2, h3, h4, h5, h6 {
