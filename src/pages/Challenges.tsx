@@ -65,7 +65,7 @@ export default function Challenges() {
       return;
     }
     checkIn(
-      { userChallengeId: uc.id, currentProgress: uc.progress, targetDays: challenge.duration_days, lastCheckinDate: lastDate || null, challengeName: challenge.name },
+      { userChallengeId: uc.id, currentProgress: uc.progress, targetDays: challenge.duration_days, lastCheckinDate: lastDate || null, challengeName: challenge.name, challengeDescription: challenge.description },
       {
         onSuccess: () => {
           const newProg = uc.progress + 1;
