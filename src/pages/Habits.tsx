@@ -27,16 +27,19 @@ export default function Habits() {
   const [difficulty, setDifficulty] = useState("medium");
   const [dialogOpen, setDialogOpen] = useState(false);
 
+  const [customTarget, setCustomTarget] = useState(1);
+
   const handleAdd = () => {
     if (!newHabit.trim()) return;
     const emojis = ["🎯", "⚡", "🌟", "🎨", "🎵", "🏃", "🍎"];
     addHabit({
       name: newHabit,
       icon: emojis[Math.floor(Math.random() * emojis.length)],
-      target: 1,
+      target: customTarget,
       difficulty,
     });
     setNewHabit("");
+    setCustomTarget(1);
     setDialogOpen(false);
   };
 
