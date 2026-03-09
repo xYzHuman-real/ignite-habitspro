@@ -107,7 +107,7 @@ export default function TimerPage() {
   };
 
   const applyCustomTime = () => {
-    const clamped = Math.max(1, Math.min(480, customMinutes));
+    const clamped = Math.max(1, Math.min(240, customMinutes));
     setCustomMinutes(clamped);
     const dur = clamped * 60;
     setTimeLeft(dur);
