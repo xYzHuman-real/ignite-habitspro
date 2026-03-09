@@ -98,7 +98,7 @@ export default function Leaderboard() {
             const heights = ["h-24", "h-32", "h-20"];
             const medals = ["🥈", "🥇", "🥉"];
             return (
-              <motion.div key={u.rank} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.15 }} className="flex flex-col items-center">
+              <motion.div key={u.rank} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.15 }} className="flex flex-col items-center cursor-pointer" onClick={() => navigate(`/user/${u.userId}`)}>
                 <span className="text-2xl mb-2">{medals[i]}</span>
                 <Avatar className={`${i === 1 ? "w-16 h-16" : "w-12 h-12"} border-2 ${i === 1 ? "border-accent shadow-glow-accent" : "border-border"}`}>
                   {u.avatarUrl && <AvatarImage src={u.avatarUrl} alt={u.name} />}
