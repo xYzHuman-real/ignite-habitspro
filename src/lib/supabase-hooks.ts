@@ -638,13 +638,15 @@ export function useDailyLogin() {
 
       await supabase.from("daily_logins").insert({ user_id: user.id, login_date: today, streak: newStreak, points_earned: bonus });
 
-      // Add points to profile and update level
-      const { data: profile } = await supabase.from("profiles").select("leaderboard_points").eq("user_id", user.id).single();
+      // Add points to profile (both leaderboard_points for ranking and coins for shop)
+      const { data: profile } = await supabase.from("profiles").select("leaderboard_points, coins").eq("user_id", user.id).single();
       if (profile) {
         const newPoints = profile.leaderboard_points + bonus;
+        const newCoins = (profile.coins || 0) + bonus;
         const newLevel = getLevelForPoints(newPoints);
         await supabase.from("profiles").update({
           leaderboard_points: newPoints,
+          coins: newCoins,
           xp_level: newLevel.level,
           title: newLevel.title,
         }).eq("user_id", user.id);
