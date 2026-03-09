@@ -579,6 +579,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           bio: string | null
+          coins: number
           created_at: string
           display_name: string
           habits_completed: number
@@ -599,6 +600,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           bio?: string | null
+          coins?: number
           created_at?: string
           display_name?: string
           habits_completed?: number
@@ -619,6 +621,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           bio?: string | null
+          coins?: number
           created_at?: string
           display_name?: string
           habits_completed?: number
