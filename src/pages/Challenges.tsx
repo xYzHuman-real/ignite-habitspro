@@ -65,7 +65,7 @@ export default function Challenges() {
       return;
     }
     checkIn(
-      { userChallengeId: uc.id, currentProgress: uc.progress, targetDays: challenge.duration_days, lastCheckinDate: lastDate || null, challengeName: challenge.name },
+      { userChallengeId: uc.id, currentProgress: uc.progress, targetDays: challenge.duration_days, lastCheckinDate: lastDate || null, challengeName: challenge.name, challengeDescription: challenge.description },
       {
         onSuccess: () => {
           const newProg = uc.progress + 1;
@@ -79,8 +79,9 @@ export default function Challenges() {
         onError: (err: Error) => {
           if (err.message === "ALREADY_CHECKED_IN") {
             toast({ title: "Already Checked In ⏳", description: "Come back tomorrow for your next check-in!", variant: "destructive" });
-          } else if (err.message === "INSUFFICIENT_FOCUS") {
-            toast({ title: "Focus Time Required 🎯", description: "Complete at least 1 hour of focus time today to check in for this challenge.", variant: "destructive" });
+          } else if (err.message.startsWith("INSUFFICIENT_FOCUS")) {
+            const hours = err.message.split(":")[1] || "1";
+            toast({ title: "Focus Time Required 🎯", description: `Complete at least ${hours} hours of focus time today to check in for this challenge.`, variant: "destructive" });
           } else {
             toast({ title: "Error", description: err.message, variant: "destructive" });
           }

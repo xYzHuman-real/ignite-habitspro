@@ -386,13 +386,14 @@ export function useChallenges() {
   });
 
   const checkIn = useMutation({
-    mutationFn: async ({ userChallengeId, currentProgress, targetDays, lastCheckinDate, challengeName }: { 
-      userChallengeId: string; currentProgress: number; targetDays: number; lastCheckinDate: string | null; challengeName: string;
+    mutationFn: async ({ userChallengeId, currentProgress, targetDays, lastCheckinDate, challengeName, challengeDescription }: { 
+      userChallengeId: string; currentProgress: number; targetDays: number; lastCheckinDate: string | null; challengeName: string; challengeDescription?: string;
     }) => {
       if (!user) throw new Error("Not authenticated");
 
-      // Prevent same-day double check-in
-      const today = new Date().toISOString().split("T")[0];
+      // Prevent same-day double check-in using local date
+      const now = new Date();
+      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
       if (lastCheckinDate === today) {
         throw new Error("ALREADY_CHECKED_IN");
       }
@@ -400,14 +401,24 @@ export function useChallenges() {
       // For study-related challenges, validate focus timer usage today
       const isStudyChallenge = challengeName.toLowerCase().includes("study") || challengeName.toLowerCase().includes("focus") || challengeName.toLowerCase().includes("pomodoro");
       if (isStudyChallenge) {
+        // Extract required hours from description (e.g. "2 hours", "1.5 hours", "3-hour")
+        let requiredMinutes = 60; // default 1 hour
+        if (challengeDescription) {
+          const hourMatch = challengeDescription.match(/(\d+\.?\d*)\s*[-\s]?hour/i);
+          if (hourMatch) {
+            requiredMinutes = Math.round(parseFloat(hourMatch[1]) * 60);
+          }
+        }
+
         const { data: todaySessions } = await supabase
           .from("pomodoro_sessions")
           .select("duration_minutes")
           .eq("user_id", user.id)
           .gte("created_at", today);
         const totalMinutes = (todaySessions || []).reduce((sum, s) => sum + s.duration_minutes, 0);
-        if (totalMinutes < 60) {
-          throw new Error("INSUFFICIENT_FOCUS");
+        if (totalMinutes < requiredMinutes) {
+          const requiredHours = requiredMinutes / 60;
+          throw new Error(`INSUFFICIENT_FOCUS:${requiredHours}`);
         }
       }
 
