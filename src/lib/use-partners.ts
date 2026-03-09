@@ -105,14 +105,55 @@ export function usePartners() {
   const nudgePartner = useMutation({
     mutationFn: async ({ partnerId, partnerName }: { partnerId: string; partnerName: string }) => {
       if (!user) throw new Error("Not authenticated");
+
+      // 1-hour cooldown: check last nudge sent to this partner
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+      const { data: recentNudges } = await supabase
+        .from("notifications")
+        .select("id")
+        .eq("user_id", partnerId)
+        .eq("type", "nudge")
+        .gte("created_at", oneHourAgo)
+        .limit(1);
+
+      if (recentNudges && recentNudges.length > 0) {
+        throw new Error("COOLDOWN");
+      }
+
+      // Get sender's display name
+      const { data: senderProfile } = await supabase
+        .from("profiles")
+        .select("display_name")
+        .eq("user_id", user.id)
+        .single();
+      const senderName = senderProfile?.display_name || "Your partner";
+
+      const title = "👋 Nudge!";
+      const message = `${senderName} nudged you — don't break your streak!`;
+
+      // Insert in-app notification
       await supabase.from("notifications").insert({
         user_id: partnerId,
         type: "nudge",
-        title: "👋 Nudge!",
-        message: `Your accountability partner is checking in — don't break your streak!`,
+        title,
+        message,
         icon: "👋",
         action_url: "/habits",
       });
+
+      // Send push notification
+      try {
+        await supabase.functions.invoke("send-push", {
+          body: {
+            user_id: partnerId,
+            title,
+            body: message,
+            data: { action_url: "/habits" },
+          },
+        });
+      } catch (e) {
+        console.error("Failed to send push for nudge:", e);
+      }
     },
     onSuccess: () => {},
   });
