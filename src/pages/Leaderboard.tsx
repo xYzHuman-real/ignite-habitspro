@@ -49,6 +49,7 @@ function FollowButton({ userId }: { userId: string }) {
 export default function Leaderboard() {
   const { data: users = [], isLoading } = useLeaderboard();
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   if (isLoading) {
     return (
