@@ -107,7 +107,7 @@ export default function TimerPage() {
   };
 
   const applyCustomTime = () => {
-    const clamped = Math.max(1, Math.min(480, customMinutes));
+    const clamped = Math.max(1, Math.min(240, customMinutes));
     setCustomMinutes(clamped);
     const dur = clamped * 60;
     setTimeLeft(dur);
@@ -194,7 +194,7 @@ export default function TimerPage() {
               <Input
                 type="number"
                 min={1}
-                max={480}
+                max={240}
                 value={customMinutes}
                 onChange={(e) => setCustomMinutes(parseInt(e.target.value) || 1)}
                 className="w-24"
