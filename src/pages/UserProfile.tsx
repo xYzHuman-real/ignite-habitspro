@@ -87,7 +87,7 @@ export default function UserProfile() {
         <Card className="p-6">
           <div className="flex flex-col sm:flex-row items-center gap-5">
             <Avatar className="w-24 h-24 border-4 border-primary shadow-glow-primary">
-              {profile.avatar_url && <AvatarImage src={profile.avatar_url} alt={profile.display_name} />}
+              {showAvatar && profile.avatar_url && <AvatarImage src={profile.avatar_url} alt={profile.display_name} />}
               <AvatarFallback className="bg-gradient-primary text-primary-foreground font-display text-2xl font-bold">
                 {avatarText}
               </AvatarFallback>
