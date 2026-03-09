@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Users, MessageCircle, Send } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -8,23 +8,136 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useCommunityGroups } from "@/lib/supabase-hooks";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
 import { Skeleton } from "@/components/ui/skeleton";
 
+interface ChatMessage {
+  id: string;
+  message: string;
+  user_id: string;
+  created_at: string;
+  display_name?: string;
+}
+
+function useChatMessages(groupId: string | null) {
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!groupId) {
+      setMessages([]);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadMessages() {
+      setLoading(true);
+      const { data } = await supabase
+        .from("community_messages")
+        .select("*")
+        .eq("group_id", groupId)
+        .order("created_at", { ascending: true })
+        .limit(100);
+
+      if (cancelled) return;
+
+      if (data && data.length > 0) {
+        // Fetch display names for message authors
+        const userIds = [...new Set(data.map((m) => m.user_id))];
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("user_id, display_name")
+          .in("user_id", userIds);
+
+        const profileMap = new Map((profiles || []).map((p) => [p.user_id, p.display_name]));
+
+        if (!cancelled) {
+          setMessages(
+            data.map((m) => ({
+              ...m,
+              display_name: profileMap.get(m.user_id) || "User",
+            }))
+          );
+        }
+      } else {
+        if (!cancelled) setMessages([]);
+      }
+      if (!cancelled) setLoading(false);
+    }
+
+    loadMessages();
+
+    // Realtime subscription filtered by group_id
+    const channel = supabase
+      .channel(`community-chat:${groupId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "community_messages",
+          filter: `group_id=eq.${groupId}`,
+        },
+        async (payload) => {
+          const newMsg = payload.new as any;
+          // Fetch sender display name
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("display_name")
+            .eq("user_id", newMsg.user_id)
+            .single();
+
+          if (!cancelled) {
+            setMessages((prev) => {
+              // Avoid duplicates
+              if (prev.find((m) => m.id === newMsg.id)) return prev;
+              return [
+                ...prev,
+                { ...newMsg, display_name: profile?.display_name || "User" },
+              ];
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      channel.unsubscribe();
+    };
+  }, [groupId]);
+
+  return { messages, loading };
+}
+
 export default function Community() {
+  const { user } = useAuth();
   const { groups, memberships, joinGroup, leaveGroup } = useCommunityGroups();
   const [chatGroupId, setChatGroupId] = useState<string | null>(null);
-  const [localMessages, setLocalMessages] = useState<Record<string, { text: string; time: string }[]>>({});
   const [newMessage, setNewMessage] = useState("");
+  const { messages, loading: messagesLoading } = useChatMessages(chatGroupId);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const chatGroup = groups.find((g) => g.id === chatGroupId);
 
-  const sendMessage = () => {
-    if (!newMessage.trim() || !chatGroupId) return;
-    setLocalMessages((prev) => ({
-      ...prev,
-      [chatGroupId]: [...(prev[chatGroupId] || []), { text: newMessage, time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) }],
-    }));
+  // Auto-scroll to bottom on new messages
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  const sendMessage = async () => {
+    if (!newMessage.trim() || !chatGroupId || !user) return;
+    const text = newMessage.trim();
     setNewMessage("");
+    await supabase.from("community_messages").insert({
+      group_id: chatGroupId,
+      user_id: user.id,
+      message: text,
+    });
   };
 
   if (groups.length === 0) {
@@ -91,26 +204,49 @@ export default function Community() {
               {chatGroup?.icon} {chatGroup?.name}
             </DialogTitle>
           </DialogHeader>
-          <ScrollArea className="flex-1 min-h-0 max-h-[50vh] pr-3">
+          <ScrollArea className="flex-1 min-h-0 max-h-[50vh] pr-3" ref={scrollRef}>
             <div className="space-y-3 py-2">
-              {(localMessages[chatGroupId || ""] || []).map((msg, i) => (
-                <div key={i} className="flex gap-2 flex-row-reverse">
-                  <Avatar className="w-8 h-8 shrink-0">
-                    <AvatarFallback className="text-xs bg-gradient-primary text-primary-foreground">You</AvatarFallback>
-                  </Avatar>
-                  <div className="max-w-[70%] text-right">
-                    <span className="text-xs text-muted-foreground">{msg.time}</span>
-                    <div className="rounded-2xl px-3 py-2 text-sm bg-gradient-primary text-primary-foreground rounded-tr-sm">
-                      {msg.text}
-                    </div>
-                  </div>
+              {messagesLoading && (
+                <div className="text-center py-4">
+                  <div className="animate-spin w-5 h-5 border-2 border-primary border-t-transparent rounded-full mx-auto" />
                 </div>
-              ))}
-              {(!localMessages[chatGroupId || ""] || localMessages[chatGroupId || ""].length === 0) && (
+              )}
+              {!messagesLoading && messages.length === 0 && (
                 <p className="text-center text-muted-foreground text-sm py-8">
                   No messages yet. Start the conversation! 💬
                 </p>
               )}
+              {messages.map((msg) => {
+                const isMe = msg.user_id === user?.id;
+                return (
+                  <div key={msg.id} className={`flex gap-2 ${isMe ? "flex-row-reverse" : ""}`}>
+                    <Avatar className="w-8 h-8 shrink-0">
+                      <AvatarFallback className={`text-xs ${isMe ? "bg-gradient-primary text-primary-foreground" : "bg-muted"}`}>
+                        {(msg.display_name || "U")[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className={`max-w-[70%] ${isMe ? "text-right" : "text-left"}`}>
+                      <div className="flex items-center gap-1 mb-0.5">
+                        <span className={`text-xs font-medium ${isMe ? "ml-auto" : ""}`}>
+                          {isMe ? "You" : msg.display_name}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                      </div>
+                      <div
+                        className={`rounded-2xl px-3 py-2 text-sm ${
+                          isMe
+                            ? "bg-gradient-primary text-primary-foreground rounded-tr-sm"
+                            : "bg-muted rounded-tl-sm"
+                        }`}
+                      >
+                        {msg.message}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </ScrollArea>
           <div className="flex gap-2 pt-2 border-t">
