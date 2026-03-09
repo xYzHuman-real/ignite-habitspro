@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, Pause, RotateCcw, Volume2, VolumeX, Timer, Music } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { usePomodoroSessions } from "@/lib/supabase-hooks";
 
 type Mode = "focus" | "shortBreak" | "longBreak" | "custom";
@@ -26,17 +26,59 @@ const SOUNDS = [
   { name: "Coffee Shop ☕", url: "https://cdn.pixabay.com/audio/2022/10/30/audio_a583db4755.mp3" },
 ];
 
+const TIMER_STORAGE_KEY = "timer_state";
+
+interface TimerState {
+  endTime: number; // timestamp when timer should end
+  mode: Mode;
+  customMinutes: number;
+  initialSeconds: number;
+  soundIdx: number;
+}
+
+function saveTimerState(state: TimerState | null) {
+  if (state) {
+    localStorage.setItem(TIMER_STORAGE_KEY, JSON.stringify(state));
+  } else {
+    localStorage.removeItem(TIMER_STORAGE_KEY);
+  }
+}
+
+function loadTimerState(): TimerState | null {
+  try {
+    const stored = localStorage.getItem(TIMER_STORAGE_KEY);
+    if (!stored) return null;
+    const state: TimerState = JSON.parse(stored);
+    if (state.endTime <= Date.now()) return null; // expired
+    return state;
+  } catch {
+    return null;
+  }
+}
+
 export default function TimerPage() {
-  const [mode, setMode] = useState<Mode>("focus");
-  const [customMinutes, setCustomMinutes] = useState(60);
-  const [initialSeconds, setInitialSeconds] = useState(PRESET_MODES.focus.minutes * 60);
-  const [timeLeft, setTimeLeft] = useState(PRESET_MODES.focus.minutes * 60);
-  const [isRunning, setIsRunning] = useState(false);
-  const [focusMode, setFocusMode] = useState(false);
-  const [soundIdx, setSoundIdx] = useState(0);
+  const savedState = useRef(loadTimerState());
+  const [mode, setMode] = useState<Mode>(savedState.current?.mode || "focus");
+  const [customMinutes, setCustomMinutes] = useState(savedState.current?.customMinutes || 60);
+  const [initialSeconds, setInitialSeconds] = useState(
+    savedState.current?.initialSeconds || PRESET_MODES.focus.minutes * 60
+  );
+  const [timeLeft, setTimeLeft] = useState(() => {
+    if (savedState.current) {
+      return Math.max(0, Math.ceil((savedState.current.endTime - Date.now()) / 1000));
+    }
+    return PRESET_MODES.focus.minutes * 60;
+  });
+  const [isRunning, setIsRunning] = useState(!!savedState.current);
+  const [focusMode, setFocusMode] = useState(
+    savedState.current ? (savedState.current.mode === "focus" || savedState.current.mode === "custom") : false
+  );
+  const [soundIdx, setSoundIdx] = useState(savedState.current?.soundIdx || 0);
   const [showSounds, setShowSounds] = useState(false);
+  const [confirmSwitch, setConfirmSwitch] = useState<Mode | null>(null);
   const intervalRef = useRef<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const endTimeRef = useRef<number>(savedState.current?.endTime || 0);
   const { sessions, addSession } = usePomodoroSessions();
 
   const todaySessions = sessions.filter((s) => s.session_type === "focus").length;
@@ -44,71 +86,108 @@ export default function TimerPage() {
     .filter((s) => s.session_type === "focus")
     .reduce((sum, s) => sum + s.duration_minutes, 0);
 
-  const getModeDuration = () => {
-    if (mode === "custom") return customMinutes * 60;
-    return PRESET_MODES[mode].minutes * 60;
-  };
-
+  // Background-safe timer: use endTime instead of decrementing
   useEffect(() => {
-    if (isRunning && timeLeft > 0) {
-      intervalRef.current = window.setInterval(() => {
-        setTimeLeft((t) => t - 1);
-      }, 1000);
-    } else if (timeLeft === 0 && isRunning) {
-      setIsRunning(false);
-      setFocusMode(false);
-      const durationMinutes = mode === "custom" ? customMinutes : PRESET_MODES[mode as Exclude<Mode, "custom">].minutes;
-      if (mode === "focus" || mode === "custom") {
-        addSession({ duration_minutes: durationMinutes, session_type: "focus" });
-      }
-      stopSound();
+    if (isRunning) {
+      const tick = () => {
+        const remaining = Math.max(0, Math.ceil((endTimeRef.current - Date.now()) / 1000));
+        setTimeLeft(remaining);
+        if (remaining <= 0) {
+          setIsRunning(false);
+          setFocusMode(false);
+          saveTimerState(null);
+          const durationMinutes = mode === "custom" ? customMinutes : PRESET_MODES[mode as Exclude<Mode, "custom">].minutes;
+          if (mode === "focus" || mode === "custom") {
+            addSession({ duration_minutes: durationMinutes, session_type: "focus" });
+          }
+          stopSound();
+        }
+      };
+      tick();
+      intervalRef.current = window.setInterval(tick, 1000);
     }
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [isRunning, timeLeft, mode]);
+  }, [isRunning, mode, customMinutes]);
 
-  const playSound = (idx: number) => {
-    stopSound();
-    if (SOUNDS[idx].url) {
-      audioRef.current = new Audio(SOUNDS[idx].url);
-      audioRef.current.loop = true;
-      audioRef.current.volume = 0.3;
-      audioRef.current.play().catch(() => {});
+  // Resume sound on mount if timer was running
+  useEffect(() => {
+    if (isRunning && soundIdx > 0 && SOUNDS[soundIdx]?.url) {
+      playSound(soundIdx);
     }
-  };
+    return () => stopSound();
+  }, []);
 
-  const stopSound = () => {
+  const playSound = useCallback((idx: number) => {
+    // Stop any existing sound first
     if (audioRef.current) {
       audioRef.current.pause();
+      audioRef.current.src = "";
       audioRef.current = null;
     }
-  };
+    if (idx > 0 && SOUNDS[idx]?.url) {
+      const audio = new Audio(SOUNDS[idx].url);
+      audio.loop = true;
+      audio.volume = 0.3;
+      audio.play().catch(() => {});
+      audioRef.current = audio;
+    }
+  }, []);
+
+  const stopSound = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = "";
+      audioRef.current = null;
+    }
+  }, []);
 
   const toggleSound = (idx: number) => {
     setSoundIdx(idx);
-    if (isRunning) playSound(idx);
+    if (isRunning) {
+      playSound(idx);
+      // Update saved state with new sound
+      if (endTimeRef.current > Date.now()) {
+        saveTimerState({ endTime: endTimeRef.current, mode, customMinutes, initialSeconds, soundIdx: idx });
+      }
+    }
   };
 
   const startTimer = () => {
+    const endTime = Date.now() + timeLeft * 1000;
+    endTimeRef.current = endTime;
     setIsRunning(true);
     if (mode === "focus" || mode === "custom") setFocusMode(true);
-    if (SOUNDS[soundIdx].url) playSound(soundIdx);
+    saveTimerState({ endTime, mode, customMinutes, initialSeconds, soundIdx });
+    if (SOUNDS[soundIdx]?.url) playSound(soundIdx);
   };
 
   const pauseTimer = () => {
     setIsRunning(false);
+    saveTimerState(null);
     stopSound();
   };
 
-  const switchMode = (m: Mode) => {
+  const attemptSwitchMode = (m: Mode) => {
+    // If custom timer is running, show confirmation
+    if (isRunning && mode === "custom" && m !== "custom") {
+      setConfirmSwitch(m);
+      return;
+    }
+    doSwitchMode(m);
+  };
+
+  const doSwitchMode = (m: Mode) => {
     setMode(m);
     const dur = m === "custom" ? customMinutes * 60 : PRESET_MODES[m].minutes * 60;
     setTimeLeft(dur);
     setInitialSeconds(dur);
     setIsRunning(false);
     setFocusMode(false);
+    saveTimerState(null);
     stopSound();
+    setConfirmSwitch(null);
   };
 
   const applyCustomTime = () => {
@@ -120,11 +199,12 @@ export default function TimerPage() {
   };
 
   const reset = () => {
-    const dur = getModeDuration();
+    const dur = mode === "custom" ? customMinutes * 60 : PRESET_MODES[mode as Exclude<Mode, "custom">].minutes * 60;
     setTimeLeft(dur);
     setInitialSeconds(dur);
     setIsRunning(false);
     setFocusMode(false);
+    saveTimerState(null);
     stopSound();
   };
 
@@ -153,7 +233,7 @@ export default function TimerPage() {
             key={m}
             variant={mode === m ? "default" : "outline"}
             size="sm"
-            onClick={() => switchMode(m)}
+            onClick={() => attemptSwitchMode(m)}
             className={mode === m ? "bg-gradient-primary text-primary-foreground" : ""}
           >
             {PRESET_MODES[m].label}
@@ -162,12 +242,30 @@ export default function TimerPage() {
         <Button
           variant={mode === "custom" ? "default" : "outline"}
           size="sm"
-          onClick={() => switchMode("custom")}
+          onClick={() => attemptSwitchMode("custom")}
           className={mode === "custom" ? "bg-gradient-primary text-primary-foreground" : ""}
         >
           <Timer className="h-3.5 w-3.5 mr-1" /> Custom
         </Button>
       </div>
+
+      {/* Custom timer switch confirmation */}
+      <AlertDialog open={!!confirmSwitch} onOpenChange={(o) => !o && setConfirmSwitch(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display">Stop Custom Session?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You are currently in a Custom Focus Session. Do you want to stop this session and start a break?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>No, Continue</AlertDialogCancel>
+            <AlertDialogAction onClick={() => confirmSwitch && doSwitchMode(confirmSwitch)} className="bg-gradient-primary text-primary-foreground">
+              Yes, Switch
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Custom time input */}
       <AnimatePresence>

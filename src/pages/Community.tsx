@@ -4,6 +4,7 @@ import { Users, MessageCircle, Send } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -44,7 +45,6 @@ function useChatMessages(groupId: string | null) {
       if (cancelled) return;
 
       if (data && data.length > 0) {
-        // Fetch display names for message authors
         const userIds = [...new Set(data.map((m) => m.user_id))];
         const { data: profiles } = await supabase
           .from("profiles")
@@ -69,7 +69,6 @@ function useChatMessages(groupId: string | null) {
 
     loadMessages();
 
-    // Realtime subscription filtered by group_id
     const channel = supabase
       .channel(`community-chat:${groupId}`)
       .on(
@@ -82,7 +81,6 @@ function useChatMessages(groupId: string | null) {
         },
         async (payload) => {
           const newMsg = payload.new as any;
-          // Fetch sender display name
           const { data: profile } = await supabase
             .from("profiles")
             .select("display_name")
@@ -91,7 +89,6 @@ function useChatMessages(groupId: string | null) {
 
           if (!cancelled) {
             setMessages((prev) => {
-              // Avoid duplicates
               if (prev.find((m) => m.id === newMsg.id)) return prev;
               return [
                 ...prev,
@@ -117,12 +114,12 @@ export default function Community() {
   const { groups, memberships, joinGroup, leaveGroup } = useCommunityGroups();
   const [chatGroupId, setChatGroupId] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState("");
+  const [activeTab, setActiveTab] = useState("join");
   const { messages, loading: messagesLoading } = useChatMessages(chatGroupId);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const chatGroup = groups.find((g) => g.id === chatGroupId);
 
-  // Auto-scroll to bottom on new messages
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -140,6 +137,9 @@ export default function Community() {
     });
   };
 
+  const joinedGroups = groups.filter((g) => memberships.includes(g.id));
+  const availableGroups = groups.filter((g) => !memberships.includes(g.id));
+
   if (groups.length === 0) {
     return (
       <div className="max-w-3xl mx-auto space-y-4">
@@ -151,6 +151,40 @@ export default function Community() {
     );
   }
 
+  const renderGroupCard = (group: typeof groups[0], joined: boolean, i: number) => (
+    <motion.div key={group.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+      <Card className={`p-5 space-y-3 ${joined ? "border-primary/30" : ""}`}>
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-3xl">{group.icon}</span>
+            <div>
+              <h3 className="font-display font-semibold">{group.name}</h3>
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Users className="h-3 w-3" /> {group.member_count.toLocaleString()} members
+              </p>
+            </div>
+          </div>
+        </div>
+        <p className="text-sm text-muted-foreground">{group.description}</p>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            className={joined ? "" : "bg-gradient-primary text-primary-foreground"}
+            variant={joined ? "outline" : "default"}
+            onClick={() => joined ? leaveGroup(group.id) : joinGroup(group.id)}
+          >
+            {joined ? "Leave" : "Join"}
+          </Button>
+          {joined && (
+            <Button size="sm" variant="ghost" onClick={() => setChatGroupId(group.id)}>
+              <MessageCircle className="h-4 w-4 mr-1" /> Chat
+            </Button>
+          )}
+        </div>
+      </Card>
+    </motion.div>
+  );
+
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div>
@@ -158,44 +192,38 @@ export default function Community() {
         <p className="text-muted-foreground">Join groups and stay accountable together</p>
       </div>
 
-      <div className="grid sm:grid-cols-2 gap-4">
-        {groups.map((group, i) => {
-          const joined = memberships.includes(group.id);
-          return (
-            <motion.div key={group.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-              <Card className={`p-5 space-y-3 ${joined ? "border-primary/30" : ""}`}>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-3xl">{group.icon}</span>
-                    <div>
-                      <h3 className="font-display font-semibold">{group.name}</h3>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Users className="h-3 w-3" /> {group.member_count.toLocaleString()} members
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <p className="text-sm text-muted-foreground">{group.description}</p>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    className={joined ? "" : "bg-gradient-primary text-primary-foreground"}
-                    variant={joined ? "outline" : "default"}
-                    onClick={() => joined ? leaveGroup(group.id) : joinGroup(group.id)}
-                  >
-                    {joined ? "Leave" : "Join"}
-                  </Button>
-                  {joined && (
-                    <Button size="sm" variant="ghost" onClick={() => setChatGroupId(group.id)}>
-                      <MessageCircle className="h-4 w-4 mr-1" /> Chat
-                    </Button>
-                  )}
-                </div>
-              </Card>
-            </motion.div>
-          );
-        })}
-      </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="w-full">
+          <TabsTrigger value="join" className="flex-1">Join ({availableGroups.length})</TabsTrigger>
+          <TabsTrigger value="joined" className="flex-1">Joined ({joinedGroups.length})</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="join" className="mt-4">
+          {availableGroups.length === 0 ? (
+            <Card className="p-8 text-center">
+              <Users className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
+              <p className="text-muted-foreground">You've joined all available communities!</p>
+            </Card>
+          ) : (
+            <div className="grid sm:grid-cols-2 gap-4">
+              {availableGroups.map((group, i) => renderGroupCard(group, false, i))}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="joined" className="mt-4">
+          {joinedGroups.length === 0 ? (
+            <Card className="p-8 text-center">
+              <Users className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
+              <p className="text-muted-foreground">You haven't joined any communities yet. Browse the "Join" tab!</p>
+            </Card>
+          ) : (
+            <div className="grid sm:grid-cols-2 gap-4">
+              {joinedGroups.map((group, i) => renderGroupCard(group, true, i))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
 
       <Dialog open={!!chatGroupId} onOpenChange={(open) => !open && setChatGroupId(null)}>
         <DialogContent className="sm:max-w-lg max-h-[80vh] flex flex-col">
