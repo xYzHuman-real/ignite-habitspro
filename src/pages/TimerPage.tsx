@@ -194,7 +194,7 @@ export default function TimerPage() {
               <Input
                 type="number"
                 min={1}
-                max={480}
+                max={240}
                 value={customMinutes}
                 onChange={(e) => setCustomMinutes(parseInt(e.target.value) || 1)}
                 className="w-24"
