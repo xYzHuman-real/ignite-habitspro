@@ -52,9 +52,7 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarContent>
         <div className="p-4 flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-primary flex items-center justify-center text-primary-foreground font-display font-bold text-sm shadow-glow-primary">
-            H
-          </div>
+          <img src={appLogo} alt="Ignite HabitPro" className="w-8 h-8 rounded-lg shadow-glow-primary" />
           {!collapsed && (
             <span className="font-display font-bold text-lg">Ignite HabitPro</span>
           )}
