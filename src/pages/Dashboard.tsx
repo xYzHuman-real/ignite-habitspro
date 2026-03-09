@@ -64,7 +64,7 @@ export default function Dashboard() {
   const stats = [
     { label: "Best Streak", value: String(maxStreak), icon: Flame, gradient: "bg-gradient-accent", glow: "shadow-glow-accent" },
     { label: "Habits Today", value: `${completedHabits}/${habits.length}`, icon: Target, gradient: "bg-gradient-primary", glow: "shadow-glow-primary" },
-    { label: "Tasks Done", value: `${completedTodos}/${todos.length}`, icon: CheckCircle2, gradient: "bg-gradient-success", glow: "" },
+    { label: "Tasks Done", value: `${completedTodos}/${todayTodos.length}`, icon: CheckCircle2, gradient: "bg-gradient-success", glow: "" },
     { label: "Daily Score", value: `${weeklyScore}%`, icon: TrendingUp, gradient: "bg-gradient-primary", glow: "shadow-glow-primary" },
   ];
 
