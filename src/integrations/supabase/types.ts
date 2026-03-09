@@ -585,6 +585,9 @@ export type Database = {
           id: string
           leaderboard_points: number
           pomodoro_sessions_count: number
+          show_avatar: boolean
+          show_profile: boolean
+          show_stats: boolean
           streak_freezes: number
           title: string
           total_streak: number
@@ -602,6 +605,9 @@ export type Database = {
           id?: string
           leaderboard_points?: number
           pomodoro_sessions_count?: number
+          show_avatar?: boolean
+          show_profile?: boolean
+          show_stats?: boolean
           streak_freezes?: number
           title?: string
           total_streak?: number
@@ -619,6 +625,9 @@ export type Database = {
           id?: string
           leaderboard_points?: number
           pomodoro_sessions_count?: number
+          show_avatar?: boolean
+          show_profile?: boolean
+          show_stats?: boolean
           streak_freezes?: number
           title?: string
           total_streak?: number

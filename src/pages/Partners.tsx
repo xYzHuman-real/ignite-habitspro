@@ -179,7 +179,7 @@ export default function Partners() {
                 {pendingIncoming.map((p) => (
                   <div key={p.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
                     <Avatar className="h-10 w-10">
-                      {p.partner_profile?.avatar_url && <AvatarImage src={p.partner_profile.avatar_url} alt={p.partner_profile?.display_name || "Partner"} />}
+                      {p.partner_profile?.show_avatar !== false && p.partner_profile?.avatar_url && <AvatarImage src={p.partner_profile.avatar_url} alt={p.partner_profile?.display_name || "Partner"} />}
                       <AvatarFallback className="bg-gradient-primary text-primary-foreground text-sm font-bold">
                         {(p.partner_profile?.display_name || "?")[0]}
                       </AvatarFallback>
@@ -216,7 +216,7 @@ export default function Partners() {
             {pendingOutgoing.map((p) => (
               <div key={p.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
                 <Avatar className="h-9 w-9">
-                  {p.partner_profile?.avatar_url && <AvatarImage src={p.partner_profile.avatar_url} alt={p.partner_profile?.display_name || "Partner"} />}
+                  {p.partner_profile?.show_avatar !== false && p.partner_profile?.avatar_url && <AvatarImage src={p.partner_profile.avatar_url} alt={p.partner_profile?.display_name || "Partner"} />}
                   <AvatarFallback className="text-xs">{(p.partner_profile?.display_name || "?")[0]}</AvatarFallback>
                 </Avatar>
                 <span className="flex-1 text-sm truncate">{p.partner_profile?.display_name || "Unknown"}</span>
@@ -256,7 +256,7 @@ export default function Partners() {
                     <div className="p-5">
                       <div className="flex items-start gap-4">
                         <Avatar className="h-12 w-12 cursor-pointer" onClick={() => navigate(`/user/${partnerId}`)}>
-                          {profile?.avatar_url && <AvatarImage src={profile.avatar_url} alt={name} />}
+                          {profile?.show_avatar !== false && profile?.avatar_url && <AvatarImage src={profile.avatar_url} alt={name} />}
                           <AvatarFallback className="bg-gradient-primary text-primary-foreground font-bold text-lg">
                             {name[0]}
                           </AvatarFallback>
@@ -268,17 +268,19 @@ export default function Partners() {
                               🤝 Shared Streak: {p.shared_streak}
                             </Badge>
                           </div>
-                          <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <Flame className="h-3.5 w-3.5 text-primary" /> {profile?.total_streak || 0} streak
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Trophy className="h-3.5 w-3.5 text-accent" /> {profile?.leaderboard_points || 0} pts
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Target className="h-3.5 w-3.5" /> {profile?.habits_completed || 0} done
-                            </span>
-                          </div>
+                          {profile?.show_stats !== false && (
+                            <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                <Flame className="h-3.5 w-3.5 text-primary" /> {profile?.total_streak || 0} streak
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Trophy className="h-3.5 w-3.5 text-accent" /> {profile?.leaderboard_points || 0} pts
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Target className="h-3.5 w-3.5" /> {profile?.habits_completed || 0} done
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </div>
                       <Separator className="my-4" />

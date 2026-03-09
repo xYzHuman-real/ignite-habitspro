@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { CalendarDays, Flame, UserPlus, Edit3, Check, LogOut, Shield, Coins, Gift, Trash2, Download, Camera } from "lucide-react";
+import { CalendarDays, Flame, UserPlus, Edit3, Check, LogOut, Shield, Coins, Gift, Trash2, Download, Camera, Eye, EyeOff } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,8 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useProfile, useBadges, useActivityLog, useFollowers, useDailyLogin } from "@/lib/supabase-hooks";
 import { useAuth } from "@/lib/auth";
@@ -387,6 +389,63 @@ export default function Profile() {
               <Download className="h-4 w-4 mr-1" />
               {exporting ? "Exporting..." : "Export All Data"}
             </Button>
+          </Card>
+        </motion.div>
+      )}
+
+      {!editing && (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+          <Card className="p-5">
+            <h2 className="font-display font-semibold text-lg mb-1 flex items-center gap-2">
+              <Eye className="h-5 w-5 text-primary" /> Privacy Settings
+            </h2>
+            <p className="text-sm text-muted-foreground mb-4">Control what other users can see on your profile.</p>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="show-avatar" className="flex items-center gap-2 cursor-pointer">
+                  <Camera className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">Profile Picture</p>
+                    <p className="text-xs text-muted-foreground">Show your avatar to other users</p>
+                  </div>
+                </Label>
+                <Switch
+                  id="show-avatar"
+                  checked={(profile as any).show_avatar !== false}
+                  onCheckedChange={(checked) => updateProfile({ show_avatar: checked })}
+                />
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between">
+                <Label htmlFor="show-stats" className="flex items-center gap-2 cursor-pointer">
+                  <Flame className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">Stats & Streaks</p>
+                    <p className="text-xs text-muted-foreground">Show streak, points, and completed habits</p>
+                  </div>
+                </Label>
+                <Switch
+                  id="show-stats"
+                  checked={(profile as any).show_stats !== false}
+                  onCheckedChange={(checked) => updateProfile({ show_stats: checked })}
+                />
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between">
+                <Label htmlFor="show-profile" className="flex items-center gap-2 cursor-pointer">
+                  <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">Profile Visibility</p>
+                    <p className="text-xs text-muted-foreground">Allow others to view your full profile</p>
+                  </div>
+                </Label>
+                <Switch
+                  id="show-profile"
+                  checked={(profile as any).show_profile !== false}
+                  onCheckedChange={(checked) => updateProfile({ show_profile: checked })}
+                />
+              </div>
+            </div>
           </Card>
         </motion.div>
       )}

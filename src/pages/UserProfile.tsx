@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Flame, UserPlus, UserMinus, Trophy, Target, CalendarDays, Coins } from "lucide-react";
+import { ArrowLeft, Flame, UserPlus, UserMinus, Trophy, Target, CalendarDays, Coins, EyeOff } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -46,6 +46,9 @@ export default function UserProfile() {
   });
 
   const isOwnProfile = user?.id === userId;
+  const showAvatar = isOwnProfile || (profile as any)?.show_avatar !== false;
+  const showStats = isOwnProfile || (profile as any)?.show_stats !== false;
+  const showProfile = isOwnProfile || (profile as any)?.show_profile !== false;
 
   if (isLoading || !profile) {
     return (
@@ -74,6 +77,21 @@ export default function UserProfile() {
     }
   };
 
+  if (!showProfile && !isOwnProfile) {
+    return (
+      <div className="max-w-2xl mx-auto space-y-6">
+        <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-1">
+          <ArrowLeft className="h-4 w-4" /> Back
+        </Button>
+        <Card className="p-8 text-center">
+          <EyeOff className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
+          <h2 className="font-display font-bold text-lg">{profile.display_name || "User"}</h2>
+          <p className="text-muted-foreground mt-1">This profile is private.</p>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-1">
@@ -84,7 +102,7 @@ export default function UserProfile() {
         <Card className="p-6">
           <div className="flex flex-col sm:flex-row items-center gap-5">
             <Avatar className="w-24 h-24 border-4 border-primary shadow-glow-primary">
-              {profile.avatar_url && <AvatarImage src={profile.avatar_url} alt={profile.display_name} />}
+              {showAvatar && profile.avatar_url && <AvatarImage src={profile.avatar_url} alt={profile.display_name} />}
               <AvatarFallback className="bg-gradient-primary text-primary-foreground font-display text-2xl font-bold">
                 {avatarText}
               </AvatarFallback>
@@ -130,37 +148,43 @@ export default function UserProfile() {
 
           <Separator className="my-5" />
 
-          <div className="grid grid-cols-4 gap-4 text-center">
-            <div>
-              <p className="text-2xl font-display font-bold">{followerCount}</p>
-              <p className="text-xs text-muted-foreground">Followers</p>
-            </div>
-            <div>
-              <p className="text-2xl font-display font-bold">{followingCount}</p>
-              <p className="text-xs text-muted-foreground">Following</p>
-            </div>
-            <div>
-              <p className="text-2xl font-display font-bold flex items-center justify-center gap-1">
-                {profile.total_streak} <Flame className="h-5 w-5 text-primary" />
-              </p>
-              <p className="text-xs text-muted-foreground">Streak</p>
-            </div>
-            <div>
-              <p className="text-2xl font-display font-bold">{profile.habits_completed}</p>
-              <p className="text-xs text-muted-foreground">Completed</p>
-            </div>
-          </div>
+          {showStats ? (
+            <>
+              <div className="grid grid-cols-4 gap-4 text-center">
+                <div>
+                  <p className="text-2xl font-display font-bold">{followerCount}</p>
+                  <p className="text-xs text-muted-foreground">Followers</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-display font-bold">{followingCount}</p>
+                  <p className="text-xs text-muted-foreground">Following</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-display font-bold flex items-center justify-center gap-1">
+                    {profile.total_streak} <Flame className="h-5 w-5 text-primary" />
+                  </p>
+                  <p className="text-xs text-muted-foreground">Streak</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-display font-bold">{profile.habits_completed}</p>
+                  <p className="text-xs text-muted-foreground">Completed</p>
+                </div>
+              </div>
 
-          <div className="mt-4 flex items-center gap-4 text-sm text-muted-foreground flex-wrap justify-center sm:justify-start">
-            <div className="flex items-center gap-1">
-              <Coins className="h-4 w-4 text-accent" />
-              <span className="font-semibold">{profile.leaderboard_points} points</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <CalendarDays className="h-3 w-3" />
-              <span>Joined {joinDate}</span>
-            </div>
-          </div>
+              <div className="mt-4 flex items-center gap-4 text-sm text-muted-foreground flex-wrap justify-center sm:justify-start">
+                <div className="flex items-center gap-1">
+                  <Coins className="h-4 w-4 text-accent" />
+                  <span className="font-semibold">{profile.leaderboard_points} points</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <CalendarDays className="h-3 w-3" />
+                  <span>Joined {joinDate}</span>
+                </div>
+              </div>
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-4">This user has hidden their stats.</p>
+          )}
         </Card>
       </motion.div>
 
