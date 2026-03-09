@@ -20,6 +20,10 @@ const SOUNDS = [
   { name: "Rain 🌧️", url: "https://cdn.pixabay.com/audio/2022/05/13/audio_257112ce99.mp3" },
   { name: "Forest 🌲", url: "https://cdn.pixabay.com/audio/2022/08/04/audio_2dae668d83.mp3" },
   { name: "White Noise", url: "https://cdn.pixabay.com/audio/2022/03/10/audio_4dedf5bf94.mp3" },
+  { name: "Lofi Chill 🎵", url: "https://cdn.pixabay.com/audio/2024/11/04/audio_4956b4edd1.mp3" },
+  { name: "Lofi Study 📚", url: "https://cdn.pixabay.com/audio/2024/09/26/audio_38cc6d8882.mp3" },
+  { name: "Piano Calm 🎹", url: "https://cdn.pixabay.com/audio/2023/10/30/audio_4ab1e7250f.mp3" },
+  { name: "Coffee Shop ☕", url: "https://cdn.pixabay.com/audio/2022/10/30/audio_a583db4755.mp3" },
 ];
 
 export default function TimerPage() {
