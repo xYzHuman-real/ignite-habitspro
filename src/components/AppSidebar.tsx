@@ -13,6 +13,7 @@ import {
   BookOpen,
   Crosshair,
 } from "lucide-react";
+import appLogo from "@/assets/app-logo.png";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import {
