@@ -77,6 +77,21 @@ export default function UserProfile() {
     }
   };
 
+  if (!showProfile && !isOwnProfile) {
+    return (
+      <div className="max-w-2xl mx-auto space-y-6">
+        <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-1">
+          <ArrowLeft className="h-4 w-4" /> Back
+        </Button>
+        <Card className="p-8 text-center">
+          <EyeOff className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
+          <h2 className="font-display font-bold text-lg">{profile.display_name || "User"}</h2>
+          <p className="text-muted-foreground mt-1">This profile is private.</p>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-1">
