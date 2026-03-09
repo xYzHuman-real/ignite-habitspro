@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { CalendarDays, Flame, UserPlus, Edit3, Check, LogOut, Shield, Coins, Gift, Trash2, Download } from "lucide-react";
+import { CalendarDays, Flame, UserPlus, Edit3, Check, LogOut, Shield, Coins, Gift, Trash2, Download, Camera } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
@@ -18,7 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function Profile() {
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const { profile, isLoading, updateProfile } = useProfile();
   const { allBadges, earnedBadgeIds } = useBadges();
   const { activities } = useActivityLog();
@@ -28,7 +28,9 @@ export default function Profile() {
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [form, setForm] = useState({ display_name: "", username: "", bio: "" });
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Auto-claim daily login on page visit
   useEffect(() => {
@@ -64,6 +66,47 @@ export default function Profile() {
     if (!form.display_name.trim()) return;
     updateProfile(form);
     setEditing(false);
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Invalid file", description: "Please select an image file.", variant: "destructive" });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "File too large", description: "Maximum size is 5MB.", variant: "destructive" });
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const filePath = `${user.id}/avatar.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("avatars")
+        .getPublicUrl(filePath);
+
+      // Add cache buster
+      const avatarUrl = `${publicUrl}?t=${Date.now()}`;
+      updateProfile({ avatar_url: avatarUrl });
+      toast({ title: "Profile picture updated! 📸" });
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+    } finally {
+      setUploadingAvatar(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   };
 
   const handleDeleteAccount = async () => {
@@ -107,15 +150,15 @@ export default function Profile() {
   const handleExportData = async () => {
     setExporting(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) throw new Error("Not authenticated");
 
       const [habitsRes, journalRes, goalsRes, todosRes, completionsRes] = await Promise.all([
-        supabase.from("habits").select("*").eq("user_id", user.id),
-        supabase.from("journal_entries").select("*").eq("user_id", user.id),
-        supabase.from("goals").select("*").eq("user_id", user.id),
-        supabase.from("todos").select("*").eq("user_id", user.id),
-        supabase.from("habit_completions").select("*").eq("user_id", user.id),
+        supabase.from("habits").select("*").eq("user_id", authUser.id),
+        supabase.from("journal_entries").select("*").eq("user_id", authUser.id),
+        supabase.from("goals").select("*").eq("user_id", authUser.id),
+        supabase.from("todos").select("*").eq("user_id", authUser.id),
+        supabase.from("habit_completions").select("*").eq("user_id", authUser.id),
       ]);
 
       if (habitsRes.data?.length) {
@@ -175,11 +218,28 @@ export default function Profile() {
           ) : (
             <>
               <div className="flex flex-col sm:flex-row items-center gap-5">
-                <Avatar className="w-24 h-24 border-4 border-primary shadow-glow-primary">
-                  <AvatarFallback className="bg-gradient-primary text-primary-foreground font-display text-2xl font-bold">
-                    {avatarText}
-                  </AvatarFallback>
-                </Avatar>
+                <div className="relative group">
+                  <Avatar className="w-24 h-24 border-4 border-primary shadow-glow-primary">
+                    {profile.avatar_url && <AvatarImage src={profile.avatar_url} alt={profile.display_name} />}
+                    <AvatarFallback className="bg-gradient-primary text-primary-foreground font-display text-2xl font-bold">
+                      {avatarText}
+                    </AvatarFallback>
+                  </Avatar>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingAvatar}
+                    className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                  >
+                    <Camera className="h-6 w-6 text-white" />
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarUpload}
+                  />
+                </div>
                 <div className="text-center sm:text-left flex-1">
                   <h1 className="text-2xl font-display font-bold">{profile.display_name || "Set up your profile"}</h1>
                   <div className="flex items-center gap-2 mt-0.5">
@@ -190,6 +250,9 @@ export default function Profile() {
                   </div>
                   <p className="text-sm mt-1">{profile.bio || "No bio yet"}</p>
                   <div className="flex gap-2 mt-3 justify-center sm:justify-start flex-wrap">
+                    <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploadingAvatar}>
+                      <Camera className="h-4 w-4 mr-1" /> {uploadingAvatar ? "Uploading..." : "Change Photo"}
+                    </Button>
                     <Button size="sm" variant="outline" onClick={startEdit}>
                       <Edit3 className="h-4 w-4 mr-1" /> Edit Profile
                     </Button>

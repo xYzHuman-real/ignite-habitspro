@@ -474,31 +474,68 @@ export function useChallenges() {
 }
 
 // ---- Followers ----
-export function useFollowers() {
+export function useFollowers(targetUserId?: string) {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const profileId = targetUserId || user?.id;
 
   const { data: followerCount = 0 } = useQuery({
-    queryKey: ["follower_count", user?.id],
+    queryKey: ["follower_count", profileId],
     queryFn: async () => {
-      if (!user) return 0;
-      const { count } = await supabase.from("followers").select("*", { count: "exact", head: true }).eq("following_id", user.id);
+      if (!profileId) return 0;
+      const { count } = await supabase.from("followers").select("*", { count: "exact", head: true }).eq("following_id", profileId);
       return count || 0;
     },
-    enabled: !!user,
+    enabled: !!profileId,
   });
 
   const { data: followingCount = 0 } = useQuery({
-    queryKey: ["following_count", user?.id],
+    queryKey: ["following_count", profileId],
     queryFn: async () => {
-      if (!user) return 0;
-      const { count } = await supabase.from("followers").select("*", { count: "exact", head: true }).eq("follower_id", user.id);
+      if (!profileId) return 0;
+      const { count } = await supabase.from("followers").select("*", { count: "exact", head: true }).eq("follower_id", profileId);
       return count || 0;
     },
-    enabled: !!user,
+    enabled: !!profileId,
   });
 
-  return { followerCount, followingCount };
+  const { data: isFollowing = false } = useQuery({
+    queryKey: ["is_following", user?.id, targetUserId],
+    queryFn: async () => {
+      if (!user || !targetUserId || user.id === targetUserId) return false;
+      const { data } = await supabase.from("followers").select("id").eq("follower_id", user.id).eq("following_id", targetUserId).single();
+      return !!data;
+    },
+    enabled: !!user && !!targetUserId && user.id !== targetUserId,
+  });
+
+  const followUser = useMutation({
+    mutationFn: async (followingId: string) => {
+      if (!user) throw new Error("Not authenticated");
+      const { error } = await supabase.from("followers").insert({ follower_id: user.id, following_id: followingId });
+      if (error) throw error;
+    },
+    onSuccess: (_, followingId) => {
+      qc.invalidateQueries({ queryKey: ["follower_count"] });
+      qc.invalidateQueries({ queryKey: ["following_count"] });
+      qc.invalidateQueries({ queryKey: ["is_following", user?.id, followingId] });
+    },
+  });
+
+  const unfollowUser = useMutation({
+    mutationFn: async (followingId: string) => {
+      if (!user) throw new Error("Not authenticated");
+      const { error } = await supabase.from("followers").delete().eq("follower_id", user.id).eq("following_id", followingId);
+      if (error) throw error;
+    },
+    onSuccess: (_, followingId) => {
+      qc.invalidateQueries({ queryKey: ["follower_count"] });
+      qc.invalidateQueries({ queryKey: ["following_count"] });
+      qc.invalidateQueries({ queryKey: ["is_following", user?.id, followingId] });
+    },
+  });
+
+  return { followerCount, followingCount, isFollowing, followUser: followUser.mutate, unfollowUser: unfollowUser.mutate };
 }
 
 // ---- Shop ----
