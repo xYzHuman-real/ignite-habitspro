@@ -74,6 +74,7 @@ function NudgeCooldownButton({ partnerId, partnerName, onNudge }: {
 }
 
 export default function Partners() {
+  const navigate = useNavigate();
   const {
     accepted,
     pendingIncoming,
