@@ -40,7 +40,39 @@ export function useHabits() {
     queryFn: async () => {
       if (!user) return [];
       const { data } = await supabase.from("habits").select("*").eq("user_id", user.id).order("created_at");
-      return data || [];
+      if (!data) return [];
+
+      // Reset habits that were completed on a previous day (local time)
+      const now = new Date();
+      const todayLocal = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
+      const staleHabits = data.filter((h) => {
+        if (!h.completed_today) return false;
+        // Check if updated_at is from a previous local day
+        const updated = new Date(h.updated_at);
+        const updatedLocal = `${updated.getFullYear()}-${String(updated.getMonth() + 1).padStart(2, "0")}-${String(updated.getDate()).padStart(2, "0")}`;
+        return updatedLocal !== todayLocal;
+      });
+
+      if (staleHabits.length > 0) {
+        // Reset stale habits in the database
+        await Promise.all(
+          staleHabits.map((h) =>
+            supabase.from("habits").update({
+              completed_today: false,
+              current: 0,
+            }).eq("id", h.id)
+          )
+        );
+        // Return corrected data
+        return data.map((h) =>
+          staleHabits.find((s) => s.id === h.id)
+            ? { ...h, completed_today: false, current: 0 }
+            : h
+        );
+      }
+
+      return data;
     },
     enabled: !!user,
   });
@@ -86,16 +118,19 @@ export function useHabits() {
       if (error) throw error;
 
       if (nowComplete) {
+        const now = new Date();
+        const localDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
         await supabase.from("habit_completions").upsert({
           user_id: user.id,
           habit_id: habit.id,
-          completed_date: new Date().toISOString().split("T")[0],
+          completed_date: localDate,
         }, { onConflict: "habit_id,completed_date" });
 
         await supabase.from("activity_log").upsert({
           user_id: user.id,
           activity_type: "habit_completion",
-          activity_date: new Date().toISOString().split("T")[0],
+          activity_date: localDate,
           count: 1,
         }, { onConflict: "user_id,activity_type,activity_date" });
 
