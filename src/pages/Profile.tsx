@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { CalendarDays, Flame, UserPlus, Edit3, Check, LogOut, Shield, Coins, Gift, Trash2, Download, Camera, Eye, EyeOff } from "lucide-react";
+import { CalendarDays, Flame, UserPlus, Edit3, Check, LogOut, Shield, Coins, Gift, Trash2, Download, Camera, Eye, EyeOff, Mail } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -482,6 +482,27 @@ export default function Profile() {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
+          </Card>
+        </motion.div>
+      )}
+
+      {/* Customer Support */}
+      {!editing && (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+          <Card className="p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <Mail className="h-5 w-5 text-primary" />
+              <h2 className="font-semibold text-lg">Customer Support</h2>
+            </div>
+            <p className="text-sm text-muted-foreground mb-3">
+              Need help or have feedback? Reach out to us anytime.
+            </p>
+            <a
+              href="mailto:support.ignitehabitproapp@gmail.com"
+              className="text-sm text-primary hover:underline font-medium"
+            >
+              support.ignitehabitproapp@gmail.com
+            </a>
           </Card>
         </motion.div>
       )}
