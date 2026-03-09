@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { usePartners } from "@/lib/use-partners";
@@ -179,6 +179,7 @@ export default function Partners() {
                 {pendingIncoming.map((p) => (
                   <div key={p.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
                     <Avatar className="h-10 w-10">
+                      {p.partner_profile?.avatar_url && <AvatarImage src={p.partner_profile.avatar_url} alt={p.partner_profile?.display_name || "Partner"} />}
                       <AvatarFallback className="bg-gradient-primary text-primary-foreground text-sm font-bold">
                         {(p.partner_profile?.display_name || "?")[0]}
                       </AvatarFallback>
@@ -215,6 +216,7 @@ export default function Partners() {
             {pendingOutgoing.map((p) => (
               <div key={p.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
                 <Avatar className="h-9 w-9">
+                  {p.partner_profile?.avatar_url && <AvatarImage src={p.partner_profile.avatar_url} alt={p.partner_profile?.display_name || "Partner"} />}
                   <AvatarFallback className="text-xs">{(p.partner_profile?.display_name || "?")[0]}</AvatarFallback>
                 </Avatar>
                 <span className="flex-1 text-sm truncate">{p.partner_profile?.display_name || "Unknown"}</span>
@@ -254,6 +256,7 @@ export default function Partners() {
                     <div className="p-5">
                       <div className="flex items-start gap-4">
                         <Avatar className="h-12 w-12 cursor-pointer" onClick={() => navigate(`/user/${partnerId}`)}>
+                          {profile?.avatar_url && <AvatarImage src={profile.avatar_url} alt={name} />}
                           <AvatarFallback className="bg-gradient-primary text-primary-foreground font-bold text-lg">
                             {name[0]}
                           </AvatarFallback>
