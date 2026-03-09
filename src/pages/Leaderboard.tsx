@@ -119,7 +119,7 @@ export default function Leaderboard() {
       <div className="space-y-2">
         {rest.map((u, i) => (
           <motion.div key={u.rank} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 + i * 0.05 }}>
-            <Card className={`p-3 flex items-center gap-4 ${u.isMe ? "border-primary/40 bg-primary/5" : ""}`}>
+            <Card className={`p-3 flex items-center gap-4 cursor-pointer hover:bg-muted/50 transition-colors ${u.isMe ? "border-primary/40 bg-primary/5" : ""}`} onClick={() => navigate(`/user/${u.userId}`)}>
               <span className="w-8 text-center font-display font-bold text-muted-foreground">#{u.rank}</span>
               <Avatar className="w-10 h-10">
                 {u.avatarUrl && <AvatarImage src={u.avatarUrl} alt={u.name} />}
