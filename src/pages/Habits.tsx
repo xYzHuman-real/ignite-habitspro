@@ -89,16 +89,31 @@ export default function Habits() {
                   onKeyDown={(e) => e.key === "Enter" && handleAdd()}
                   className="flex-1"
                 />
-                <Select value={difficulty} onValueChange={setDifficulty}>
-                  <SelectTrigger className="w-28">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="easy">Easy</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="hard">Hard</SelectItem>
-                  </SelectContent>
-                </Select>
+              </div>
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <label className="text-xs text-muted-foreground mb-1 block">Daily Target</label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={99}
+                    value={customTarget}
+                    onChange={(e) => setCustomTarget(Math.max(1, parseInt(e.target.value) || 1))}
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="text-xs text-muted-foreground mb-1 block">Difficulty</label>
+                  <Select value={difficulty} onValueChange={setDifficulty}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="easy">Easy</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="hard">Hard</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <Button onClick={handleAdd} className="w-full bg-gradient-primary text-primary-foreground">Add Custom Habit</Button>
 
