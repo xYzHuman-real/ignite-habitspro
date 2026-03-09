@@ -151,67 +151,111 @@ export default function TimerPage() {
         {(["focus", "shortBreak", "longBreak"] as const).map((m) => (
           <Button
             key={m}
-            variant={mode === m ? "default" : "outline"}
+            variant={mode === m && !showSounds ? "default" : "outline"}
             size="sm"
-            onClick={() => switchMode(m)}
-            className={mode === m ? "bg-gradient-primary text-primary-foreground" : ""}
+            onClick={() => { switchMode(m); setShowSounds(false); }}
+            className={mode === m && !showSounds ? "bg-gradient-primary text-primary-foreground" : ""}
           >
             {PRESET_MODES[m].label}
           </Button>
         ))}
         <Button
-          variant={mode === "custom" ? "default" : "outline"}
+          variant={mode === "custom" && !showSounds ? "default" : "outline"}
           size="sm"
-          onClick={() => switchMode("custom")}
-          className={mode === "custom" ? "bg-gradient-primary text-primary-foreground" : ""}
+          onClick={() => { switchMode("custom"); setShowSounds(false); }}
+          className={mode === "custom" && !showSounds ? "bg-gradient-primary text-primary-foreground" : ""}
         >
           <Timer className="h-3.5 w-3.5 mr-1" /> Custom
         </Button>
+        <Button
+          variant={showSounds ? "default" : "outline"}
+          size="sm"
+          onClick={() => setShowSounds(!showSounds)}
+          className={showSounds ? "bg-gradient-primary text-primary-foreground" : ""}
+        >
+          <Music className="h-3.5 w-3.5 mr-1" /> Sounds
+          {soundIdx > 0 && !showSounds && (
+            <span className="ml-1 w-2 h-2 rounded-full bg-success inline-block" />
+          )}
+        </Button>
       </div>
 
+      {/* Sounds panel */}
+      <AnimatePresence>
+        {showSounds && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <Card className="p-4">
+              <p className="text-sm font-medium text-muted-foreground mb-3">🎵 Choose ambient sound:</p>
+              <div className="grid grid-cols-2 gap-2">
+                {SOUNDS.map((s, i) => (
+                  <Button
+                    key={s.name}
+                    variant={soundIdx === i ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => toggleSound(i)}
+                    className={`justify-start ${soundIdx === i ? "bg-gradient-primary text-primary-foreground" : ""}`}
+                  >
+                    {soundIdx === i && i > 0 ? <Volume2 className="h-3.5 w-3.5 mr-1.5" /> : i > 0 ? <VolumeX className="h-3.5 w-3.5 mr-1.5" /> : null}
+                    {s.name}
+                  </Button>
+                ))}
+              </div>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Custom time input */}
-      {mode === "custom" && !isRunning && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: "auto" }}
-          className="overflow-hidden"
-        >
-          <Card className="p-4">
-            <p className="text-sm font-medium text-muted-foreground mb-3">Set your study duration (minutes):</p>
-            <div className="flex gap-2 flex-wrap">
-              {[30, 45, 60, 90, 120, 180].map((m) => (
-                <Button
-                  key={m}
-                  variant={customMinutes === m ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => {
-                    setCustomMinutes(m);
-                    setTimeLeft(m * 60);
-                    setInitialSeconds(m * 60);
-                  }}
-                  className={customMinutes === m ? "bg-gradient-primary text-primary-foreground" : ""}
-                >
-                  {m >= 60 ? `${m / 60}h` : `${m}m`}
+      <AnimatePresence>
+        {mode === "custom" && !isRunning && !showSounds && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <Card className="p-4">
+              <p className="text-sm font-medium text-muted-foreground mb-3">Set your study duration (minutes):</p>
+              <div className="flex gap-2 flex-wrap">
+                {[30, 45, 60, 90, 120, 180].map((m) => (
+                  <Button
+                    key={m}
+                    variant={customMinutes === m ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => {
+                      setCustomMinutes(m);
+                      setTimeLeft(m * 60);
+                      setInitialSeconds(m * 60);
+                    }}
+                    className={customMinutes === m ? "bg-gradient-primary text-primary-foreground" : ""}
+                  >
+                    {m >= 60 ? `${m / 60}h` : `${m}m`}
+                  </Button>
+                ))}
+              </div>
+              <div className="flex gap-2 mt-3">
+                <Input
+                  type="number"
+                  min={1}
+                  max={240}
+                  value={customMinutes}
+                  onChange={(e) => setCustomMinutes(parseInt(e.target.value) || 1)}
+                  className="w-24"
+                  placeholder="Minutes"
+                />
+                <Button variant="outline" size="sm" onClick={applyCustomTime}>
+                  Set Timer
                 </Button>
-              ))}
-            </div>
-            <div className="flex gap-2 mt-3">
-              <Input
-                type="number"
-                min={1}
-                max={240}
-                value={customMinutes}
-                onChange={(e) => setCustomMinutes(parseInt(e.target.value) || 1)}
-                className="w-24"
-                placeholder="Minutes"
-              />
-              <Button variant="outline" size="sm" onClick={applyCustomTime}>
-                Set Timer
-              </Button>
-            </div>
-          </Card>
-        </motion.div>
-      )}
+              </div>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <Card className="p-8 flex flex-col items-center gap-6">
         <div className="relative w-56 h-56">
@@ -256,23 +300,6 @@ export default function TimerPage() {
             <RotateCcw className="h-5 w-5" />
           </Button>
         </div>
-
-        {isFocusMode && (
-          <div className="flex flex-wrap justify-center gap-2">
-            {SOUNDS.map((s, i) => (
-              <Button
-                key={s.name}
-                variant={soundIdx === i ? "default" : "outline"}
-                size="sm"
-                onClick={() => toggleSound(i)}
-                className={soundIdx === i ? "bg-gradient-primary text-primary-foreground" : ""}
-              >
-                {soundIdx === i && i > 0 ? <Volume2 className="h-3 w-3 mr-1" /> : i > 0 ? <VolumeX className="h-3 w-3 mr-1" /> : null}
-                {s.name}
-              </Button>
-            ))}
-          </div>
-        )}
       </Card>
 
       <Card className="p-4 text-center space-y-3">
