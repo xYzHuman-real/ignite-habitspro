@@ -137,9 +137,9 @@ export default function Dashboard() {
 
         <Card className="p-5 space-y-4">
           <h2 className="font-display font-semibold text-lg">To-Do List</h2>
-          {todos.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4 text-center">No tasks yet. Add one to stay productive!</p>
-          ) : todos.slice(0, 5).map((todo) => (
+          {todayTodos.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4 text-center">No tasks for today. Add one to stay productive!</p>
+          ) : todayTodos.slice(0, 5).map((todo) => (
             <div key={todo.id} className="flex items-center gap-3">
               <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
                 todo.completed ? "bg-success border-success" : "border-muted-foreground"
