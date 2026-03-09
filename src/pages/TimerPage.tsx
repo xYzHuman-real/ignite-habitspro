@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
-import { Play, Pause, RotateCcw, Volume2, VolumeX, Timer } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Play, Pause, RotateCcw, Volume2, VolumeX, Timer, Music } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
