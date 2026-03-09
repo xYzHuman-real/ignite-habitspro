@@ -118,16 +118,19 @@ export function useHabits() {
       if (error) throw error;
 
       if (nowComplete) {
+        const now = new Date();
+        const localDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
         await supabase.from("habit_completions").upsert({
           user_id: user.id,
           habit_id: habit.id,
-          completed_date: new Date().toISOString().split("T")[0],
+          completed_date: localDate,
         }, { onConflict: "habit_id,completed_date" });
 
         await supabase.from("activity_log").upsert({
           user_id: user.id,
           activity_type: "habit_completion",
-          activity_date: new Date().toISOString().split("T")[0],
+          activity_date: localDate,
           count: 1,
         }, { onConflict: "user_id,activity_type,activity_date" });
 
