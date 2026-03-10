@@ -32,6 +32,7 @@ const queryClient = new QueryClient();
 
 function ProtectedRoutes() {
   const { user, loading } = useAuth();
+  useBackButton();
 
   if (loading) {
     return (
