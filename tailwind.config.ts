@@ -93,12 +93,17 @@ export default {
           "25%": { transform: "scale(1.1) rotate(-3deg)" },
           "75%": { transform: "scale(1.1) rotate(3deg)" },
         },
+        "float-up": {
+          "0%": { opacity: "1", transform: "translateY(0)" },
+          "100%": { opacity: "0", transform: "translateY(-40px)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "pulse-glow": "pulse-glow 2s ease-in-out infinite",
         "streak-fire": "streak-fire 1s ease-in-out infinite",
+        "float-up": "float-up 1.2s ease-out forwards",
       },
     },
   },

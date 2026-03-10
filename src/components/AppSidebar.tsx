@@ -21,32 +21,48 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const items = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Habits", url: "/habits", icon: Target },
-  { title: "Timer", url: "/timer", icon: Timer },
-  { title: "To-Do List", url: "/todos", icon: ListTodo },
-  { title: "Challenges", url: "/challenges", icon: Swords },
-  { title: "Shop", url: "/shop", icon: ShoppingBag },
-  { title: "Reports", url: "/reports", icon: BarChart3 },
-  { title: "Journal", url: "/journal", icon: BookOpen },
-  { title: "Goals", url: "/goals", icon: Crosshair },
-  { title: "Partners", url: "/partners", icon: Handshake },
-  { title: "Community", url: "/community", icon: Users },
-  { title: "Leaderboard", url: "/leaderboard", icon: Trophy },
-  { title: "Profile", url: "/profile", icon: User },
+const sections = [
+  {
+    label: "Productivity",
+    items: [
+      { title: "Dashboard", url: "/", icon: LayoutDashboard },
+      { title: "Habits", url: "/habits", icon: Target },
+      { title: "Timer", url: "/timer", icon: Timer },
+      { title: "To-Do List", url: "/todos", icon: ListTodo },
+      { title: "Journal", url: "/journal", icon: BookOpen },
+      { title: "Goals", url: "/goals", icon: Crosshair },
+    ],
+  },
+  {
+    label: "Community",
+    items: [
+      { title: "Focus Rooms", url: "/focus-rooms", icon: Users },
+      { title: "Partners", url: "/partners", icon: Handshake },
+      { title: "Community", url: "/community", icon: Users },
+      { title: "Leaderboard", url: "/leaderboard", icon: Trophy },
+    ],
+  },
+  {
+    label: "Progress & Extras",
+    items: [
+      { title: "Reports", url: "/reports", icon: BarChart3 },
+      { title: "Challenges", url: "/challenges", icon: Swords },
+      { title: "Shop", url: "/shop", icon: ShoppingBag },
+      { title: "Profile", url: "/profile", icon: User },
+    ],
+  },
 ];
 
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
-  const location = useLocation();
 
   return (
     <Sidebar collapsible="icon">
@@ -57,27 +73,30 @@ export function AppSidebar() {
             <span className="font-display font-bold text-lg">Ignite HabitPro</span>
           )}
         </div>
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {items.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      end={item.url === "/"}
-                      className="hover:bg-sidebar-accent/50 transition-colors"
-                      activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
-                    >
-                      <item.icon className="h-4 w-4 mr-2" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {sections.map((section) => (
+          <SidebarGroup key={section.label}>
+            {!collapsed && <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground/60">{section.label}</SidebarGroupLabel>}
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {section.items.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to={item.url}
+                        end={item.url === "/"}
+                        className="hover:bg-sidebar-accent/50 transition-colors"
+                        activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                      >
+                        <item.icon className="h-4 w-4 mr-2" />
+                        {!collapsed && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
     </Sidebar>
   );

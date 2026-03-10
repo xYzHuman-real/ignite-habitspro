@@ -1,11 +1,15 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, RotateCcw, Volume2, VolumeX, Timer, Music } from "lucide-react";
+import { Play, Pause, RotateCcw, Volume2, VolumeX, Timer, Music, Square } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { usePomodoroSessions } from "@/lib/supabase-hooks";
+import { SmartBreakPopup } from "@/components/SmartBreakPopup";
+import { FocusExitConfirmDialog } from "@/components/FocusModeOverlay";
+import { PageTransition } from "@/components/PageTransition";
+import { useNavigate } from "react-router-dom";
 
 type Mode = "focus" | "shortBreak" | "longBreak" | "custom";
 
@@ -29,7 +33,7 @@ const SOUNDS = [
 const TIMER_STORAGE_KEY = "timer_state";
 
 interface TimerState {
-  endTime: number; // timestamp when timer should end
+  endTime: number;
   mode: Mode;
   customMinutes: number;
   initialSeconds: number;
@@ -49,7 +53,7 @@ function loadTimerState(): TimerState | null {
     const stored = localStorage.getItem(TIMER_STORAGE_KEY);
     if (!stored) return null;
     const state: TimerState = JSON.parse(stored);
-    if (state.endTime <= Date.now()) return null; // expired
+    if (state.endTime <= Date.now()) return null;
     return state;
   } catch {
     return null;
@@ -57,6 +61,7 @@ function loadTimerState(): TimerState | null {
 }
 
 export default function TimerPage() {
+  const navigate = useNavigate();
   const savedState = useRef(loadTimerState());
   const [mode, setMode] = useState<Mode>(savedState.current?.mode || "focus");
   const [customMinutes, setCustomMinutes] = useState(savedState.current?.customMinutes || 60);
@@ -76,6 +81,10 @@ export default function TimerPage() {
   const [soundIdx, setSoundIdx] = useState(savedState.current?.soundIdx || 0);
   const [showSounds, setShowSounds] = useState(false);
   const [confirmSwitch, setConfirmSwitch] = useState<Mode | null>(null);
+  const [showBreakPopup, setShowBreakPopup] = useState(false);
+  const [completedFocusMinutes, setCompletedFocusMinutes] = useState(0);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [timerCompleteAnimation, setTimerCompleteAnimation] = useState(false);
   const intervalRef = useRef<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const endTimeRef = useRef<number>(savedState.current?.endTime || 0);
@@ -86,7 +95,7 @@ export default function TimerPage() {
     .filter((s) => s.session_type === "focus")
     .reduce((sum, s) => sum + s.duration_minutes, 0);
 
-  // Background-safe timer: use endTime instead of decrementing
+  // Background-safe timer
   useEffect(() => {
     if (isRunning) {
       const tick = () => {
@@ -99,6 +108,10 @@ export default function TimerPage() {
           const durationMinutes = mode === "custom" ? customMinutes : PRESET_MODES[mode as Exclude<Mode, "custom">].minutes;
           if (mode === "focus" || mode === "custom") {
             addSession({ duration_minutes: durationMinutes, session_type: "focus" });
+            setCompletedFocusMinutes(durationMinutes);
+            setShowBreakPopup(true);
+            setTimerCompleteAnimation(true);
+            setTimeout(() => setTimerCompleteAnimation(false), 2000);
           }
           stopSound();
         }
@@ -111,7 +124,7 @@ export default function TimerPage() {
     };
   }, [isRunning, mode, customMinutes]);
 
-  // Resume sound on mount if timer was running
+  // Resume sound on mount
   useEffect(() => {
     if (isRunning && soundIdx > 0 && SOUNDS[soundIdx]?.url) {
       playSound(soundIdx);
@@ -120,7 +133,6 @@ export default function TimerPage() {
   }, []);
 
   const playSound = useCallback((idx: number) => {
-    // Stop any existing sound first
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.src = "";
@@ -147,7 +159,6 @@ export default function TimerPage() {
     setSoundIdx(idx);
     if (isRunning) {
       playSound(idx);
-      // Update saved state with new sound
       if (endTimeRef.current > Date.now()) {
         saveTimerState({ endTime: endTimeRef.current, mode, customMinutes, initialSeconds, soundIdx: idx });
       }
@@ -169,8 +180,17 @@ export default function TimerPage() {
     stopSound();
   };
 
+  const stopTimer = () => {
+    setIsRunning(false);
+    setFocusMode(false);
+    saveTimerState(null);
+    stopSound();
+    const dur = mode === "custom" ? customMinutes * 60 : PRESET_MODES[mode as Exclude<Mode, "custom">].minutes * 60;
+    setTimeLeft(dur);
+    setInitialSeconds(dur);
+  };
+
   const attemptSwitchMode = (m: Mode) => {
-    // If custom timer is running, show confirmation
     if (isRunning && mode === "custom" && m !== "custom") {
       setConfirmSwitch(m);
       return;
@@ -208,6 +228,21 @@ export default function TimerPage() {
     stopSound();
   };
 
+  const handleStartBreak = (breakMinutes: number) => {
+    setShowBreakPopup(false);
+    const shortOrLong = breakMinutes <= 7 ? "shortBreak" : "longBreak";
+    doSwitchMode(shortOrLong);
+    // Auto-start the break
+    setTimeout(() => {
+      const endTime = Date.now() + breakMinutes * 60 * 1000;
+      endTimeRef.current = endTime;
+      setIsRunning(true);
+      setTimeLeft(breakMinutes * 60);
+      setInitialSeconds(breakMinutes * 60);
+      saveTimerState({ endTime, mode: shortOrLong, customMinutes, initialSeconds: breakMinutes * 60, soundIdx });
+    }, 100);
+  };
+
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
   const progress = initialSeconds > 0 ? ((initialSeconds - timeLeft) / initialSeconds) * 100 : 0;
@@ -222,211 +257,313 @@ export default function TimerPage() {
 
   const isFocusMode = mode === "focus" || mode === "custom";
 
-  return (
-    <div className={`max-w-lg mx-auto space-y-6 ${focusMode ? "animate-pulse-subtle" : ""}`}>
-      <h1 className="text-3xl font-display font-bold text-center">Focus Timer</h1>
-
-      {/* Mode tabs */}
-      <div className="flex justify-center gap-2 flex-wrap">
-        {(["focus", "shortBreak", "longBreak"] as const).map((m) => (
-          <Button
-            key={m}
-            variant={mode === m ? "default" : "outline"}
-            size="sm"
-            onClick={() => attemptSwitchMode(m)}
-            className={mode === m ? "bg-gradient-primary text-primary-foreground" : ""}
-          >
-            {PRESET_MODES[m].label}
-          </Button>
-        ))}
-        <Button
-          variant={mode === "custom" ? "default" : "outline"}
-          size="sm"
-          onClick={() => attemptSwitchMode("custom")}
-          className={mode === "custom" ? "bg-gradient-primary text-primary-foreground" : ""}
+  // Deep Focus Mode: show minimal UI when running
+  if (focusMode && isRunning) {
+    return (
+      <div className="fixed inset-0 z-[80] bg-background flex flex-col items-center justify-center">
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="text-center space-y-8"
         >
-          <Timer className="h-3.5 w-3.5 mr-1" /> Custom
-        </Button>
-      </div>
-
-      {/* Custom timer switch confirmation */}
-      <AlertDialog open={!!confirmSwitch} onOpenChange={(o) => !o && setConfirmSwitch(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="font-display">Stop Custom Session?</AlertDialogTitle>
-            <AlertDialogDescription>
-              You are currently in a Custom Focus Session. Do you want to stop this session and start a break?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>No, Continue</AlertDialogCancel>
-            <AlertDialogAction onClick={() => confirmSwitch && doSwitchMode(confirmSwitch)} className="bg-gradient-primary text-primary-foreground">
-              Yes, Switch
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Custom time input */}
-      <AnimatePresence>
-        {mode === "custom" && !isRunning && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden"
-          >
-            <Card className="p-4">
-              <p className="text-sm font-medium text-muted-foreground mb-3">Set your study duration (minutes):</p>
-              <div className="flex gap-2 flex-wrap">
-                {[30, 45, 60, 90, 120, 180].map((m) => (
-                  <Button
-                    key={m}
-                    variant={customMinutes === m ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => {
-                      setCustomMinutes(m);
-                      setTimeLeft(m * 60);
-                      setInitialSeconds(m * 60);
-                    }}
-                    className={customMinutes === m ? "bg-gradient-primary text-primary-foreground" : ""}
-                  >
-                    {m >= 60 ? `${m / 60}h` : `${m}m`}
-                  </Button>
-                ))}
-              </div>
-              <div className="flex gap-2 mt-3">
-                <Input
-                  type="number"
-                  min={1}
-                  max={240}
-                  value={customMinutes}
-                  onChange={(e) => setCustomMinutes(parseInt(e.target.value) || 1)}
-                  className="w-24"
-                  placeholder="Minutes"
-                />
-                <Button variant="outline" size="sm" onClick={applyCustomTime}>
-                  Set Timer
-                </Button>
-              </div>
-            </Card>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <Card className="p-8 flex flex-col items-center gap-6">
-        <div className="relative w-56 h-56">
-          <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-            <circle cx="50" cy="50" r="45" fill="none" className="stroke-muted" strokeWidth="4" />
-            <motion.circle
-              cx="50" cy="50" r="45" fill="none"
-              className="stroke-primary"
-              strokeWidth="4"
-              strokeLinecap="round"
-              strokeDasharray={Math.PI * 90}
-              animate={{ strokeDashoffset: Math.PI * 90 * (1 - progress / 100) }}
-              transition={{ duration: 0.5 }}
-            />
-          </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-5xl font-display font-bold tabular-nums">
-              {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
-            </span>
-            <span className="text-sm text-muted-foreground mt-1">
-              {mode === "custom" ? `Custom (${customMinutes}m)` : PRESET_MODES[mode].label}
-            </span>
+          <div className="relative w-64 h-64 mx-auto">
+            <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="45" fill="none" className="stroke-muted" strokeWidth="3" />
+              <motion.circle
+                cx="50" cy="50" r="45" fill="none"
+                className="stroke-primary"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeDasharray={Math.PI * 90}
+                animate={{ strokeDashoffset: Math.PI * 90 * (1 - progress / 100) }}
+                transition={{ duration: 0.5 }}
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <motion.span
+                key={timeLeft}
+                initial={{ scale: 1.05 }}
+                animate={{ scale: 1 }}
+                className="text-6xl font-display font-bold tabular-nums"
+              >
+                {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
+              </motion.span>
+              <span className="text-sm text-muted-foreground mt-2">Deep Focus</span>
+            </div>
           </div>
-        </div>
 
-        {focusMode && (
-          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-sm text-muted-foreground text-center italic max-w-xs">
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="text-sm text-muted-foreground italic max-w-xs mx-auto"
+          >
             "{quote}"
           </motion.p>
-        )}
 
-        <div className="flex gap-3">
-          <Button
-            size="lg"
-            onClick={isRunning ? pauseTimer : startTimer}
-            className={`px-8 ${isRunning ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : "bg-gradient-primary text-primary-foreground shadow-glow-primary"}`}
-          >
-            {isRunning ? <Pause className="h-5 w-5 mr-2" /> : <Play className="h-5 w-5 mr-2" />}
-            {isRunning ? "Pause" : "Start"}
-          </Button>
-          <Button size="lg" variant="outline" onClick={reset}>
-            <RotateCcw className="h-5 w-5" />
-          </Button>
-        </div>
-
-        {/* Sounds toggle */}
-        {isFocusMode && (
-          <div className="w-full space-y-3">
+          <div className="flex gap-3 justify-center">
             <Button
-              variant={showSounds ? "default" : "outline"}
-              size="sm"
-              onClick={() => setShowSounds(!showSounds)}
-              className={`w-full ${showSounds ? "bg-gradient-primary text-primary-foreground" : ""}`}
+              size="lg"
+              onClick={pauseTimer}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              <Music className="h-3.5 w-3.5 mr-1.5" />
-              {soundIdx > 0 ? `🎵 ${SOUNDS[soundIdx].name}` : "Sounds"}
-              {soundIdx > 0 && !showSounds && (
-                <span className="ml-1.5 w-2 h-2 rounded-full bg-success inline-block" />
-              )}
+              <Pause className="h-5 w-5 mr-2" /> Pause
             </Button>
-            <AnimatePresence>
-              {showSounds && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="overflow-hidden"
-                >
-                  <div className="grid grid-cols-2 gap-2">
-                    {SOUNDS.map((s, i) => (
-                      <Button
-                        key={s.name}
-                        variant={soundIdx === i ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => toggleSound(i)}
-                        className={`justify-start ${soundIdx === i ? "bg-gradient-primary text-primary-foreground" : ""}`}
-                      >
-                        {soundIdx === i && i > 0 ? <Volume2 className="h-3.5 w-3.5 mr-1.5" /> : i > 0 ? <VolumeX className="h-3.5 w-3.5 mr-1.5" /> : null}
-                        {s.name}
-                      </Button>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <Button size="lg" variant="outline" onClick={() => setShowExitConfirm(true)}>
+              <Square className="h-5 w-5 mr-2" /> Stop
+            </Button>
           </div>
-        )}
-      </Card>
 
-      <Card className="p-4 text-center space-y-3">
-        <p className="text-sm text-muted-foreground">Today's focus</p>
-        <div className="flex justify-center gap-6">
-          <div>
-            <p className="font-display font-bold text-2xl text-primary">{todaySessions}</p>
-            <p className="text-xs text-muted-foreground">Sessions</p>
-          </div>
-          <div>
-            <p className="font-display font-bold text-2xl text-accent-foreground">
-              {todayMinutes >= 60 ? `${(todayMinutes / 60).toFixed(1)}h` : `${todayMinutes}m`}
-            </p>
-            <p className="text-xs text-muted-foreground">Total Focus</p>
-          </div>
-        </div>
-        <div className="flex justify-center gap-2 mt-2">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div
-              key={i}
-              className={`w-5 h-5 rounded-full ${
-                i < todaySessions ? "bg-gradient-primary shadow-glow-primary" : "bg-muted"
-              }`}
-            />
+          {/* Sound indicator */}
+          {soundIdx > 0 && (
+            <button
+              onClick={() => toggleSound(0)}
+              className="text-xs text-muted-foreground flex items-center gap-1 mx-auto hover:text-foreground transition-colors"
+            >
+              <Volume2 className="h-3 w-3" /> {SOUNDS[soundIdx].name}
+            </button>
+          )}
+        </motion.div>
+
+        <FocusExitConfirmDialog
+          showExitConfirm={showExitConfirm}
+          onContinue={() => setShowExitConfirm(false)}
+          onExit={() => { setShowExitConfirm(false); stopTimer(); }}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <PageTransition>
+      <div className="max-w-lg mx-auto space-y-6">
+        <h1 className="text-3xl font-display font-bold text-center">Focus Timer</h1>
+
+        {/* Mode tabs */}
+        <div className="flex justify-center gap-2 flex-wrap">
+          {(["focus", "shortBreak", "longBreak"] as const).map((m) => (
+            <Button
+              key={m}
+              variant={mode === m ? "default" : "outline"}
+              size="sm"
+              onClick={() => attemptSwitchMode(m)}
+              className={mode === m ? "bg-gradient-primary text-primary-foreground" : ""}
+            >
+              {PRESET_MODES[m].label}
+            </Button>
           ))}
+          <Button
+            variant={mode === "custom" ? "default" : "outline"}
+            size="sm"
+            onClick={() => attemptSwitchMode("custom")}
+            className={mode === "custom" ? "bg-gradient-primary text-primary-foreground" : ""}
+          >
+            <Timer className="h-3.5 w-3.5 mr-1" /> Custom
+          </Button>
         </div>
-      </Card>
-    </div>
+
+        {/* Custom timer switch confirmation */}
+        <AlertDialog open={!!confirmSwitch} onOpenChange={(o) => !o && setConfirmSwitch(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="font-display">Stop Custom Session?</AlertDialogTitle>
+              <AlertDialogDescription>
+                You are currently in a Custom Focus Session. Do you want to stop this session and start a break?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>No, Continue</AlertDialogCancel>
+              <AlertDialogAction onClick={() => confirmSwitch && doSwitchMode(confirmSwitch)} className="bg-gradient-primary text-primary-foreground">
+                Yes, Switch
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Custom time input */}
+        <AnimatePresence>
+          {mode === "custom" && !isRunning && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden"
+            >
+              <Card className="p-4">
+                <p className="text-sm font-medium text-muted-foreground mb-3">Set your study duration (minutes):</p>
+                <div className="flex gap-2 flex-wrap">
+                  {[30, 45, 60, 90, 120, 180].map((m) => (
+                    <Button
+                      key={m}
+                      variant={customMinutes === m ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => {
+                        setCustomMinutes(m);
+                        setTimeLeft(m * 60);
+                        setInitialSeconds(m * 60);
+                      }}
+                      className={customMinutes === m ? "bg-gradient-primary text-primary-foreground" : ""}
+                    >
+                      {m >= 60 ? `${m / 60}h` : `${m}m`}
+                    </Button>
+                  ))}
+                </div>
+                <div className="flex gap-2 mt-3">
+                  <Input
+                    type="number"
+                    min={1}
+                    max={240}
+                    value={customMinutes}
+                    onChange={(e) => setCustomMinutes(parseInt(e.target.value) || 1)}
+                    className="w-24"
+                    placeholder="Minutes"
+                  />
+                  <Button variant="outline" size="sm" onClick={applyCustomTime}>
+                    Set Timer
+                  </Button>
+                </div>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <Card className="p-8 flex flex-col items-center gap-6">
+          <div className="relative w-56 h-56">
+            <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="45" fill="none" className="stroke-muted" strokeWidth="4" />
+              <motion.circle
+                cx="50" cy="50" r="45" fill="none"
+                className="stroke-primary"
+                strokeWidth="4"
+                strokeLinecap="round"
+                strokeDasharray={Math.PI * 90}
+                animate={{ strokeDashoffset: Math.PI * 90 * (1 - progress / 100) }}
+                transition={{ duration: 0.5 }}
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-5xl font-display font-bold tabular-nums">
+                {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
+              </span>
+              <span className="text-sm text-muted-foreground mt-1">
+                {mode === "custom" ? `Custom (${customMinutes}m)` : PRESET_MODES[mode].label}
+              </span>
+            </div>
+          </div>
+
+          {/* Timer completion animation */}
+          <AnimatePresence>
+            {timerCompleteAnimation && (
+              <motion.div
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: [0, 1.3, 1], opacity: 1 }}
+                exit={{ scale: 0, opacity: 0 }}
+                className="text-4xl"
+              >
+                🎉
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <div className="flex gap-3">
+            <motion.div whileTap={{ scale: 0.95 }}>
+              <Button
+                size="lg"
+                onClick={isRunning ? pauseTimer : startTimer}
+                className={`px-8 ${isRunning ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : "bg-gradient-primary text-primary-foreground shadow-glow-primary"}`}
+              >
+                {isRunning ? <Pause className="h-5 w-5 mr-2" /> : <Play className="h-5 w-5 mr-2" />}
+                {isRunning ? "Pause" : "Start"}
+              </Button>
+            </motion.div>
+            <motion.div whileTap={{ scale: 0.95 }}>
+              <Button size="lg" variant="outline" onClick={reset}>
+                <RotateCcw className="h-5 w-5" />
+              </Button>
+            </motion.div>
+          </div>
+
+          {/* Sounds toggle */}
+          {isFocusMode && (
+            <div className="w-full space-y-3">
+              <Button
+                variant={showSounds ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowSounds(!showSounds)}
+                className={`w-full ${showSounds ? "bg-gradient-primary text-primary-foreground" : ""}`}
+              >
+                <Music className="h-3.5 w-3.5 mr-1.5" />
+                {soundIdx > 0 ? `🎵 ${SOUNDS[soundIdx].name}` : "Sounds"}
+                {soundIdx > 0 && !showSounds && (
+                  <span className="ml-1.5 w-2 h-2 rounded-full bg-success inline-block" />
+                )}
+              </Button>
+              <AnimatePresence>
+                {showSounds && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="grid grid-cols-2 gap-2">
+                      {SOUNDS.map((s, i) => (
+                        <Button
+                          key={s.name}
+                          variant={soundIdx === i ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => toggleSound(i)}
+                          className={`justify-start ${soundIdx === i ? "bg-gradient-primary text-primary-foreground" : ""}`}
+                        >
+                          {soundIdx === i && i > 0 ? <Volume2 className="h-3.5 w-3.5 mr-1.5" /> : i > 0 ? <VolumeX className="h-3.5 w-3.5 mr-1.5" /> : null}
+                          {s.name}
+                        </Button>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
+        </Card>
+
+        <Card className="p-4 text-center space-y-3">
+          <p className="text-sm text-muted-foreground">Today's focus</p>
+          <div className="flex justify-center gap-6">
+            <div>
+              <p className="font-display font-bold text-2xl text-primary">{todaySessions}</p>
+              <p className="text-xs text-muted-foreground">Sessions</p>
+            </div>
+            <div>
+              <p className="font-display font-bold text-2xl text-accent-foreground">
+                {todayMinutes >= 60 ? `${(todayMinutes / 60).toFixed(1)}h` : `${todayMinutes}m`}
+              </p>
+              <p className="text-xs text-muted-foreground">Total Focus</p>
+            </div>
+          </div>
+          <div className="flex justify-center gap-2 mt-2">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <motion.div
+                key={i}
+                initial={i === todaySessions - 1 ? { scale: 0 } : false}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 400 }}
+                className={`w-5 h-5 rounded-full ${
+                  i < todaySessions ? "bg-gradient-primary shadow-glow-primary" : "bg-muted"
+                }`}
+              />
+            ))}
+          </div>
+        </Card>
+
+        {/* Smart Break Popup */}
+        <SmartBreakPopup
+          show={showBreakPopup}
+          focusMinutes={completedFocusMinutes}
+          onStartBreak={handleStartBreak}
+          onDismiss={() => setShowBreakPopup(false)}
+        />
+      </div>
+    </PageTransition>
   );
 }
