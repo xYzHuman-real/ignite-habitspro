@@ -93,6 +93,10 @@ export default {
           "25%": { transform: "scale(1.1) rotate(-3deg)" },
           "75%": { transform: "scale(1.1) rotate(3deg)" },
         },
+        "float-up": {
+          "0%": { opacity: "1", transform: "translateY(0)" },
+          "100%": { opacity: "0", transform: "translateY(-40px)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
