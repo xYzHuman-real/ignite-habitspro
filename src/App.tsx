@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { Layout } from "@/components/Layout";
+import { AnimatePresence } from "framer-motion";
 import Dashboard from "./pages/Dashboard";
 import Habits from "./pages/Habits";
 import TimerPage from "./pages/TimerPage";
@@ -21,6 +22,7 @@ import WeeklyReport from "./pages/WeeklyReport";
 import Journal from "./pages/Journal";
 import GoalsPage from "./pages/Goals";
 import Partners from "./pages/Partners";
+import FocusRooms from "./pages/FocusRooms";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
@@ -59,6 +61,7 @@ function ProtectedRoutes() {
         <Route path="/journal" element={<Journal />} />
         <Route path="/goals" element={<GoalsPage />} />
         <Route path="/partners" element={<Partners />} />
+        <Route path="/focus-rooms" element={<FocusRooms />} />
         <Route path="/user/:userId" element={<UserProfile />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="*" element={<NotFound />} />
