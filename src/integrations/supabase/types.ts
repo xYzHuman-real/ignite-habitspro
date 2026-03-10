@@ -272,6 +272,106 @@ export type Database = {
         }
         Relationships: []
       }
+      focus_room_messages: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          room_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          room_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          room_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "focus_room_messages_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "focus_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      focus_room_participants: {
+        Row: {
+          id: string
+          joined_at: string
+          room_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          joined_at?: string
+          room_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          joined_at?: string
+          room_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "focus_room_participants_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "focus_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      focus_rooms: {
+        Row: {
+          break_duration_minutes: number
+          created_at: string
+          creator_id: string
+          id: string
+          invite_code: string | null
+          is_private: boolean
+          name: string
+          session_duration_minutes: number
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          break_duration_minutes?: number
+          created_at?: string
+          creator_id: string
+          id?: string
+          invite_code?: string | null
+          is_private?: boolean
+          name: string
+          session_duration_minutes?: number
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          break_duration_minutes?: number
+          created_at?: string
+          creator_id?: string
+          id?: string
+          invite_code?: string | null
+          is_private?: boolean
+          name?: string
+          session_duration_minutes?: number
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       followers: {
         Row: {
           created_at: string
