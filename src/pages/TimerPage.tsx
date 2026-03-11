@@ -213,6 +213,7 @@ export default function TimerPage() {
   const stopTimer = () => {
     setIsRunning(false);
     setFocusMode(false);
+    setLinkedTask(null);
     saveTimerState(null);
     stopSound();
     const dur = mode === "custom" ? customMinutes * 60 : PRESET_MODES[mode as Exclude<Mode, "custom">].minutes * 60;
