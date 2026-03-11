@@ -9,6 +9,7 @@ import { usePomodoroSessions } from "@/lib/supabase-hooks";
 import { SmartBreakPopup } from "@/components/SmartBreakPopup";
 import { FocusExitConfirmDialog } from "@/components/FocusModeOverlay";
 import { PageTransition } from "@/components/PageTransition";
+import { TaskLinkPopup } from "@/components/TaskLinkPopup";
 import { useNavigate } from "react-router-dom";
 
 type Mode = "focus" | "shortBreak" | "longBreak" | "custom";
