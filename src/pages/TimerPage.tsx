@@ -33,12 +33,21 @@ const SOUNDS = [
 
 const TIMER_STORAGE_KEY = "timer_state";
 
+interface LinkedTask {
+  type: "task" | "subject";
+  label: string;
+  id?: string;
+}
+
 interface TimerState {
   endTime: number;
   mode: Mode;
   customMinutes: number;
   initialSeconds: number;
   soundIdx: number;
+  paused?: boolean;
+  pausedTimeLeft?: number;
+  linkedTask?: LinkedTask | null;
 }
 
 function saveTimerState(state: TimerState | null) {
