@@ -9,6 +9,7 @@ import { usePomodoroSessions } from "@/lib/supabase-hooks";
 import { SmartBreakPopup } from "@/components/SmartBreakPopup";
 import { FocusExitConfirmDialog } from "@/components/FocusModeOverlay";
 import { PageTransition } from "@/components/PageTransition";
+import { TaskLinkPopup } from "@/components/TaskLinkPopup";
 import { useNavigate } from "react-router-dom";
 
 type Mode = "focus" | "shortBreak" | "longBreak" | "custom";
@@ -32,12 +33,21 @@ const SOUNDS = [
 
 const TIMER_STORAGE_KEY = "timer_state";
 
+interface LinkedTask {
+  type: "task" | "subject";
+  label: string;
+  id?: string;
+}
+
 interface TimerState {
   endTime: number;
   mode: Mode;
   customMinutes: number;
   initialSeconds: number;
   soundIdx: number;
+  paused?: boolean;
+  pausedTimeLeft?: number;
+  linkedTask?: LinkedTask | null;
 }
 
 function saveTimerState(state: TimerState | null) {
@@ -53,6 +63,9 @@ function loadTimerState(): TimerState | null {
     const stored = localStorage.getItem(TIMER_STORAGE_KEY);
     if (!stored) return null;
     const state: TimerState = JSON.parse(stored);
+    // Paused state: preserve it
+    if (state.paused && state.pausedTimeLeft && state.pausedTimeLeft > 0) return state;
+    // Running state: check if expired
     if (state.endTime <= Date.now()) return null;
     return state;
   } catch {
@@ -70,11 +83,17 @@ export default function TimerPage() {
   );
   const [timeLeft, setTimeLeft] = useState(() => {
     if (savedState.current) {
+      if (savedState.current.paused && savedState.current.pausedTimeLeft) {
+        return savedState.current.pausedTimeLeft;
+      }
       return Math.max(0, Math.ceil((savedState.current.endTime - Date.now()) / 1000));
     }
     return PRESET_MODES.focus.minutes * 60;
   });
-  const [isRunning, setIsRunning] = useState(!!savedState.current);
+  const [isRunning, setIsRunning] = useState(() => {
+    if (!savedState.current) return false;
+    return !savedState.current.paused && savedState.current.endTime > Date.now();
+  });
   const [focusMode, setFocusMode] = useState(
     savedState.current ? (savedState.current.mode === "focus" || savedState.current.mode === "custom") : false
   );
@@ -85,6 +104,8 @@ export default function TimerPage() {
   const [completedFocusMinutes, setCompletedFocusMinutes] = useState(0);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [timerCompleteAnimation, setTimerCompleteAnimation] = useState(false);
+  const [showTaskLink, setShowTaskLink] = useState(false);
+  const [linkedTask, setLinkedTask] = useState<LinkedTask | null>(savedState.current?.linkedTask || null);
   const intervalRef = useRef<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const endTimeRef = useRef<number>(savedState.current?.endTime || 0);
@@ -107,7 +128,7 @@ export default function TimerPage() {
           saveTimerState(null);
           const durationMinutes = mode === "custom" ? customMinutes : PRESET_MODES[mode as Exclude<Mode, "custom">].minutes;
           if (mode === "focus" || mode === "custom") {
-            addSession({ duration_minutes: durationMinutes, session_type: "focus" });
+            addSession({ duration_minutes: durationMinutes, session_type: "focus", linked_task: linkedTask?.label || null, linked_subject: linkedTask?.type === "subject" ? linkedTask.label : null });
             setCompletedFocusMinutes(durationMinutes);
             setShowBreakPopup(true);
             setTimerCompleteAnimation(true);
@@ -165,24 +186,43 @@ export default function TimerPage() {
     }
   };
 
-  const startTimer = () => {
+  const requestStart = () => {
+    const isFocus = mode === "focus" || mode === "custom";
+    if (isFocus && !linkedTask) {
+      setShowTaskLink(true);
+      return;
+    }
+    doStartTimer();
+  };
+
+  const handleTaskLinkSelect = (task: LinkedTask | null) => {
+    setLinkedTask(task);
+    setShowTaskLink(false);
+    // Start timer after selection
+    setTimeout(() => doStartTimer(task), 50);
+  };
+
+  const doStartTimer = (taskOverride?: LinkedTask | null) => {
     const endTime = Date.now() + timeLeft * 1000;
     endTimeRef.current = endTime;
     setIsRunning(true);
     if (mode === "focus" || mode === "custom") setFocusMode(true);
-    saveTimerState({ endTime, mode, customMinutes, initialSeconds, soundIdx });
+    const task = taskOverride !== undefined ? taskOverride : linkedTask;
+    saveTimerState({ endTime, mode, customMinutes, initialSeconds, soundIdx, linkedTask: task });
     if (SOUNDS[soundIdx]?.url) playSound(soundIdx);
   };
 
   const pauseTimer = () => {
     setIsRunning(false);
-    saveTimerState(null);
+    // Save remaining time so it can be resumed
+    saveTimerState({ endTime: 0, mode, customMinutes, initialSeconds, soundIdx, paused: true, pausedTimeLeft: timeLeft, linkedTask });
     stopSound();
   };
 
   const stopTimer = () => {
     setIsRunning(false);
     setFocusMode(false);
+    setLinkedTask(null);
     saveTimerState(null);
     stopSound();
     const dur = mode === "custom" ? customMinutes * 60 : PRESET_MODES[mode as Exclude<Mode, "custom">].minutes * 60;
@@ -289,6 +329,9 @@ export default function TimerPage() {
                 {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
               </motion.span>
               <span className="text-sm text-muted-foreground mt-2">Deep Focus</span>
+              {linkedTask && (
+                <span className="text-xs text-primary mt-1 font-medium">{linkedTask.label}</span>
+              )}
             </div>
           </div>
 
@@ -448,6 +491,11 @@ export default function TimerPage() {
               <span className="text-sm text-muted-foreground mt-1">
                 {mode === "custom" ? `Custom (${customMinutes}m)` : PRESET_MODES[mode].label}
               </span>
+              {linkedTask && (
+                <span className="text-xs text-primary mt-1 font-medium truncate max-w-[180px]">
+                  🎯 {linkedTask.label}
+                </span>
+              )}
             </div>
           </div>
 
@@ -469,7 +517,7 @@ export default function TimerPage() {
             <motion.div whileTap={{ scale: 0.95 }}>
               <Button
                 size="lg"
-                onClick={isRunning ? pauseTimer : startTimer}
+                onClick={isRunning ? pauseTimer : requestStart}
                 className={`px-8 ${isRunning ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : "bg-gradient-primary text-primary-foreground shadow-glow-primary"}`}
               >
                 {isRunning ? <Pause className="h-5 w-5 mr-2" /> : <Play className="h-5 w-5 mr-2" />}
@@ -562,6 +610,13 @@ export default function TimerPage() {
           focusMinutes={completedFocusMinutes}
           onStartBreak={handleStartBreak}
           onDismiss={() => setShowBreakPopup(false)}
+        />
+
+        {/* Task Link Popup */}
+        <TaskLinkPopup
+          open={showTaskLink}
+          onSelect={handleTaskLinkSelect}
+          onClose={() => setShowTaskLink(false)}
         />
       </div>
     </PageTransition>

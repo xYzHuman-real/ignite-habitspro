@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Flame, Target, CheckCircle2, TrendingUp, Share2 } from "lucide-react";
+import { Flame, Target, CheckCircle2, TrendingUp } from "lucide-react";
 import { ShareProgress } from "@/components/ShareProgress";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useHabits, useTodos, useProfile } from "@/lib/supabase-hooks";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Onboarding } from "@/components/Onboarding";
+import { GpaCalculator } from "@/components/GpaCalculator";
+import { ExamCountdown } from "@/components/ExamCountdown";
 
 const container = {
   hidden: {},
@@ -159,6 +161,12 @@ export default function Dashboard() {
             </div>
           ))}
         </Card>
+      </motion.div>
+
+      {/* Academic Tools */}
+      <motion.div variants={item} className="grid md:grid-cols-2 gap-4">
+        <GpaCalculator />
+        <ExamCountdown />
       </motion.div>
     </motion.div>
     </>
