@@ -83,11 +83,17 @@ export default function TimerPage() {
   );
   const [timeLeft, setTimeLeft] = useState(() => {
     if (savedState.current) {
+      if (savedState.current.paused && savedState.current.pausedTimeLeft) {
+        return savedState.current.pausedTimeLeft;
+      }
       return Math.max(0, Math.ceil((savedState.current.endTime - Date.now()) / 1000));
     }
     return PRESET_MODES.focus.minutes * 60;
   });
-  const [isRunning, setIsRunning] = useState(!!savedState.current);
+  const [isRunning, setIsRunning] = useState(() => {
+    if (!savedState.current) return false;
+    return !savedState.current.paused && savedState.current.endTime > Date.now();
+  });
   const [focusMode, setFocusMode] = useState(
     savedState.current ? (savedState.current.mode === "focus" || savedState.current.mode === "custom") : false
   );
