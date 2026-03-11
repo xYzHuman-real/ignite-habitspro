@@ -654,6 +654,8 @@ export type Database = {
           created_at: string
           duration_minutes: number
           id: string
+          linked_subject: string | null
+          linked_task: string | null
           session_type: string
           user_id: string
         }
@@ -662,6 +664,8 @@ export type Database = {
           created_at?: string
           duration_minutes: number
           id?: string
+          linked_subject?: string | null
+          linked_task?: string | null
           session_type?: string
           user_id: string
         }
@@ -670,6 +674,8 @@ export type Database = {
           created_at?: string
           duration_minutes?: number
           id?: string
+          linked_subject?: string | null
+          linked_task?: string | null
           session_type?: string
           user_id?: string
         }
