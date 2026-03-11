@@ -606,6 +606,13 @@ export default function TimerPage() {
           onStartBreak={handleStartBreak}
           onDismiss={() => setShowBreakPopup(false)}
         />
+
+        {/* Task Link Popup */}
+        <TaskLinkPopup
+          open={showTaskLink}
+          onSelect={handleTaskLinkSelect}
+          onClose={() => setShowTaskLink(false)}
+        />
       </div>
     </PageTransition>
   );
