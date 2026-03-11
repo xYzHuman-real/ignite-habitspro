@@ -95,6 +95,8 @@ export default function TimerPage() {
   const [completedFocusMinutes, setCompletedFocusMinutes] = useState(0);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [timerCompleteAnimation, setTimerCompleteAnimation] = useState(false);
+  const [showTaskLink, setShowTaskLink] = useState(false);
+  const [linkedTask, setLinkedTask] = useState<LinkedTask | null>(savedState.current?.linkedTask || null);
   const intervalRef = useRef<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const endTimeRef = useRef<number>(savedState.current?.endTime || 0);
