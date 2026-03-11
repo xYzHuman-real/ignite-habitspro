@@ -500,7 +500,7 @@ export default function TimerPage() {
             <motion.div whileTap={{ scale: 0.95 }}>
               <Button
                 size="lg"
-                onClick={isRunning ? pauseTimer : startTimer}
+                onClick={isRunning ? pauseTimer : requestStart}
                 className={`px-8 ${isRunning ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : "bg-gradient-primary text-primary-foreground shadow-glow-primary"}`}
               >
                 {isRunning ? <Pause className="h-5 w-5 mr-2" /> : <Play className="h-5 w-5 mr-2" />}
