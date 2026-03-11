@@ -128,7 +128,7 @@ export default function TimerPage() {
           saveTimerState(null);
           const durationMinutes = mode === "custom" ? customMinutes : PRESET_MODES[mode as Exclude<Mode, "custom">].minutes;
           if (mode === "focus" || mode === "custom") {
-            addSession({ duration_minutes: durationMinutes, session_type: "focus" });
+            addSession({ duration_minutes: durationMinutes, session_type: "focus", linked_task: linkedTask?.label || null, linked_subject: linkedTask?.type === "subject" ? linkedTask.label : null });
             setCompletedFocusMinutes(durationMinutes);
             setShowBreakPopup(true);
             setTimerCompleteAnimation(true);
