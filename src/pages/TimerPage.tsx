@@ -177,18 +177,36 @@ export default function TimerPage() {
     }
   };
 
-  const startTimer = () => {
+  const requestStart = () => {
+    const isFocus = mode === "focus" || mode === "custom";
+    if (isFocus && !linkedTask) {
+      setShowTaskLink(true);
+      return;
+    }
+    doStartTimer();
+  };
+
+  const handleTaskLinkSelect = (task: LinkedTask | null) => {
+    setLinkedTask(task);
+    setShowTaskLink(false);
+    // Start timer after selection
+    setTimeout(() => doStartTimer(task), 50);
+  };
+
+  const doStartTimer = (taskOverride?: LinkedTask | null) => {
     const endTime = Date.now() + timeLeft * 1000;
     endTimeRef.current = endTime;
     setIsRunning(true);
     if (mode === "focus" || mode === "custom") setFocusMode(true);
-    saveTimerState({ endTime, mode, customMinutes, initialSeconds, soundIdx });
+    const task = taskOverride !== undefined ? taskOverride : linkedTask;
+    saveTimerState({ endTime, mode, customMinutes, initialSeconds, soundIdx, linkedTask: task });
     if (SOUNDS[soundIdx]?.url) playSound(soundIdx);
   };
 
   const pauseTimer = () => {
     setIsRunning(false);
-    saveTimerState(null);
+    // Save remaining time so it can be resumed
+    saveTimerState({ endTime: 0, mode, customMinutes, initialSeconds, soundIdx, paused: true, pausedTimeLeft: timeLeft, linkedTask });
     stopSound();
   };
 
