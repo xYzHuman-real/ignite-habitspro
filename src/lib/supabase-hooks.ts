@@ -253,9 +253,15 @@ export function usePomodoroSessions() {
   });
 
   const addSession = useMutation({
-    mutationFn: async (session: { duration_minutes: number; session_type: string }) => {
+    mutationFn: async (session: { duration_minutes: number; session_type: string; linked_task?: string | null; linked_subject?: string | null }) => {
       if (!user) throw new Error("Not authenticated");
-      const { error } = await supabase.from("pomodoro_sessions").insert({ ...session, user_id: user.id });
+      const { linked_task, linked_subject, ...rest } = session;
+      const { error } = await supabase.from("pomodoro_sessions").insert({
+        ...rest,
+        user_id: user.id,
+        ...(linked_task ? { linked_task } : {}),
+        ...(linked_subject ? { linked_subject } : {}),
+      } as any);
       if (error) throw error;
 
       await supabase.from("activity_log").upsert({
