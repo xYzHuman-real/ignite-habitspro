@@ -491,6 +491,11 @@ export default function TimerPage() {
               <span className="text-sm text-muted-foreground mt-1">
                 {mode === "custom" ? `Custom (${customMinutes}m)` : PRESET_MODES[mode].label}
               </span>
+              {linkedTask && (
+                <span className="text-xs text-primary mt-1 font-medium truncate max-w-[180px]">
+                  🎯 {linkedTask.label}
+                </span>
+              )}
             </div>
           </div>
 
