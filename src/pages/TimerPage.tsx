@@ -329,6 +329,9 @@ export default function TimerPage() {
                 {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
               </motion.span>
               <span className="text-sm text-muted-foreground mt-2">Deep Focus</span>
+              {linkedTask && (
+                <span className="text-xs text-primary mt-1 font-medium">{linkedTask.label}</span>
+              )}
             </div>
           </div>
 
