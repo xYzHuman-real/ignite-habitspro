@@ -63,6 +63,9 @@ function loadTimerState(): TimerState | null {
     const stored = localStorage.getItem(TIMER_STORAGE_KEY);
     if (!stored) return null;
     const state: TimerState = JSON.parse(stored);
+    // Paused state: preserve it
+    if (state.paused && state.pausedTimeLeft && state.pausedTimeLeft > 0) return state;
+    // Running state: check if expired
     if (state.endTime <= Date.now()) return null;
     return state;
   } catch {
