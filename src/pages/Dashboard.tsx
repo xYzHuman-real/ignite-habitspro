@@ -162,6 +162,12 @@ export default function Dashboard() {
           ))}
         </Card>
       </motion.div>
+
+      {/* Academic Tools */}
+      <motion.div variants={item} className="grid md:grid-cols-2 gap-4">
+        <GpaCalculator />
+        <ExamCountdown />
+      </motion.div>
     </motion.div>
     </>
   );
