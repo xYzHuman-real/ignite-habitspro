@@ -1,16 +1,22 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, RotateCcw, Volume2, VolumeX, Timer, Music, Square } from "lucide-react";
+import { Play, RotateCcw, Volume2, VolumeX, Timer, Music, Square, Palette, Settings } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { usePomodoroSessions } from "@/lib/supabase-hooks";
+import { usePomodoroSessions, useProfile } from "@/lib/supabase-hooks";
 import { SmartBreakPopup } from "@/components/SmartBreakPopup";
 import { FocusExitConfirmDialog } from "@/components/FocusModeOverlay";
 import { PageTransition } from "@/components/PageTransition";
 import { TaskLinkPopup } from "@/components/TaskLinkPopup";
+import { FocusSettingsHub } from "@/components/FocusSettingsHub";
+import { FocusFeedbackForm } from "@/components/FocusFeedbackForm";
+import { useFocusThemes } from "@/lib/use-focus-themes";
+import { useFocusSettings } from "@/lib/use-focus-settings";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
 
 type Mode = "focus" | "shortBreak" | "longBreak" | "custom";
 
@@ -21,14 +27,14 @@ const PRESET_MODES: Record<Exclude<Mode, "custom">, { label: string; minutes: nu
 };
 
 const SOUNDS = [
-  { name: "None", url: "" },
-  { name: "Rain 🌧️", url: "https://cdn.pixabay.com/audio/2022/05/13/audio_257112ce99.mp3" },
-  { name: "Forest 🌲", url: "https://cdn.pixabay.com/audio/2022/08/04/audio_2dae668d83.mp3" },
-  { name: "White Noise", url: "https://cdn.pixabay.com/audio/2022/03/10/audio_4dedf5bf94.mp3" },
-  { name: "Lofi Chill 🎵", url: "https://cdn.pixabay.com/audio/2024/11/04/audio_4956b4edd1.mp3" },
-  { name: "Lofi Study 📚", url: "https://cdn.pixabay.com/audio/2024/09/26/audio_38cc6d8882.mp3" },
-  { name: "Piano Calm 🎹", url: "https://cdn.pixabay.com/audio/2023/10/30/audio_4ab1e7250f.mp3" },
-  { name: "Coffee Shop ☕", url: "https://cdn.pixabay.com/audio/2022/10/30/audio_a583db4755.mp3" },
+  { name: "None", url: "", icon: "🔇" },
+  { name: "Rain", url: "https://cdn.pixabay.com/audio/2022/05/13/audio_257112ce99.mp3", icon: "🌧️" },
+  { name: "Forest", url: "https://cdn.pixabay.com/audio/2022/08/04/audio_2dae668d83.mp3", icon: "🌲" },
+  { name: "Library", url: "https://cdn.pixabay.com/audio/2022/10/30/audio_a583db4755.mp3", icon: "📖" },
+  { name: "White Noise", url: "https://cdn.pixabay.com/audio/2022/03/10/audio_4dedf5bf94.mp3", icon: "📻" },
+  { name: "Lofi Chill", url: "https://cdn.pixabay.com/audio/2024/11/04/audio_4956b4edd1.mp3", icon: "🎵" },
+  { name: "Lofi Study", url: "https://cdn.pixabay.com/audio/2024/09/26/audio_38cc6d8882.mp3", icon: "📚" },
+  { name: "Piano", url: "https://cdn.pixabay.com/audio/2023/10/30/audio_4ab1e7250f.mp3", icon: "🎹" },
 ];
 
 const TIMER_STORAGE_KEY = "timer_state";
@@ -48,6 +54,7 @@ interface TimerState {
   paused?: boolean;
   pausedTimeLeft?: number;
   linkedTask?: LinkedTask | null;
+  startedAt?: number;
 }
 
 function saveTimerState(state: TimerState | null) {
@@ -63,9 +70,7 @@ function loadTimerState(): TimerState | null {
     const stored = localStorage.getItem(TIMER_STORAGE_KEY);
     if (!stored) return null;
     const state: TimerState = JSON.parse(stored);
-    // Paused state: preserve it
     if (state.paused && state.pausedTimeLeft && state.pausedTimeLeft > 0) return state;
-    // Running state: check if expired
     if (state.endTime <= Date.now()) return null;
     return state;
   } catch {
@@ -73,8 +78,15 @@ function loadTimerState(): TimerState | null {
   }
 }
 
+// Calculate focus reward points: 1 point per 3 minutes, 0 if < 10 min
+function calculateFocusPoints(minutes: number): number {
+  if (minutes < 10) return 0;
+  return Math.floor(minutes / 3);
+}
+
 export default function TimerPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const savedState = useRef(loadTimerState());
   const [mode, setMode] = useState<Mode>(savedState.current?.mode || "focus");
   const [customMinutes, setCustomMinutes] = useState(savedState.current?.customMinutes || 60);
@@ -106,10 +118,14 @@ export default function TimerPage() {
   const [timerCompleteAnimation, setTimerCompleteAnimation] = useState(false);
   const [showTaskLink, setShowTaskLink] = useState(false);
   const [linkedTask, setLinkedTask] = useState<LinkedTask | null>(savedState.current?.linkedTask || null);
+  const [sessionStartedAt, setSessionStartedAt] = useState<number>(savedState.current?.startedAt || 0);
+  const [showThemePicker, setShowThemePicker] = useState(false);
   const intervalRef = useRef<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const endTimeRef = useRef<number>(savedState.current?.endTime || 0);
   const { sessions, addSession } = usePomodoroSessions();
+  const { currentTheme, ownedThemes, selectTheme } = useFocusThemes();
+  const { settings } = useFocusSettings();
 
   const todaySessions = sessions.filter((s) => s.session_type === "focus").length;
   const todayMinutes = sessions
@@ -123,18 +139,7 @@ export default function TimerPage() {
         const remaining = Math.max(0, Math.ceil((endTimeRef.current - Date.now()) / 1000));
         setTimeLeft(remaining);
         if (remaining <= 0) {
-          setIsRunning(false);
-          setFocusMode(false);
-          saveTimerState(null);
-          const durationMinutes = mode === "custom" ? customMinutes : PRESET_MODES[mode as Exclude<Mode, "custom">].minutes;
-          if (mode === "focus" || mode === "custom") {
-            addSession({ duration_minutes: durationMinutes, session_type: "focus", linked_task: linkedTask?.label || null, linked_subject: linkedTask?.type === "subject" ? linkedTask.label : null });
-            setCompletedFocusMinutes(durationMinutes);
-            setShowBreakPopup(true);
-            setTimerCompleteAnimation(true);
-            setTimeout(() => setTimerCompleteAnimation(false), 2000);
-          }
-          stopSound();
+          handleSessionComplete();
         }
       };
       tick();
@@ -153,6 +158,36 @@ export default function TimerPage() {
     return () => stopSound();
   }, []);
 
+  const handleSessionComplete = useCallback(() => {
+    setIsRunning(false);
+    setFocusMode(false);
+    saveTimerState(null);
+    const durationMinutes = mode === "custom" ? customMinutes : PRESET_MODES[mode as Exclude<Mode, "custom">].minutes;
+    if (mode === "focus" || mode === "custom") {
+      addSession({ duration_minutes: durationMinutes, session_type: "focus", linked_task: linkedTask?.label || null, linked_subject: linkedTask?.type === "subject" ? linkedTask.label : null });
+      // Award focus points
+      awardFocusPoints(durationMinutes);
+      setCompletedFocusMinutes(durationMinutes);
+      setShowBreakPopup(true);
+      setTimerCompleteAnimation(true);
+      setTimeout(() => setTimerCompleteAnimation(false), 2000);
+    }
+    stopSound();
+  }, [mode, customMinutes, linkedTask]);
+
+  const awardFocusPoints = async (minutes: number) => {
+    if (!user) return;
+    const points = calculateFocusPoints(minutes);
+    if (points <= 0) return;
+    const { data: profile } = await supabase.from("profiles").select("leaderboard_points, coins").eq("user_id", user.id).single();
+    if (profile) {
+      await supabase.from("profiles").update({
+        leaderboard_points: profile.leaderboard_points + points,
+        coins: (profile.coins || 0) + points,
+      }).eq("user_id", user.id);
+    }
+  };
+
   const playSound = useCallback((idx: number) => {
     if (audioRef.current) {
       audioRef.current.pause();
@@ -162,11 +197,11 @@ export default function TimerPage() {
     if (idx > 0 && SOUNDS[idx]?.url) {
       const audio = new Audio(SOUNDS[idx].url);
       audio.loop = true;
-      audio.volume = 0.3;
+      audio.volume = settings.soundVolume;
       audio.play().catch(() => {});
       audioRef.current = audio;
     }
-  }, []);
+  }, [settings.soundVolume]);
 
   const stopSound = useCallback(() => {
     if (audioRef.current) {
@@ -181,7 +216,7 @@ export default function TimerPage() {
     if (isRunning) {
       playSound(idx);
       if (endTimeRef.current > Date.now()) {
-        saveTimerState({ endTime: endTimeRef.current, mode, customMinutes, initialSeconds, soundIdx: idx });
+        saveTimerState({ endTime: endTimeRef.current, mode, customMinutes, initialSeconds, soundIdx: idx, startedAt: sessionStartedAt });
       }
     }
   };
@@ -198,33 +233,37 @@ export default function TimerPage() {
   const handleTaskLinkSelect = (task: LinkedTask | null) => {
     setLinkedTask(task);
     setShowTaskLink(false);
-    // Start timer after selection
     setTimeout(() => doStartTimer(task), 50);
   };
 
   const doStartTimer = (taskOverride?: LinkedTask | null) => {
     const endTime = Date.now() + timeLeft * 1000;
+    const startedAt = Date.now();
     endTimeRef.current = endTime;
     setIsRunning(true);
+    setSessionStartedAt(startedAt);
     if (mode === "focus" || mode === "custom") setFocusMode(true);
     const task = taskOverride !== undefined ? taskOverride : linkedTask;
-    saveTimerState({ endTime, mode, customMinutes, initialSeconds, soundIdx, linkedTask: task });
+    saveTimerState({ endTime, mode, customMinutes, initialSeconds, soundIdx, linkedTask: task, startedAt });
     if (SOUNDS[soundIdx]?.url) playSound(soundIdx);
   };
 
-  const pauseTimer = () => {
-    setIsRunning(false);
-    // Save remaining time so it can be resumed
-    saveTimerState({ endTime: 0, mode, customMinutes, initialSeconds, soundIdx, paused: true, pausedTimeLeft: timeLeft, linkedTask });
-    stopSound();
-  };
-
-  const stopTimer = () => {
+  // End session early - save actual time studied
+  const endSessionEarly = () => {
     setIsRunning(false);
     setFocusMode(false);
-    setLinkedTask(null);
+    const actualSecondsStudied = sessionStartedAt > 0 ? Math.floor((Date.now() - sessionStartedAt) / 1000) : (initialSeconds - timeLeft);
+    const actualMinutes = Math.max(1, Math.round(actualSecondsStudied / 60));
     saveTimerState(null);
     stopSound();
+
+    if (mode === "focus" || mode === "custom") {
+      addSession({ duration_minutes: actualMinutes, session_type: "focus", linked_task: linkedTask?.label || null, linked_subject: linkedTask?.type === "subject" ? linkedTask.label : null });
+      awardFocusPoints(actualMinutes);
+      setCompletedFocusMinutes(actualMinutes);
+      setShowBreakPopup(true);
+    }
+    setLinkedTask(null);
     const dur = mode === "custom" ? customMinutes * 60 : PRESET_MODES[mode as Exclude<Mode, "custom">].minutes * 60;
     setTimeLeft(dur);
     setInitialSeconds(dur);
@@ -272,7 +311,6 @@ export default function TimerPage() {
     setShowBreakPopup(false);
     const shortOrLong = breakMinutes <= 7 ? "shortBreak" : "longBreak";
     doSwitchMode(shortOrLong);
-    // Auto-start the break
     setTimeout(() => {
       const endTime = Date.now() + breakMinutes * 60 * 1000;
       endTimeRef.current = endTime;
@@ -292,26 +330,57 @@ export default function TimerPage() {
     "Start where you are. Use what you have. Do what you can.",
     "Small daily improvements over time lead to stunning results.",
     "The secret of getting ahead is getting started. — Mark Twain",
+    "Discipline is choosing what you want most over what you want now.",
   ];
   const quote = quotes[todaySessions % quotes.length];
 
   const isFocusMode = mode === "focus" || mode === "custom";
+  const focusPoints = calculateFocusPoints(
+    mode === "custom" ? customMinutes : (isFocusMode ? PRESET_MODES.focus.minutes : 0)
+  );
 
-  // Deep Focus Mode: show minimal UI when running
+  // ===== DEEP FOCUS MODE (LOCKDOWN) =====
   if (focusMode && isRunning) {
+    const actualMinutesElapsed = sessionStartedAt > 0 ? Math.round((Date.now() - sessionStartedAt) / 60000) : 0;
+    const estimatedPoints = calculateFocusPoints(actualMinutesElapsed);
+
     return (
-      <div className="fixed inset-0 z-[80] bg-background flex flex-col items-center justify-center">
+      <div
+        className="fixed inset-0 z-[200] flex flex-col items-center justify-center transition-all duration-500"
+        style={{ background: currentTheme.gradient }}
+      >
+        {/* Subtle animated background particles */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {[...Array(6)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute w-2 h-2 rounded-full bg-white/10"
+              initial={{ x: Math.random() * 400, y: Math.random() * 800, opacity: 0 }}
+              animate={{
+                y: [Math.random() * 800, -20],
+                opacity: [0, 0.3, 0],
+              }}
+              transition={{
+                duration: 8 + Math.random() * 4,
+                repeat: Infinity,
+                delay: i * 1.5,
+              }}
+            />
+          ))}
+        </div>
+
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="text-center space-y-8"
+          className="text-center space-y-6 relative z-10"
         >
+          {/* Timer Ring */}
           <div className="relative w-64 h-64 mx-auto">
             <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-              <circle cx="50" cy="50" r="45" fill="none" className="stroke-muted" strokeWidth="3" />
+              <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="3" />
               <motion.circle
                 cx="50" cy="50" r="45" fill="none"
-                className="stroke-primary"
+                stroke="rgba(255,255,255,0.8)"
                 strokeWidth="3"
                 strokeLinecap="round"
                 strokeDasharray={Math.PI * 90}
@@ -322,65 +391,132 @@ export default function TimerPage() {
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <motion.span
                 key={timeLeft}
-                initial={{ scale: 1.05 }}
+                initial={{ scale: 1.02 }}
                 animate={{ scale: 1 }}
-                className="text-6xl font-display font-bold tabular-nums"
+                className="text-6xl font-display font-bold tabular-nums text-white"
               >
                 {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
               </motion.span>
-              <span className="text-sm text-muted-foreground mt-2">Deep Focus</span>
+              <span className="text-sm text-white/60 mt-2 font-medium">Deep Focus</span>
               {linkedTask && (
-                <span className="text-xs text-primary mt-1 font-medium">{linkedTask.label}</span>
+                <span className="text-xs text-white/70 mt-1 font-medium">🎯 {linkedTask.label}</span>
               )}
             </div>
           </div>
 
+          {/* Points earned so far */}
+          {estimatedPoints > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center justify-center gap-2 text-white/70"
+            >
+              <span className="text-sm">🔥 +{estimatedPoints} pts earned</span>
+            </motion.div>
+          )}
+
+          {/* Quote */}
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="text-sm text-muted-foreground italic max-w-xs mx-auto"
+            className="text-sm text-white/50 italic max-w-xs mx-auto"
           >
             "{quote}"
           </motion.p>
 
-          <div className="flex gap-3 justify-center">
+          {/* Only End Session button - no pause/stop */}
+          <div className="flex flex-col gap-3 items-center">
             <Button
               size="lg"
-              onClick={pauseTimer}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => setShowExitConfirm(true)}
+              variant="outline"
+              className="border-white/30 text-white hover:bg-white/10 hover:text-white px-8"
             >
-              <Pause className="h-5 w-5 mr-2" /> Pause
-            </Button>
-            <Button size="lg" variant="outline" onClick={() => setShowExitConfirm(true)}>
-              <Square className="h-5 w-5 mr-2" /> Stop
+              <Square className="h-5 w-5 mr-2" /> End Session
             </Button>
           </div>
 
           {/* Sound indicator */}
-          {soundIdx > 0 && (
+          <div className="flex items-center justify-center gap-4">
+            {soundIdx > 0 && (
+              <button
+                onClick={() => toggleSound(0)}
+                className="text-xs text-white/50 flex items-center gap-1 hover:text-white/70 transition-colors"
+              >
+                <Volume2 className="h-3 w-3" /> {SOUNDS[soundIdx].icon} {SOUNDS[soundIdx].name}
+              </button>
+            )}
+            {/* Sound selection in focus mode */}
             <button
-              onClick={() => toggleSound(0)}
-              className="text-xs text-muted-foreground flex items-center gap-1 mx-auto hover:text-foreground transition-colors"
+              onClick={() => setShowSounds(!showSounds)}
+              className="text-xs text-white/50 flex items-center gap-1 hover:text-white/70 transition-colors"
             >
-              <Volume2 className="h-3 w-3" /> {SOUNDS[soundIdx].name}
+              <Music className="h-3 w-3" /> Sounds
             </button>
-          )}
+          </div>
+
+          {/* Inline sound picker in focus mode */}
+          <AnimatePresence>
+            {showSounds && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="grid grid-cols-2 gap-2 max-w-xs mx-auto overflow-hidden"
+              >
+                {SOUNDS.map((s, i) => (
+                  <button
+                    key={s.name}
+                    onClick={() => { toggleSound(i); setShowSounds(false); }}
+                    className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                      soundIdx === i
+                        ? "bg-white/20 text-white"
+                        : "bg-white/5 text-white/60 hover:bg-white/10"
+                    }`}
+                  >
+                    {s.icon} {s.name}
+                  </button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Feedback in focus mode */}
+          <div className="pt-2">
+            <FocusFeedbackForm />
+          </div>
         </motion.div>
 
+        {/* Exit confirmation */}
         <FocusExitConfirmDialog
           showExitConfirm={showExitConfirm}
           onContinue={() => setShowExitConfirm(false)}
-          onExit={() => { setShowExitConfirm(false); stopTimer(); }}
+          onExit={() => { setShowExitConfirm(false); endSessionEarly(); }}
+        />
+
+        {/* Smart Break Popup */}
+        <SmartBreakPopup
+          show={showBreakPopup}
+          focusMinutes={completedFocusMinutes}
+          onStartBreak={handleStartBreak}
+          onDismiss={() => setShowBreakPopup(false)}
         />
       </div>
     );
   }
 
+  // ===== NORMAL TIMER UI =====
   return (
     <PageTransition>
       <div className="max-w-lg mx-auto space-y-6">
-        <h1 className="text-3xl font-display font-bold text-center">Focus Timer</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-display font-bold">Focus Timer</h1>
+          <div className="flex items-center gap-2">
+            <FocusSettingsHub />
+            <FocusFeedbackForm />
+          </div>
+        </div>
 
         {/* Mode tabs */}
         <div className="flex justify-center gap-2 flex-wrap">
@@ -470,6 +606,38 @@ export default function TimerPage() {
           )}
         </AnimatePresence>
 
+        {/* Focus Theme Preview */}
+        {isFocusMode && !isRunning && (
+          <Card className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-display font-semibold flex items-center gap-1.5">
+                <Palette className="h-4 w-4 text-accent" /> Focus Theme
+              </h3>
+              <span className="text-xs text-muted-foreground">{currentTheme.icon} {currentTheme.name}</span>
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {ownedThemes.map((theme) => (
+                <button
+                  key={theme.value}
+                  onClick={() => selectTheme(theme.value)}
+                  className={`flex-shrink-0 w-16 h-10 rounded-lg border-2 transition-all ${
+                    currentTheme.value === theme.value ? "border-primary shadow-glow-primary" : "border-border"
+                  }`}
+                  style={{ background: theme.gradient }}
+                  title={theme.name}
+                />
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {/* Focus points preview */}
+        {isFocusMode && !isRunning && focusPoints > 0 && (
+          <div className="text-center text-sm text-muted-foreground">
+            🔥 Complete this session to earn <span className="font-semibold text-primary">+{focusPoints} points</span>
+          </div>
+        )}
+
         <Card className="p-8 flex flex-col items-center gap-6">
           <div className="relative w-56 h-56">
             <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
@@ -517,11 +685,11 @@ export default function TimerPage() {
             <motion.div whileTap={{ scale: 0.95 }}>
               <Button
                 size="lg"
-                onClick={isRunning ? pauseTimer : requestStart}
-                className={`px-8 ${isRunning ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : "bg-gradient-primary text-primary-foreground shadow-glow-primary"}`}
+                onClick={requestStart}
+                className="px-8 bg-gradient-primary text-primary-foreground shadow-glow-primary"
+                disabled={isRunning}
               >
-                {isRunning ? <Pause className="h-5 w-5 mr-2" /> : <Play className="h-5 w-5 mr-2" />}
-                {isRunning ? "Pause" : "Start"}
+                <Play className="h-5 w-5 mr-2" /> Start Focus
               </Button>
             </motion.div>
             <motion.div whileTap={{ scale: 0.95 }}>
@@ -541,7 +709,7 @@ export default function TimerPage() {
                 className={`w-full ${showSounds ? "bg-gradient-primary text-primary-foreground" : ""}`}
               >
                 <Music className="h-3.5 w-3.5 mr-1.5" />
-                {soundIdx > 0 ? `🎵 ${SOUNDS[soundIdx].name}` : "Sounds"}
+                {soundIdx > 0 ? `${SOUNDS[soundIdx].icon} ${SOUNDS[soundIdx].name}` : "Ambient Sounds"}
                 {soundIdx > 0 && !showSounds && (
                   <span className="ml-1.5 w-2 h-2 rounded-full bg-success inline-block" />
                 )}
@@ -563,8 +731,7 @@ export default function TimerPage() {
                           onClick={() => toggleSound(i)}
                           className={`justify-start ${soundIdx === i ? "bg-gradient-primary text-primary-foreground" : ""}`}
                         >
-                          {soundIdx === i && i > 0 ? <Volume2 className="h-3.5 w-3.5 mr-1.5" /> : i > 0 ? <VolumeX className="h-3.5 w-3.5 mr-1.5" /> : null}
-                          {s.name}
+                          {s.icon} {s.name}
                         </Button>
                       ))}
                     </div>
@@ -574,6 +741,27 @@ export default function TimerPage() {
             </div>
           )}
         </Card>
+
+        {/* Distraction blocklist preview */}
+        {isFocusMode && settings.blockedApps.length > 0 && (
+          <Card className="p-4">
+            <h3 className="text-sm font-display font-semibold mb-2 flex items-center gap-1.5">
+              🚫 Blocked During Focus
+            </h3>
+            <div className="flex flex-wrap gap-1.5">
+              {settings.blockedApps.slice(0, 8).map((app) => (
+                <span key={app} className="px-2 py-0.5 text-xs rounded-full bg-destructive/10 text-destructive">
+                  {app}
+                </span>
+              ))}
+              {settings.blockedApps.length > 8 && (
+                <span className="px-2 py-0.5 text-xs rounded-full bg-muted text-muted-foreground">
+                  +{settings.blockedApps.length - 8} more
+                </span>
+              )}
+            </div>
+          </Card>
+        )}
 
         <Card className="p-4 text-center space-y-3">
           <p className="text-sm text-muted-foreground">Today's focus</p>
