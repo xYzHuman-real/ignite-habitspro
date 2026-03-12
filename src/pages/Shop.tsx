@@ -19,6 +19,7 @@ const categoryIcons: Record<string, React.ReactNode> = {
   titles: <Tag className="h-4 w-4" />,
   boosts: <Zap className="h-4 w-4" />,
   cosmetics: <Sparkles className="h-4 w-4" />,
+  themes: <Sparkles className="h-4 w-4" />,
 };
 
 const categoryLabels: Record<string, string> = {
@@ -26,6 +27,7 @@ const categoryLabels: Record<string, string> = {
   titles: "Titles",
   boosts: "Boosts",
   cosmetics: "Cosmetics",
+  themes: "Focus Themes",
 };
 
 export default function Shop() {
