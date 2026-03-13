@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, Plus, X, Zap } from "lucide-react";
+import { BookOpen, Plus, X, Zap, Palette } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useTodos } from "@/lib/supabase-hooks";
+import { useFocusThemes, type FocusTheme } from "@/lib/use-focus-themes";
 
 const PRESET_SUBJECTS = [
   "📐 Mathematics",
@@ -21,39 +22,45 @@ const PRESET_SUBJECTS = [
 
 interface TaskLinkPopupProps {
   open: boolean;
-  onSelect: (task: { type: "task" | "subject"; label: string; id?: string } | null) => void;
+  onSelect: (task: { type: "task" | "subject"; label: string; id?: string } | null, theme?: string) => void;
   onClose: () => void;
 }
 
 export function TaskLinkPopup({ open, onSelect, onClose }: TaskLinkPopupProps) {
   const { todos } = useTodos();
-  const [tab, setTab] = useState<"tasks" | "subjects">("subjects");
+  const { ownedThemes, currentTheme, selectTheme } = useFocusThemes();
+  const [tab, setTab] = useState<"subjects" | "tasks">("subjects");
   const [customSubject, setCustomSubject] = useState("");
+  const [selectedTheme, setSelectedTheme] = useState(currentTheme.value);
 
   const incompleteTodos = todos.filter((t) => !t.completed);
 
   const handleSelectSubject = (subject: string) => {
-    onSelect({ type: "subject", label: subject });
+    selectTheme(selectedTheme);
+    onSelect({ type: "subject", label: subject }, selectedTheme);
   };
 
   const handleSelectTask = (todo: { id: string; text: string }) => {
-    onSelect({ type: "task", label: todo.text, id: todo.id });
+    selectTheme(selectedTheme);
+    onSelect({ type: "task", label: todo.text, id: todo.id }, selectedTheme);
   };
 
   const handleCustomSubject = () => {
     if (customSubject.trim()) {
-      onSelect({ type: "subject", label: customSubject.trim() });
+      selectTheme(selectedTheme);
+      onSelect({ type: "subject", label: customSubject.trim() }, selectedTheme);
       setCustomSubject("");
     }
   };
 
   const handleSkip = () => {
-    onSelect(null);
+    selectTheme(selectedTheme);
+    onSelect(null, selectedTheme);
   };
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-md max-h-[80vh] overflow-hidden">
+      <DialogContent className="max-w-md max-h-[85vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle className="font-display flex items-center gap-2">
             <Zap className="h-5 w-5 text-primary" />
@@ -84,7 +91,7 @@ export function TaskLinkPopup({ open, onSelect, onClose }: TaskLinkPopupProps) {
           </Button>
         </div>
 
-        <div className="max-h-[45vh] overflow-y-auto space-y-2 mt-2">
+        <div className="max-h-[30vh] overflow-y-auto space-y-2 mt-2">
           <AnimatePresence mode="wait">
             {tab === "subjects" ? (
               <motion.div
@@ -152,6 +159,30 @@ export function TaskLinkPopup({ open, onSelect, onClose }: TaskLinkPopupProps) {
               </motion.div>
             )}
           </AnimatePresence>
+        </div>
+
+        {/* Theme Selection */}
+        <div className="mt-3 pt-3 border-t border-border">
+          <h4 className="text-sm font-display font-semibold flex items-center gap-1.5 mb-2">
+            <Palette className="h-4 w-4 text-primary" /> Choose Theme
+          </h4>
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {ownedThemes.map((theme) => (
+              <button
+                key={theme.value}
+                onClick={() => setSelectedTheme(theme.value)}
+                className={`flex-shrink-0 flex flex-col items-center gap-1 p-1.5 rounded-lg border-2 transition-all ${
+                  selectedTheme === theme.value ? "border-primary shadow-glow-primary" : "border-transparent"
+                }`}
+              >
+                <div
+                  className="w-14 h-9 rounded-md"
+                  style={{ background: theme.gradient }}
+                />
+                <span className="text-[10px] text-muted-foreground whitespace-nowrap">{theme.icon} {theme.name}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="flex justify-between mt-3">
