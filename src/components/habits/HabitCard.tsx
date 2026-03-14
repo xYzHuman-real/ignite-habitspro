@@ -42,11 +42,11 @@ export default function HabitCard({ habit, onToggle, onDelete, isDragging }: Hab
   const handleDragEnd = (_: any, info: PanInfo) => {
     if (info.offset.x > 100 && !habit.completed_today) {
       setSwiped(true);
-      controls.start({ x: 0, transition: { type: "spring", stiffness: 500, damping: 30 } });
+      controls.start({ x: 0, transition: { duration: 0.2, ease: "easeOut" } });
       onToggle(habit);
-      setTimeout(() => setSwiped(false), 500);
+      setTimeout(() => setSwiped(false), 300);
     } else {
-      controls.start({ x: 0, transition: { type: "spring", stiffness: 400, damping: 25 } });
+      controls.start({ x: 0, transition: { duration: 0.2, ease: "easeOut" } });
     }
   };
 
