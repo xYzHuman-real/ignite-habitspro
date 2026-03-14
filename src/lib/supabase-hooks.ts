@@ -78,9 +78,9 @@ export function useHabits() {
   });
 
   const addHabit = useMutation({
-    mutationFn: async (habit: { name: string; icon: string; target: number; difficulty: string }) => {
+    mutationFn: async (habit: { name: string; icon: string; target: number; difficulty: string; [key: string]: unknown }) => {
       if (!user) throw new Error("Not authenticated");
-      const { error } = await supabase.from("habits").insert({ ...habit, user_id: user.id });
+      const { error } = await supabase.from("habits").insert({ ...habit, user_id: user.id } as any);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["habits", user?.id] }),
@@ -162,11 +162,14 @@ export function useHabits() {
           );
         }
 
-        // Award 5 points per habit completion (add to both leaderboard_points and coins)
+        // Award points based on priority
+        const habitPriority = (habit as any).priority || "important";
+        const pointsMap: Record<string, number> = { very_important: 10, important: 5, less_important: 2 };
+        const earnedPoints = pointsMap[habitPriority] || 5;
         const { data: profileData } = await supabase.from("profiles").select("total_streak, habits_completed, leaderboard_points, coins").eq("user_id", user.id).single();
         if (profileData) {
-          const newPoints = profileData.leaderboard_points + 5;
-          const newCoins = (profileData.coins || 0) + 5;
+          const newPoints = profileData.leaderboard_points + earnedPoints;
+          const newCoins = (profileData.coins || 0) + earnedPoints;
           const newLevel = getLevelForPoints(newPoints);
           const maxStreak = allHabits ? Math.max(...allHabits.map(h => h.id === habit.id ? habit.streak + 1 : h.streak)) : habit.streak + 1;
           await supabase.from("profiles").update({
