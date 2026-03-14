@@ -114,13 +114,7 @@ export default function HabitCard({ habit, onToggle, onDelete, isDragging }: Hab
             }`}
           >
             {habit.completed_today && (
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 500, damping: 25 }}
-              >
-                <Check className="h-5 w-5" />
-              </motion.div>
+              <Check className="h-5 w-5" />
             )}
           </button>
 
