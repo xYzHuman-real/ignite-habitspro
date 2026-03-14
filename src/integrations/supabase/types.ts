@@ -521,8 +521,11 @@ export type Database = {
           id: string
           longest_streak: number
           name: string
+          priority: string
+          reminder_days: string[]
           reminder_enabled: boolean
           reminder_time: string | null
+          sort_order: number
           streak: number
           target: number
           updated_at: string
@@ -537,8 +540,11 @@ export type Database = {
           id?: string
           longest_streak?: number
           name: string
+          priority?: string
+          reminder_days?: string[]
           reminder_enabled?: boolean
           reminder_time?: string | null
+          sort_order?: number
           streak?: number
           target?: number
           updated_at?: string
@@ -553,8 +559,11 @@ export type Database = {
           id?: string
           longest_streak?: number
           name?: string
+          priority?: string
+          reminder_days?: string[]
           reminder_enabled?: boolean
           reminder_time?: string | null
+          sort_order?: number
           streak?: number
           target?: number
           updated_at?: string
