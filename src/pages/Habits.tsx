@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { motion, AnimatePresence, Reorder } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useHabits } from "@/lib/supabase-hooks";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,7 +15,6 @@ export default function Habits() {
   const { habits, isLoading, addHabit, toggleHabit, deleteHabit, updateHabit } = useHabits();
   const [activeTab, setActiveTab] = useState<"habits" | "calendar">("habits");
 
-  // Fetch habit completions for calendar/header
   const { data: completions = [] } = useQuery({
     queryKey: ["habit_completions", user?.id],
     queryFn: async () => {
@@ -32,33 +31,9 @@ export default function Habits() {
     enabled: !!user,
   });
 
-  // Sort habits by sort_order
   const sortedHabits = useMemo(() => {
     return [...habits].sort((a, b) => ((a as any).sort_order || 0) - ((b as any).sort_order || 0));
   }, [habits]);
-
-  const [orderedIds, setOrderedIds] = useState<string[]>([]);
-  const displayHabits = useMemo(() => {
-    if (orderedIds.length === sortedHabits.length) {
-      return orderedIds.map(id => sortedHabits.find(h => h.id === id)).filter(Boolean) as typeof sortedHabits;
-    }
-    return sortedHabits;
-  }, [sortedHabits, orderedIds]);
-
-  // Sync orderedIds when habits change
-  useMemo(() => {
-    if (sortedHabits.length > 0 && orderedIds.length !== sortedHabits.length) {
-      setOrderedIds(sortedHabits.map(h => h.id));
-    }
-  }, [sortedHabits.length]);
-
-  const handleReorder = (newOrder: string[]) => {
-    setOrderedIds(newOrder);
-    // Persist sort order
-    newOrder.forEach((id, idx) => {
-      updateHabit({ id, updates: { sort_order: idx } });
-    });
-  };
 
   const handleAdd = (habit: any) => {
     addHabit({
@@ -84,7 +59,6 @@ export default function Habits() {
 
   return (
     <div className="max-w-lg mx-auto px-4 pb-32 space-y-5">
-      {/* Momentum Header */}
       <HabitMomentumHeader habits={habits} completions={completions} />
 
       {/* Tab Switcher */}
@@ -134,22 +108,16 @@ export default function Habits() {
                 <p className="text-muted-foreground text-sm">No habits yet. Tap + to start building your routine!</p>
               </div>
             ) : (
-              <Reorder.Group
-                axis="y"
-                values={orderedIds}
-                onReorder={handleReorder}
-                className="space-y-3"
-              >
-                {displayHabits.map(habit => (
-                  <Reorder.Item key={habit.id} value={habit.id}>
-                    <HabitCard
-                      habit={habit as any}
-                      onToggle={(h) => toggleHabit(h as any)}
-                      onDelete={deleteHabit}
-                    />
-                  </Reorder.Item>
+              <div className="space-y-3">
+                {sortedHabits.map(habit => (
+                  <HabitCard
+                    key={habit.id}
+                    habit={habit as any}
+                    onToggle={(h) => toggleHabit(h as any)}
+                    onDelete={deleteHabit}
+                  />
                 ))}
-              </Reorder.Group>
+              </div>
             )}
           </motion.div>
         ) : (
@@ -162,7 +130,6 @@ export default function Habits() {
         )}
       </AnimatePresence>
 
-      {/* FAB */}
       <AddHabitDrawer onAdd={handleAdd} />
     </div>
   );

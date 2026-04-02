@@ -1,6 +1,6 @@
 import { motion, useMotionValue, useTransform, useAnimation, PanInfo } from "framer-motion";
-import { Check, Flame, Bell, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { Check, Flame, Bell, Trash2, GripVertical } from "lucide-react";
+import { useState, useRef, useCallback } from "react";
 
 const PRIORITY_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   very_important: { label: "Very Important", color: "text-destructive", bg: "bg-destructive/10" },
@@ -68,11 +68,11 @@ export default function HabitCard({ habit, onToggle, onDelete, isDragging }: Hab
         drag={habit.completed_today ? false : "x"}
         dragConstraints={{ left: 0, right: 120 }}
         dragElastic={0.1}
+        dragDirectionLock
         onDragEnd={handleDragEnd}
-        whileTap={isDragging ? { scale: 1.03, boxShadow: "0 8px 30px rgba(0,0,0,0.12)" } : {}}
         className={`relative bg-card rounded-2xl p-4 shadow-sm border border-border/50 transition-all ${
           habit.completed_today ? "opacity-60" : ""
-        } ${isDragging ? "z-50" : ""}`}
+        } ${isDragging ? "z-50 shadow-lg scale-[1.02]" : ""}`}
       >
         <div className="flex items-center gap-3">
           {/* Icon */}
