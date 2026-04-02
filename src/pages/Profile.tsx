@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { CalendarDays, Flame, UserPlus, Edit3, Check, LogOut, Shield, Coins, Gift, Trash2, Download, Camera, Eye, EyeOff, Mail } from "lucide-react";
+import { CalendarDays, Flame, UserPlus, Edit3, Check, LogOut, Shield, Coins, Gift, Trash2, Download, Camera, Eye, EyeOff, Mail, Settings } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export default function Profile() {
   const { signOut, user } = useAuth();
+  const navigate = useNavigate();
   const { profile, isLoading, updateProfile } = useProfile();
   const { allBadges, earnedBadgeIds } = useBadges();
   const { activities } = useActivityLog();
@@ -257,6 +259,9 @@ export default function Profile() {
                     </Button>
                     <Button size="sm" variant="outline" onClick={startEdit}>
                       <Edit3 className="h-4 w-4 mr-1" /> Edit Profile
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => navigate("/settings")}>
+                      <Settings className="h-4 w-4 mr-1" /> Settings
                     </Button>
                     <Button size="sm" variant="outline" className="text-destructive hover:text-destructive" onClick={signOut}>
                       <LogOut className="h-4 w-4 mr-1" /> Sign Out
