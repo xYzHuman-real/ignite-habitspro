@@ -173,7 +173,7 @@ export default function Todos() {
             <h1 className="text-2xl font-display font-bold text-foreground">To-Do List</h1>
             <p className="text-sm text-muted-foreground">{completed}/{todos.length} tasks completed today</p>
           </div>
-          <ThemeToggle />
+          <ThemeToggle theme={(resolvedTheme as "light" | "dark") || "light"} toggle={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")} />
         </div>
         <div className="flex items-center gap-3">
           <Progress value={progressPct} className="flex-1 h-2" />
