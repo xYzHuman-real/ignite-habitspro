@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, X } from "lucide-react";
+import { Plus, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
+import { toast } from "sonner";
 
 const ICONS = ["🎯", "📚", "💪", "🧘", "💧", "📖", "📝", "📵", "🌅", "🏃", "🍎", "🎨", "🎵", "⚡", "🌟", "🧠", "🫀", "🏋️", "🛏️", "🥗"];
 
@@ -51,8 +52,21 @@ export default function AddHabitDrawer({ onAdd }: AddHabitDrawerProps) {
     setRepeatDays(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]);
   };
 
+  const resetForm = () => {
+    setName("");
+    setIcon("🎯");
+    setPriority("important");
+    setTarget(1);
+    setReminderEnabled(false);
+    setReminderTime("08:00");
+    setRepeatDays(["mon", "tue", "wed", "thu", "fri", "sat", "sun"]);
+  };
+
   const handleCreate = () => {
-    if (!name.trim()) return;
+    if (!name.trim()) {
+      toast.error("Please enter a habit name");
+      return;
+    }
     const difficulty = priority === "very_important" ? "hard" : priority === "important" ? "medium" : "easy";
     onAdd({
       name: name.trim(),
@@ -64,14 +78,13 @@ export default function AddHabitDrawer({ onAdd }: AddHabitDrawerProps) {
       reminder_time: reminderEnabled ? reminderTime : null,
       reminder_days: repeatDays,
     });
-    // Reset
-    setName("");
-    setIcon("🎯");
-    setPriority("important");
-    setTarget(1);
-    setReminderEnabled(false);
-    setReminderTime("08:00");
-    setRepeatDays(["mon", "tue", "wed", "thu", "fri", "sat", "sun"]);
+    resetForm();
+    setOpen(false);
+    toast.success("Habit Created Successfully ✅");
+  };
+
+  const handleCancel = () => {
+    resetForm();
     setOpen(false);
   };
 
@@ -86,11 +99,13 @@ export default function AddHabitDrawer({ onAdd }: AddHabitDrawerProps) {
           <Plus className="h-6 w-6" />
         </motion.button>
       </DrawerTrigger>
-      <DrawerContent className="max-h-[85vh]">
+      <DrawerContent className="max-h-[85vh] flex flex-col">
         <DrawerHeader className="pb-2">
           <DrawerTitle className="font-display text-lg">New Habit</DrawerTitle>
         </DrawerHeader>
-        <div className="px-4 pb-6 space-y-5 overflow-y-auto">
+
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-5">
           {/* Name */}
           <div>
             <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Habit Name</label>
@@ -199,14 +214,24 @@ export default function AddHabitDrawer({ onAdd }: AddHabitDrawerProps) {
               </motion.div>
             )}
           </AnimatePresence>
+        </div>
 
-          {/* Create Button */}
+        {/* Sticky bottom action bar */}
+        <div className="sticky bottom-0 border-t border-border bg-card px-4 py-3 flex gap-3">
+          <Button
+            variant="outline"
+            onClick={handleCancel}
+            className="flex-1 rounded-xl h-12 text-base"
+          >
+            Cancel
+          </Button>
           <Button
             onClick={handleCreate}
             disabled={!name.trim()}
-            className="w-full bg-gradient-primary text-primary-foreground rounded-xl h-12 text-base font-semibold shadow-glow-primary"
+            className="flex-1 bg-gradient-primary text-primary-foreground rounded-xl h-12 text-base font-semibold shadow-glow-primary gap-2"
           >
-            Create Habit
+            Save Habit
+            <Check className="h-4 w-4" />
           </Button>
         </div>
       </DrawerContent>
