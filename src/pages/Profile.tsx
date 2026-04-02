@@ -22,6 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export default function Profile() {
   const { signOut, user } = useAuth();
+  const navigate = useNavigate();
   const { profile, isLoading, updateProfile } = useProfile();
   const { allBadges, earnedBadgeIds } = useBadges();
   const { activities } = useActivityLog();
