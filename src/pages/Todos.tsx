@@ -129,6 +129,7 @@ function CollapsibleSection({ title, count, children, defaultOpen = true }: {
 export default function Todos() {
   const { todos, isLoading, addTodo, toggleTodo, deleteTodo } = useTodos();
   const { profile } = useProfile();
+  const { resolvedTheme, setTheme } = useTheme();
   const [newTodo, setNewTodo] = useState("");
   const [priority, setPriority] = useState("medium");
 
