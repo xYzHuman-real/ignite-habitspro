@@ -65,6 +65,7 @@ function ProtectedRoutes() {
         <Route path="/focus-rooms" element={<FocusRooms />} />
         <Route path="/user/:userId" element={<UserProfile />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/settings" element={<Settings />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Layout>
