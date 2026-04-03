@@ -67,6 +67,7 @@ function ProtectedRoutes() {
         <Route path="/user/:userId" element={<UserProfile />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/daily-planner" element={<DailyPlanner />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Layout>
