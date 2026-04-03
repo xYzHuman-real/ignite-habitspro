@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Eye, EyeOff, Camera, Flame, Bell,
   Globe, Lock, ShieldCheck, Smartphone, Zap,
-  ChevronRight, ArrowLeft, Download, Trash2, Mail,
+  ChevronRight, ArrowLeft, Download, Trash2, Mail, BarChart3,
   Volume2, Clock, Target, BookOpen, Trophy
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
