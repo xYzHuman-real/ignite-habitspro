@@ -309,26 +309,6 @@ export default function Profile() {
         </motion.div>
       )}
 
-      {!editing && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-          <Card className="p-5">
-            <h2 className="font-display font-semibold text-lg mb-1">Your Data</h2>
-            <p className="text-sm text-muted-foreground mb-4">
-              Download all your habits, journal entries, goals, and todos as CSV files.
-            </p>
-            <Button variant="outline" size="sm" onClick={handleExportData} disabled={exporting}>
-              <Download className="h-4 w-4 mr-1" />
-              {exporting ? "Exporting..." : "Export All Data"}
-            </Button>
-          </Card>
-        </motion.div>
-      )}
-
-      {!editing && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
-          <Card className="p-5">
-            <h2 className="font-display font-semibold text-lg mb-1 flex items-center gap-2">
-              <Eye className="h-5 w-5 text-primary" /> Privacy Settings
             </h2>
             <p className="text-sm text-muted-foreground mb-4">Control what other users can see on your profile.</p>
             <div className="space-y-4">
