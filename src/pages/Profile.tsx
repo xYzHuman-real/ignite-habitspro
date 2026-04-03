@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { CalendarDays, Flame, UserPlus, Edit3, Check, LogOut, Shield, Coins, Gift, Trash2, Download, Camera, Eye, EyeOff, Mail, Settings } from "lucide-react";
+import { CalendarDays, Flame, UserPlus, Edit3, Check, LogOut, Shield, Coins, Gift, Camera, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -9,9 +9,6 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useProfile, useBadges, useActivityLog, useFollowers, useDailyLogin } from "@/lib/supabase-hooks";
 import { useAuth } from "@/lib/auth";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -30,8 +27,6 @@ export default function Profile() {
   const { claimDaily, todayLogin, isClaiming } = useDailyLogin();
   const { toast } = useToast();
   const [editing, setEditing] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [exporting, setExporting] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [form, setForm] = useState({ display_name: "", username: "", bio: "" });
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -113,81 +108,6 @@ export default function Profile() {
     }
   };
 
-  const handleDeleteAccount = async () => {
-    setDeleting(true);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const res = await supabase.functions.invoke("delete-account", {
-        headers: { Authorization: `Bearer ${session?.access_token}` },
-      });
-      if (res.error) throw res.error;
-      await supabase.auth.signOut();
-      toast({ title: "Account deleted", description: "Your account and all data have been permanently removed." });
-    } catch (e: any) {
-      toast({ title: "Failed to delete account", description: e.message, variant: "destructive" });
-    } finally {
-      setDeleting(false);
-    }
-  };
-
-  const toCsv = (headers: string[], rows: Record<string, any>[]) => {
-    const lines = [headers.join(",")];
-    rows.forEach((r) => {
-      lines.push(headers.map((h) => {
-        const val = String(r[h] ?? "").replace(/"/g, '""');
-        return `"${val}"`;
-      }).join(","));
-    });
-    return lines.join("\n");
-  };
-
-  const downloadFile = (content: string, filename: string) => {
-    const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const handleExportData = async () => {
-    setExporting(true);
-    try {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) throw new Error("Not authenticated");
-
-      const [habitsRes, journalRes, goalsRes, todosRes, completionsRes] = await Promise.all([
-        supabase.from("habits").select("*").eq("user_id", authUser.id),
-        supabase.from("journal_entries").select("*").eq("user_id", authUser.id),
-        supabase.from("goals").select("*").eq("user_id", authUser.id),
-        supabase.from("todos").select("*").eq("user_id", authUser.id),
-        supabase.from("habit_completions").select("*").eq("user_id", authUser.id),
-      ]);
-
-      if (habitsRes.data?.length) {
-        downloadFile(toCsv(["name", "icon", "difficulty", "streak", "longest_streak", "target", "current", "reminder_enabled", "reminder_time", "created_at"], habitsRes.data), "habits.csv");
-      }
-      if (completionsRes.data?.length) {
-        downloadFile(toCsv(["habit_id", "completed_date", "created_at"], completionsRes.data), "habit_completions.csv");
-      }
-      if (journalRes.data?.length) {
-        downloadFile(toCsv(["entry_date", "mood", "reflection", "gratitude", "wins", "improvements"], journalRes.data), "journal.csv");
-      }
-      if (goalsRes.data?.length) {
-        downloadFile(toCsv(["title", "description", "target_value", "current_value", "unit", "completed", "deadline", "created_at"], goalsRes.data), "goals.csv");
-      }
-      if (todosRes.data?.length) {
-        downloadFile(toCsv(["text", "priority", "completed", "created_at"], todosRes.data), "todos.csv");
-      }
-
-      toast({ title: "Export complete!", description: "Your data has been downloaded as CSV files." });
-    } catch (e: any) {
-      toast({ title: "Export failed", description: e.message, variant: "destructive" });
-    } finally {
-      setExporting(false);
-    }
-  };
 
   const avatarText = profile.display_name ? profile.display_name.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2) : "?";
   const earnedBadges = allBadges.filter((b) => earnedBadgeIds.includes(b.id));
@@ -205,7 +125,16 @@ export default function Profile() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-        <Card className="p-6">
+        <Card className="p-6 relative">
+          {/* Settings icon top-right */}
+          {!editing && (
+            <button
+              onClick={() => navigate("/settings")}
+              className="absolute top-4 right-4 w-9 h-9 rounded-xl flex items-center justify-center hover:bg-muted transition-colors"
+            >
+              <Settings className="h-5 w-5 text-muted-foreground" />
+            </button>
+          )}
           {editing ? (
             <div className="space-y-4">
               <h2 className="font-display font-bold text-xl">Edit Profile</h2>
@@ -259,9 +188,6 @@ export default function Profile() {
                     </Button>
                     <Button size="sm" variant="outline" onClick={startEdit}>
                       <Edit3 className="h-4 w-4 mr-1" /> Edit Profile
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => navigate("/settings")}>
-                      <Settings className="h-4 w-4 mr-1" /> Settings
                     </Button>
                     <Button size="sm" variant="outline" className="text-destructive hover:text-destructive" onClick={signOut}>
                       <LogOut className="h-4 w-4 mr-1" /> Sign Out
@@ -379,135 +305,6 @@ export default function Profile() {
                 Less <div className="w-3 h-3 rounded-sm bg-muted" /> <div className="w-3 h-3 rounded-sm bg-primary/30" /> <div className="w-3 h-3 rounded-sm bg-primary/60" /> <div className="w-3 h-3 rounded-sm bg-gradient-primary" /> More
               </div>
             </div>
-          </Card>
-        </motion.div>
-      )}
-
-      {!editing && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-          <Card className="p-5">
-            <h2 className="font-display font-semibold text-lg mb-1">Your Data</h2>
-            <p className="text-sm text-muted-foreground mb-4">
-              Download all your habits, journal entries, goals, and todos as CSV files.
-            </p>
-            <Button variant="outline" size="sm" onClick={handleExportData} disabled={exporting}>
-              <Download className="h-4 w-4 mr-1" />
-              {exporting ? "Exporting..." : "Export All Data"}
-            </Button>
-          </Card>
-        </motion.div>
-      )}
-
-      {!editing && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
-          <Card className="p-5">
-            <h2 className="font-display font-semibold text-lg mb-1 flex items-center gap-2">
-              <Eye className="h-5 w-5 text-primary" /> Privacy Settings
-            </h2>
-            <p className="text-sm text-muted-foreground mb-4">Control what other users can see on your profile.</p>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="show-avatar" className="flex items-center gap-2 cursor-pointer">
-                  <Camera className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">Profile Picture</p>
-                    <p className="text-xs text-muted-foreground">Show your avatar to other users</p>
-                  </div>
-                </Label>
-                <Switch
-                  id="show-avatar"
-                  checked={(profile as any).show_avatar !== false}
-                  onCheckedChange={(checked) => updateProfile({ show_avatar: checked })}
-                />
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <Label htmlFor="show-stats" className="flex items-center gap-2 cursor-pointer">
-                  <Flame className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">Stats & Streaks</p>
-                    <p className="text-xs text-muted-foreground">Show streak, points, and completed habits</p>
-                  </div>
-                </Label>
-                <Switch
-                  id="show-stats"
-                  checked={(profile as any).show_stats !== false}
-                  onCheckedChange={(checked) => updateProfile({ show_stats: checked })}
-                />
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <Label htmlFor="show-profile" className="flex items-center gap-2 cursor-pointer">
-                  <EyeOff className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">Profile Visibility</p>
-                    <p className="text-xs text-muted-foreground">Allow others to view your full profile</p>
-                  </div>
-                </Label>
-                <Switch
-                  id="show-profile"
-                  checked={(profile as any).show_profile !== false}
-                  onCheckedChange={(checked) => updateProfile({ show_profile: checked })}
-                />
-              </div>
-            </div>
-          </Card>
-        </motion.div>
-      )}
-
-      {!editing && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-          <Card className="p-5 border-destructive/30">
-            <h2 className="font-display font-semibold text-lg mb-1 text-destructive">Danger Zone</h2>
-            <p className="text-sm text-muted-foreground mb-4">
-              Permanently delete your account and all associated data. This action cannot be undone.
-            </p>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm" disabled={deleting}>
-                  <Trash2 className="h-4 w-4 mr-1" />
-                  {deleting ? "Deleting..." : "Delete Account"}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will permanently delete your account, all habits, journal entries, goals, streaks, badges, and community data. This action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleDeleteAccount}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
-                    Yes, delete my account
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </Card>
-        </motion.div>
-      )}
-
-      {/* Customer Support */}
-      {!editing && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
-          <Card className="p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <Mail className="h-5 w-5 text-primary" />
-              <h2 className="font-semibold text-lg">Customer Support</h2>
-            </div>
-            <p className="text-sm text-muted-foreground mb-3">
-              Need help or have feedback? Reach out to us anytime.
-            </p>
-            <a
-              href="mailto:support.ignitehabitproapp@gmail.com"
-              className="text-sm text-primary hover:underline font-medium"
-            >
-              support.ignitehabitproapp@gmail.com
-            </a>
           </Card>
         </motion.div>
       )}

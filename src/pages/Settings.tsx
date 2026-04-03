@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Settings as SettingsIcon, Eye, EyeOff, Camera, Flame, Bell, BellOff,
-  Moon, Sun, Globe, Lock, ShieldCheck, Smartphone, Zap, BarChart3,
-  ChevronRight, ArrowLeft, Star, ExternalLink, Download, Trash2, Mail,
+  Eye, EyeOff, Camera, Flame, Bell,
+  Globe, Lock, ShieldCheck, Smartphone, Zap,
+  ChevronRight, ArrowLeft, Download, Trash2, Mail, BarChart3,
   Volume2, Clock, Target, BookOpen, Trophy
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -18,34 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
-const competitors = [
-  {
-    name: "Todoist",
-    icon: "✅",
-    features: ["Task management", "Projects & labels", "Productivity tracking"],
-    comparison: "Ignite adds gamification, streaks, and focus timer — Todoist focuses purely on tasks.",
-  },
-  {
-    name: "Habitica",
-    icon: "🐉",
-    features: ["RPG-style habits", "Avatars & quests", "Party system"],
-    comparison: "Ignite offers a cleaner modern UI with focus rooms and accountability partners.",
-  },
-  {
-    name: "TickTick",
-    icon: "⏰",
-    features: ["Pomodoro timer", "Habit tracker", "Calendar view"],
-    comparison: "Ignite combines community, leaderboards, and deeper gamification in one app.",
-  },
-  {
-    name: "Forest",
-    icon: "🌳",
-    features: ["Focus timer", "Tree planting", "Phone lockdown"],
-    comparison: "Ignite goes beyond focus with full habit tracking, journals, and social features.",
-  },
-];
-
-type SettingsSection = "main" | "privacy" | "notifications" | "preferences" | "compare" | "about";
+type SettingsSection = "main" | "privacy" | "notifications" | "preferences" | "about";
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -186,7 +159,7 @@ export default function Settings() {
             {/* App */}
             <Card className="p-2 mb-3">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 pt-2 pb-1">App</p>
-              <SettingsItem icon={BarChart3} label="App Comparison" desc="See how Ignite compares to other apps" onClick={() => setSection("compare")} />
+              <SettingsItem icon={Mail} label="Customer Support" desc="Get help or send feedback" onClick={() => setSection("about")} />
               <SettingsItem icon={BookOpen} label="About Ignite" desc="Version, credits & links" onClick={() => setSection("about")} />
             </Card>
 
@@ -288,47 +261,6 @@ export default function Settings() {
               <Separator />
               <ToggleRow id="lock-screen" icon={Lock} label="Focus Lock Screen" desc="Lock navigation during focus sessions" checked={true} onChange={() => toast({ title: "Coming soon!" })} />
             </Card>
-          </motion.div>
-        )}
-
-        {section === "compare" && (
-          <motion.div key="compare" {...pageVariants} transition={{ duration: 0.2 }}>
-            <SectionHeader title="How Ignite Compares" onBack={() => setSection("main")} />
-            <div className="space-y-3">
-              {/* Ignite highlight */}
-              <Card className="p-4 border-primary/30 bg-gradient-to-br from-primary/5 to-accent/5">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                    <Zap className="h-6 w-6 text-primary-foreground" />
-                  </div>
-                  <div>
-                    <h3 className="font-display font-bold text-base">Ignite HabitPro</h3>
-                    <p className="text-xs text-muted-foreground">All-in-one productivity suite</p>
-                  </div>
-                  <span className="ml-auto text-xs px-2 py-1 rounded-full bg-primary/15 text-primary font-semibold">You're here!</span>
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {["Habits", "Focus Timer", "To-Dos", "Journal", "Goals", "Leaderboard", "Community", "Gamification", "Focus Rooms"].map((f) => (
-                    <span key={f} className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">{f}</span>
-                  ))}
-                </div>
-              </Card>
-
-              {competitors.map((app) => (
-                <Card key={app.name} className="p-4">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="text-2xl">{app.icon}</span>
-                    <h3 className="font-display font-semibold text-sm">{app.name}</h3>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5 mb-2">
-                    {app.features.map((f) => (
-                      <span key={f} className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{f}</span>
-                    ))}
-                  </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{app.comparison}</p>
-                </Card>
-              ))}
-            </div>
           </motion.div>
         )}
 
