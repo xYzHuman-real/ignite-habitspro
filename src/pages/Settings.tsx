@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Settings as SettingsIcon, Eye, EyeOff, Camera, Flame, Bell, BellOff,
-  Moon, Sun, Globe, Lock, ShieldCheck, Smartphone, Zap, BarChart3,
-  ChevronRight, ArrowLeft, Star, ExternalLink, Download, Trash2, Mail,
+  Eye, EyeOff, Camera, Flame, Bell,
+  Globe, Lock, ShieldCheck, Smartphone, Zap,
+  ChevronRight, ArrowLeft, Download, Trash2, Mail,
   Volume2, Clock, Target, BookOpen, Trophy
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
