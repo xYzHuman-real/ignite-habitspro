@@ -12,6 +12,7 @@ import {
   BarChart3,
   BookOpen,
   Crosshair,
+  Brain,
 } from "lucide-react";
 import appLogo from "@/assets/app-logo.png";
 import { NavLink } from "@/components/NavLink";
@@ -38,6 +39,7 @@ const sections = [
       { title: "To-Do List", url: "/todos", icon: ListTodo },
       { title: "Journal", url: "/journal", icon: BookOpen },
       { title: "Goals", url: "/goals", icon: Crosshair },
+      { title: "AI Planner", url: "/daily-planner", icon: Brain },
     ],
   },
   {
