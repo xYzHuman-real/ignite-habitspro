@@ -186,7 +186,7 @@ export default function Settings() {
             {/* App */}
             <Card className="p-2 mb-3">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 pt-2 pb-1">App</p>
-              <SettingsItem icon={BarChart3} label="App Comparison" desc="See how Ignite compares to other apps" onClick={() => setSection("compare")} />
+              <SettingsItem icon={Mail} label="Customer Support" desc="Get help or send feedback" onClick={() => setSection("about")} />
               <SettingsItem icon={BookOpen} label="About Ignite" desc="Version, credits & links" onClick={() => setSection("about")} />
             </Card>
 
