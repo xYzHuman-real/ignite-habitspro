@@ -18,33 +18,6 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
-const competitors = [
-  {
-    name: "Todoist",
-    icon: "✅",
-    features: ["Task management", "Projects & labels", "Productivity tracking"],
-    comparison: "Ignite adds gamification, streaks, and focus timer — Todoist focuses purely on tasks.",
-  },
-  {
-    name: "Habitica",
-    icon: "🐉",
-    features: ["RPG-style habits", "Avatars & quests", "Party system"],
-    comparison: "Ignite offers a cleaner modern UI with focus rooms and accountability partners.",
-  },
-  {
-    name: "TickTick",
-    icon: "⏰",
-    features: ["Pomodoro timer", "Habit tracker", "Calendar view"],
-    comparison: "Ignite combines community, leaderboards, and deeper gamification in one app.",
-  },
-  {
-    name: "Forest",
-    icon: "🌳",
-    features: ["Focus timer", "Tree planting", "Phone lockdown"],
-    comparison: "Ignite goes beyond focus with full habit tracking, journals, and social features.",
-  },
-];
-
 type SettingsSection = "main" | "privacy" | "notifications" | "preferences" | "about";
 
 export default function Settings() {
