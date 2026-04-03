@@ -201,6 +201,15 @@ export default function Profile() {
     <div className="max-w-2xl mx-auto space-y-6">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
         <Card className="p-6">
+          {/* Settings icon top-right */}
+          {!editing && (
+            <button
+              onClick={() => navigate("/settings")}
+              className="absolute top-4 right-4 w-9 h-9 rounded-xl flex items-center justify-center hover:bg-muted transition-colors"
+            >
+              <Settings className="h-5 w-5 text-muted-foreground" />
+            </button>
+          )}
           {editing ? (
             <div className="space-y-4">
               <h2 className="font-display font-bold text-xl">Edit Profile</h2>
