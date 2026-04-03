@@ -12,6 +12,7 @@ import {
   BarChart3,
   BookOpen,
   Crosshair,
+  Brain,
 } from "lucide-react";
 import appLogo from "@/assets/app-logo.png";
 import { NavLink } from "@/components/NavLink";
