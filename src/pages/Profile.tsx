@@ -264,9 +264,6 @@ export default function Profile() {
                     <Button size="sm" variant="outline" onClick={startEdit}>
                       <Edit3 className="h-4 w-4 mr-1" /> Edit Profile
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => navigate("/settings")}>
-                      <Settings className="h-4 w-4 mr-1" /> Settings
-                    </Button>
                     <Button size="sm" variant="outline" className="text-destructive hover:text-destructive" onClick={signOut}>
                       <LogOut className="h-4 w-4 mr-1" /> Sign Out
                     </Button>
