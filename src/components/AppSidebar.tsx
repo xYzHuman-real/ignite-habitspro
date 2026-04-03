@@ -39,6 +39,7 @@ const sections = [
       { title: "To-Do List", url: "/todos", icon: ListTodo },
       { title: "Journal", url: "/journal", icon: BookOpen },
       { title: "Goals", url: "/goals", icon: Crosshair },
+      { title: "AI Planner", url: "/daily-planner", icon: Brain },
     ],
   },
   {
