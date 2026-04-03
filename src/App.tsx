@@ -28,6 +28,7 @@ import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
+import DailyPlanner from "./pages/DailyPlanner";
 import NotFound from "./pages/NotFound";
 import { SplashScreen } from "@/components/SplashScreen";
 
