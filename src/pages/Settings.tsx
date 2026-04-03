@@ -45,7 +45,7 @@ const competitors = [
   },
 ];
 
-type SettingsSection = "main" | "privacy" | "notifications" | "preferences" | "compare" | "about";
+type SettingsSection = "main" | "privacy" | "notifications" | "preferences" | "about";
 
 export default function Settings() {
   const navigate = useNavigate();
