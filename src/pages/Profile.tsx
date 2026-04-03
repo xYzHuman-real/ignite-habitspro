@@ -200,7 +200,7 @@ export default function Profile() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-        <Card className="p-6">
+        <Card className="p-6 relative">
           {/* Settings icon top-right */}
           {!editing && (
             <button

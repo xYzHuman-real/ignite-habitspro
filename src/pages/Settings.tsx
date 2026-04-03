@@ -291,47 +291,6 @@ export default function Settings() {
           </motion.div>
         )}
 
-        {section === "compare" && (
-          <motion.div key="compare" {...pageVariants} transition={{ duration: 0.2 }}>
-            <SectionHeader title="How Ignite Compares" onBack={() => setSection("main")} />
-            <div className="space-y-3">
-              {/* Ignite highlight */}
-              <Card className="p-4 border-primary/30 bg-gradient-to-br from-primary/5 to-accent/5">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                    <Zap className="h-6 w-6 text-primary-foreground" />
-                  </div>
-                  <div>
-                    <h3 className="font-display font-bold text-base">Ignite HabitPro</h3>
-                    <p className="text-xs text-muted-foreground">All-in-one productivity suite</p>
-                  </div>
-                  <span className="ml-auto text-xs px-2 py-1 rounded-full bg-primary/15 text-primary font-semibold">You're here!</span>
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {["Habits", "Focus Timer", "To-Dos", "Journal", "Goals", "Leaderboard", "Community", "Gamification", "Focus Rooms"].map((f) => (
-                    <span key={f} className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">{f}</span>
-                  ))}
-                </div>
-              </Card>
-
-              {competitors.map((app) => (
-                <Card key={app.name} className="p-4">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="text-2xl">{app.icon}</span>
-                    <h3 className="font-display font-semibold text-sm">{app.name}</h3>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5 mb-2">
-                    {app.features.map((f) => (
-                      <span key={f} className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{f}</span>
-                    ))}
-                  </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{app.comparison}</p>
-                </Card>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
         {section === "about" && (
           <motion.div key="about" {...pageVariants} transition={{ duration: 0.2 }}>
             <SectionHeader title="About Ignite" onBack={() => setSection("main")} />
