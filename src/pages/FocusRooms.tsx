@@ -119,73 +119,18 @@ export default function FocusRooms() {
           )}
         </div>
 
-        {/* Active Room Dialog */}
-        <Dialog open={!!activeRoomId} onOpenChange={open => !open && setActiveRoomId(null)}>
-          <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col">
-            <DialogHeader>
-              <DialogTitle className="font-display">{activeRoom?.name}</DialogTitle>
-            </DialogHeader>
-            {activeRoom?.status === "active" && timeLeft !== null && !isOnBreak && (
-              <div className="text-center py-4">
-                <p className="text-sm text-muted-foreground mb-2">Time Remaining</p>
-                <p className="text-4xl font-display font-bold tabular-nums text-primary">
-                  {String(Math.floor(timeLeft / 60)).padStart(2, "0")}:{String(timeLeft % 60).padStart(2, "0")}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">{getParticipantCount(activeRoom.id)} focusing together</p>
-              </div>
-            )}
-            {activeRoom?.status === "waiting" && (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">Waiting for the host to start the session...</p>
-                <p className="text-sm text-muted-foreground mt-1">{getParticipantCount(activeRoom.id)} participants ready</p>
-              </div>
-            )}
-            {isOnBreak && (
-              <div className="text-center py-4">
-                <p className="text-2xl">☕</p>
-                <p className="font-display font-semibold text-lg mt-1">Break Time!</p>
-                <p className="text-sm text-muted-foreground">Chat with your focus partners</p>
-              </div>
-            )}
-            {/* Chat (available during break) */}
-            <ScrollArea className="flex-1 min-h-0 max-h-[40vh] pr-3" ref={scrollRef as any}>
-              <div className="space-y-3 py-2">
-                {chatMessages.length === 0 && (
-                  <p className="text-center text-muted-foreground text-sm py-4">
-                    {isOnBreak ? "Break time — say hi! 👋" : "Chat available during break time"}
-                  </p>
-                )}
-                {chatMessages.map((msg: any) => {
-                  const isMe = msg.user_id === user?.id;
-                  return (
-                    <div key={msg.id} className={`flex gap-2 ${isMe ? "flex-row-reverse" : ""}`}>
-                      <Avatar className="w-7 h-7 shrink-0">
-                        <AvatarFallback className={`text-xs ${isMe ? "bg-gradient-primary text-primary-foreground" : "bg-muted"}`}>
-                          {(msg.display_name || "U")[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className={`rounded-2xl px-3 py-1.5 text-sm max-w-[70%] ${isMe ? "bg-gradient-primary text-primary-foreground rounded-tr-sm" : "bg-muted rounded-tl-sm"}`}>
-                        {msg.message}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </ScrollArea>
-            <div className="flex gap-2 pt-2 border-t">
-              <Input
-                placeholder={isOnBreak ? "Say something..." : "Chat during break"}
-                value={chatMsg}
-                onChange={e => setChatMsg(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && sendChat()}
-                disabled={!isOnBreak}
-              />
-              <Button onClick={sendChat} size="icon" disabled={!isOnBreak} className="bg-gradient-primary text-primary-foreground shrink-0">
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        {/* Full-screen Active Room */}
+        <AnimatePresence>
+          {activeRoomId && activeRoom && (
+            <ActiveFocusRoom
+              room={activeRoom}
+              participants={participants}
+              participantCount={getParticipantCount(activeRoom.id)}
+              onLeave={() => { leaveRoom(activeRoom.id); setActiveRoomId(null); }}
+              onClose={() => setActiveRoomId(null)}
+            />
+          )}
+        </AnimatePresence>
 
         {/* Create Room Dialog */}
         <Dialog open={showCreate} onOpenChange={setShowCreate}>
