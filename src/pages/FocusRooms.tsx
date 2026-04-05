@@ -1,23 +1,21 @@
-import { useState, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
-import { Users, Plus, Lock, Unlock, Play, LogOut, Send, Clock, Copy } from "lucide-react";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Users, Plus, Lock, Unlock, Play, LogOut, Clock, Copy } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { useFocusRooms, useFocusRoomChat } from "@/lib/use-focus-rooms";
+import { useFocusRooms } from "@/lib/use-focus-rooms";
 import { useAuth } from "@/lib/auth";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PageTransition } from "@/components/PageTransition";
+import { ActiveFocusRoom } from "@/components/focus-room/ActiveFocusRoom";
 
 export default function FocusRooms() {
   const { user } = useAuth();
-  const { rooms, createRoom, joinRoom, joinByCode, leaveRoom, startRoom, getParticipantCount, isJoined } = useFocusRooms();
+  const { rooms, participants, createRoom, joinRoom, joinByCode, leaveRoom, startRoom, getParticipantCount, isJoined } = useFocusRooms();
 
   const [showCreate, setShowCreate] = useState(false);
   const [roomName, setRoomName] = useState("");
@@ -28,13 +26,6 @@ export default function FocusRooms() {
   const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
 
   const activeRoom = rooms.find((r: any) => r.id === activeRoomId);
-  const chatMessages = useFocusRoomChat(activeRoomId);
-  const [chatMsg, setChatMsg] = useState("");
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-  }, [chatMessages]);
 
   const handleCreate = () => {
     if (!roomName.trim()) return;
@@ -51,35 +42,6 @@ export default function FocusRooms() {
       onError: () => toast.error("Invalid invite code"),
     } as any);
   };
-
-  const sendChat = async () => {
-    if (!chatMsg.trim() || !activeRoomId || !user) return;
-    const text = chatMsg.trim();
-    setChatMsg("");
-    await supabase.from("focus_room_messages" as any).insert({
-      room_id: activeRoomId,
-      user_id: user.id,
-      message: text,
-    } as any);
-  };
-
-  // Timer for active room
-  const [timeLeft, setTimeLeft] = useState<number | null>(null);
-  useEffect(() => {
-    if (!activeRoom || activeRoom.status !== "active" || !activeRoom.started_at) {
-      setTimeLeft(null); return;
-    }
-    const tick = () => {
-      const elapsed = (Date.now() - new Date(activeRoom.started_at).getTime()) / 1000;
-      const total = activeRoom.session_duration_minutes * 60;
-      setTimeLeft(Math.max(0, Math.round(total - elapsed)));
-    };
-    tick();
-    const iv = setInterval(tick, 1000);
-    return () => clearInterval(iv);
-  }, [activeRoom]);
-
-  const isOnBreak = activeRoom?.status === "active" && timeLeft !== null && timeLeft <= 0;
 
   return (
     <PageTransition>
@@ -157,73 +119,18 @@ export default function FocusRooms() {
           )}
         </div>
 
-        {/* Active Room Dialog */}
-        <Dialog open={!!activeRoomId} onOpenChange={open => !open && setActiveRoomId(null)}>
-          <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col">
-            <DialogHeader>
-              <DialogTitle className="font-display">{activeRoom?.name}</DialogTitle>
-            </DialogHeader>
-            {activeRoom?.status === "active" && timeLeft !== null && !isOnBreak && (
-              <div className="text-center py-4">
-                <p className="text-sm text-muted-foreground mb-2">Time Remaining</p>
-                <p className="text-4xl font-display font-bold tabular-nums text-primary">
-                  {String(Math.floor(timeLeft / 60)).padStart(2, "0")}:{String(timeLeft % 60).padStart(2, "0")}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">{getParticipantCount(activeRoom.id)} focusing together</p>
-              </div>
-            )}
-            {activeRoom?.status === "waiting" && (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">Waiting for the host to start the session...</p>
-                <p className="text-sm text-muted-foreground mt-1">{getParticipantCount(activeRoom.id)} participants ready</p>
-              </div>
-            )}
-            {isOnBreak && (
-              <div className="text-center py-4">
-                <p className="text-2xl">☕</p>
-                <p className="font-display font-semibold text-lg mt-1">Break Time!</p>
-                <p className="text-sm text-muted-foreground">Chat with your focus partners</p>
-              </div>
-            )}
-            {/* Chat (available during break) */}
-            <ScrollArea className="flex-1 min-h-0 max-h-[40vh] pr-3" ref={scrollRef as any}>
-              <div className="space-y-3 py-2">
-                {chatMessages.length === 0 && (
-                  <p className="text-center text-muted-foreground text-sm py-4">
-                    {isOnBreak ? "Break time — say hi! 👋" : "Chat available during break time"}
-                  </p>
-                )}
-                {chatMessages.map((msg: any) => {
-                  const isMe = msg.user_id === user?.id;
-                  return (
-                    <div key={msg.id} className={`flex gap-2 ${isMe ? "flex-row-reverse" : ""}`}>
-                      <Avatar className="w-7 h-7 shrink-0">
-                        <AvatarFallback className={`text-xs ${isMe ? "bg-gradient-primary text-primary-foreground" : "bg-muted"}`}>
-                          {(msg.display_name || "U")[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className={`rounded-2xl px-3 py-1.5 text-sm max-w-[70%] ${isMe ? "bg-gradient-primary text-primary-foreground rounded-tr-sm" : "bg-muted rounded-tl-sm"}`}>
-                        {msg.message}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </ScrollArea>
-            <div className="flex gap-2 pt-2 border-t">
-              <Input
-                placeholder={isOnBreak ? "Say something..." : "Chat during break"}
-                value={chatMsg}
-                onChange={e => setChatMsg(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && sendChat()}
-                disabled={!isOnBreak}
-              />
-              <Button onClick={sendChat} size="icon" disabled={!isOnBreak} className="bg-gradient-primary text-primary-foreground shrink-0">
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        {/* Full-screen Active Room */}
+        <AnimatePresence>
+          {activeRoomId && activeRoom && (
+            <ActiveFocusRoom
+              room={activeRoom}
+              participants={participants}
+              participantCount={getParticipantCount(activeRoom.id)}
+              onLeave={() => { leaveRoom(activeRoom.id); setActiveRoomId(null); }}
+              onClose={() => setActiveRoomId(null)}
+            />
+          )}
+        </AnimatePresence>
 
         {/* Create Room Dialog */}
         <Dialog open={showCreate} onOpenChange={setShowCreate}>
