@@ -1,19 +1,17 @@
-import { useState, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
-import { Users, Plus, Lock, Unlock, Play, LogOut, Send, Clock, Copy } from "lucide-react";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Users, Plus, Lock, Unlock, Play, LogOut, Clock, Copy } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { useFocusRooms, useFocusRoomChat } from "@/lib/use-focus-rooms";
+import { useFocusRooms } from "@/lib/use-focus-rooms";
 import { useAuth } from "@/lib/auth";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PageTransition } from "@/components/PageTransition";
+import { ActiveFocusRoom } from "@/components/focus-room/ActiveFocusRoom";
 
 export default function FocusRooms() {
   const { user } = useAuth();
