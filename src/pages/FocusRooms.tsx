@@ -15,7 +15,7 @@ import { ActiveFocusRoom } from "@/components/focus-room/ActiveFocusRoom";
 
 export default function FocusRooms() {
   const { user } = useAuth();
-  const { rooms, createRoom, joinRoom, joinByCode, leaveRoom, startRoom, getParticipantCount, isJoined } = useFocusRooms();
+  const { rooms, participants, createRoom, joinRoom, joinByCode, leaveRoom, startRoom, getParticipantCount, isJoined } = useFocusRooms();
 
   const [showCreate, setShowCreate] = useState(false);
   const [roomName, setRoomName] = useState("");
@@ -26,13 +26,6 @@ export default function FocusRooms() {
   const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
 
   const activeRoom = rooms.find((r: any) => r.id === activeRoomId);
-  const chatMessages = useFocusRoomChat(activeRoomId);
-  const [chatMsg, setChatMsg] = useState("");
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-  }, [chatMessages]);
 
   const handleCreate = () => {
     if (!roomName.trim()) return;
@@ -49,35 +42,6 @@ export default function FocusRooms() {
       onError: () => toast.error("Invalid invite code"),
     } as any);
   };
-
-  const sendChat = async () => {
-    if (!chatMsg.trim() || !activeRoomId || !user) return;
-    const text = chatMsg.trim();
-    setChatMsg("");
-    await supabase.from("focus_room_messages" as any).insert({
-      room_id: activeRoomId,
-      user_id: user.id,
-      message: text,
-    } as any);
-  };
-
-  // Timer for active room
-  const [timeLeft, setTimeLeft] = useState<number | null>(null);
-  useEffect(() => {
-    if (!activeRoom || activeRoom.status !== "active" || !activeRoom.started_at) {
-      setTimeLeft(null); return;
-    }
-    const tick = () => {
-      const elapsed = (Date.now() - new Date(activeRoom.started_at).getTime()) / 1000;
-      const total = activeRoom.session_duration_minutes * 60;
-      setTimeLeft(Math.max(0, Math.round(total - elapsed)));
-    };
-    tick();
-    const iv = setInterval(tick, 1000);
-    return () => clearInterval(iv);
-  }, [activeRoom]);
-
-  const isOnBreak = activeRoom?.status === "active" && timeLeft !== null && timeLeft <= 0;
 
   return (
     <PageTransition>
