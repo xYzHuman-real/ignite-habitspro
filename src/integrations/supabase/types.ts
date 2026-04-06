@@ -851,12 +851,55 @@ export type Database = {
           },
         ]
       }
-      todos: {
+      subtasks: {
         Row: {
           completed: boolean
           created_at: string
           id: string
+          sort_order: number
+          text: string
+          todo_id: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean
+          created_at?: string
+          id?: string
+          sort_order?: number
+          text: string
+          todo_id: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean
+          created_at?: string
+          id?: string
+          sort_order?: number
+          text?: string
+          todo_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subtasks_todo_id_fkey"
+            columns: ["todo_id"]
+            isOneToOne: false
+            referencedRelation: "todos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      todos: {
+        Row: {
+          completed: boolean
+          created_at: string
+          due_date: string | null
+          id: string
+          notes: string | null
           priority: string
+          recurring: string | null
+          sort_order: number | null
+          tags: string[] | null
           text: string
           updated_at: string
           user_id: string
@@ -864,8 +907,13 @@ export type Database = {
         Insert: {
           completed?: boolean
           created_at?: string
+          due_date?: string | null
           id?: string
+          notes?: string | null
           priority?: string
+          recurring?: string | null
+          sort_order?: number | null
+          tags?: string[] | null
           text: string
           updated_at?: string
           user_id: string
@@ -873,8 +921,13 @@ export type Database = {
         Update: {
           completed?: boolean
           created_at?: string
+          due_date?: string | null
           id?: string
+          notes?: string | null
           priority?: string
+          recurring?: string | null
+          sort_order?: number | null
+          tags?: string[] | null
           text?: string
           updated_at?: string
           user_id?: string
