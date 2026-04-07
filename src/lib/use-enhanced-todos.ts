@@ -3,6 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { getLevelForPoints } from "@/lib/xp-levels";
 
+export interface Attachment {
+  type: "pdf" | "link" | "google_doc" | "google_drive";
+  name: string;
+  url: string;
+}
+
 export interface Todo {
   id: string;
   text: string;
@@ -16,6 +22,7 @@ export interface Todo {
   notes: string;
   recurring: string;
   sort_order: number;
+  attachments: Attachment[];
 }
 
 export interface Subtask {
@@ -44,7 +51,13 @@ export function useEnhancedTodos() {
         .eq("user_id", user.id)
         .order("sort_order", { ascending: true })
         .order("created_at", { ascending: false });
-      return (data || []) as unknown as Todo[];
+      return (data || []).map((t: any) => ({
+        ...t,
+        tags: t.tags || [],
+        notes: t.notes || "",
+        recurring: t.recurring || "none",
+        attachments: t.attachments || [],
+      })) as Todo[];
     },
     enabled: !!user,
   });
@@ -64,7 +77,7 @@ export function useEnhancedTodos() {
   });
 
   const addTodo = useMutation({
-    mutationFn: async (todo: { text: string; priority: string; due_date?: string | null; tags?: string[]; notes?: string; recurring?: string }) => {
+    mutationFn: async (todo: { text: string; priority: string; due_date?: string | null; tags?: string[]; notes?: string; recurring?: string; attachments?: Attachment[] }) => {
       if (!user) throw new Error("Not authenticated");
       const { error } = await supabase.from("todos").insert({
         text: todo.text,
@@ -74,6 +87,7 @@ export function useEnhancedTodos() {
         tags: todo.tags || [],
         notes: todo.notes || "",
         recurring: todo.recurring || "none",
+        attachments: todo.attachments || [],
       } as any);
       if (error) throw error;
     },
@@ -110,7 +124,6 @@ export function useEnhancedTodos() {
           }).eq("user_id", user.id);
         }
 
-        // Handle recurring: create new task if recurring
         if (todo && todo.recurring && todo.recurring !== "none" && todo.due_date) {
           const oldDate = new Date(todo.due_date);
           let newDate = new Date(oldDate);
@@ -126,6 +139,7 @@ export function useEnhancedTodos() {
             tags: todo.tags,
             notes: todo.notes,
             recurring: todo.recurring,
+            attachments: todo.attachments || [],
           } as any);
         }
       }
@@ -144,7 +158,6 @@ export function useEnhancedTodos() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["todos", user?.id] }),
   });
 
-  // Subtask mutations
   const addSubtask = useMutation({
     mutationFn: async ({ todoId, text }: { todoId: string; text: string }) => {
       if (!user) throw new Error("Not authenticated");
