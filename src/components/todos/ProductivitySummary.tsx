@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { CheckCircle, Clock, Zap, TrendingUp } from "lucide-react";
 import type { Todo } from "@/lib/use-enhanced-todos";
@@ -22,16 +21,20 @@ export function ProductivitySummary({ todos }: Props) {
   }, [todos]);
 
   const items = [
-    { icon: CheckCircle, label: "Done", value: stats.completed, color: "text-success" },
-    { icon: Clock, label: "Pending", value: stats.pending, color: "text-orange-500" },
-    { icon: TrendingUp, label: "Productivity", value: `${stats.pct}%`, color: "text-primary" },
-    { icon: Zap, label: "XP Earned", value: `+${stats.xpEarned}`, color: "text-accent" },
+    { icon: CheckCircle, label: "Done", value: String(stats.completed), color: "text-success" },
+    { icon: Clock, label: "Pending", value: String(stats.pending), color: "text-orange-500" },
+    { icon: TrendingUp, label: "Score", value: `${stats.pct}%`, color: "text-primary" },
+    { icon: Zap, label: "XP", value: `+${stats.xpEarned}`, color: "text-accent" },
   ];
 
   return (
-    <Card className="p-4 rounded-2xl border-border/50 bg-card/80 backdrop-blur-xl">
-      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Today's Summary</h3>
-      <div className="grid grid-cols-4 gap-2 mb-3">
+    <div className="bg-card rounded-2xl border border-border/30 shadow-sm p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Today</h3>
+        <span className="text-xs font-bold text-primary">{stats.pct}%</span>
+      </div>
+      <Progress value={stats.pct} className="h-1.5 mb-4" />
+      <div className="grid grid-cols-4 gap-1">
         {items.map(({ icon: Icon, label, value, color }) => (
           <div key={label} className="text-center">
             <Icon className={`h-4 w-4 mx-auto mb-1 ${color}`} />
@@ -40,7 +43,6 @@ export function ProductivitySummary({ todos }: Props) {
           </div>
         ))}
       </div>
-      <Progress value={stats.pct} className="h-1.5" />
-    </Card>
+    </div>
   );
 }

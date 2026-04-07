@@ -891,6 +891,7 @@ export type Database = {
       }
       todos: {
         Row: {
+          attachments: Json | null
           completed: boolean
           created_at: string
           due_date: string | null
@@ -905,6 +906,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          attachments?: Json | null
           completed?: boolean
           created_at?: string
           due_date?: string | null
@@ -919,6 +921,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          attachments?: Json | null
           completed?: boolean
           created_at?: string
           due_date?: string | null
