@@ -12,6 +12,7 @@ import { TaskLinkPopup } from "@/components/TaskLinkPopup";
 import { FocusSettingsHub } from "@/components/FocusSettingsHub";
 import { FocusFeedbackForm } from "@/components/FocusFeedbackForm";
 import { FocusStatsTab } from "@/components/FocusStatsTab";
+import { MotivationalQuotes } from "@/components/MotivationalQuotes";
 import { NotificationBell } from "@/components/NotificationBell";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useTheme } from "@/lib/store";
@@ -750,6 +751,9 @@ export default function TimerPage() {
                   />
                 </div>
               </div>
+
+              {/* Motivational Quotes */}
+              <MotivationalQuotes />
             </motion.div>
           )}
         </AnimatePresence>
