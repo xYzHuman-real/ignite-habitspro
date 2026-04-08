@@ -83,6 +83,7 @@ function calculateFocusPoints(minutes: number): number {
 }
 
 export default function TimerPage() {
+  const { theme, toggle } = useTheme();
   const navigate = useNavigate();
   const { user } = useAuth();
   const savedState = useRef(loadTimerState());
