@@ -14,6 +14,7 @@ import { FocusFeedbackForm } from "@/components/FocusFeedbackForm";
 import { FocusStatsTab } from "@/components/FocusStatsTab";
 import { NotificationBell } from "@/components/NotificationBell";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useTheme } from "@/lib/store";
 import { useFocusThemes } from "@/lib/use-focus-themes";
 import { useFocusSettings } from "@/lib/use-focus-settings";
 import { useNavigate } from "react-router-dom";
