@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, RotateCcw, Volume2, Timer, Music, Square } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { Play, RotateCcw, Volume2, Timer, Music, Square, Coffee, Zap, Clock, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -13,6 +12,8 @@ import { TaskLinkPopup } from "@/components/TaskLinkPopup";
 import { FocusSettingsHub } from "@/components/FocusSettingsHub";
 import { FocusFeedbackForm } from "@/components/FocusFeedbackForm";
 import { FocusStatsTab } from "@/components/FocusStatsTab";
+import { NotificationBell } from "@/components/NotificationBell";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useFocusThemes } from "@/lib/use-focus-themes";
 import { useFocusSettings } from "@/lib/use-focus-settings";
 import { useNavigate } from "react-router-dom";
@@ -304,85 +305,132 @@ export default function TimerPage() {
   const isFocusMode = mode === "focus" || mode === "custom";
   const focusPoints = calculateFocusPoints(mode === "custom" ? customMinutes : (isFocusMode ? PRESET_MODES.focus.minutes : 0));
 
+  // SVG circle params
+  const radius = 44;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference * (1 - progress / 100);
+
   // ===== DEEP FOCUS LOCKDOWN =====
   if (focusMode && isRunning) {
     const actualMinutesElapsed = sessionStartedAt > 0 ? Math.round((Date.now() - sessionStartedAt) / 60000) : 0;
     const estimatedPoints = calculateFocusPoints(actualMinutesElapsed);
+    const lockdownRadius = 46;
+    const lockdownCircumference = 2 * Math.PI * lockdownRadius;
+    const lockdownOffset = lockdownCircumference * (1 - progress / 100);
 
     return (
-      <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center transition-all duration-500" style={{ background: currentTheme.gradient }}>
-        {/* Particles */}
+      <div className="fixed inset-0 z-[200] flex flex-col transition-all duration-500" style={{ background: currentTheme.gradient }}>
+        {/* Ambient particles */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {[...Array(6)].map((_, i) => (
+          {[...Array(8)].map((_, i) => (
             <motion.div
               key={i}
-              className="absolute w-2 h-2 rounded-full bg-white/10"
+              className="absolute rounded-full"
+              style={{
+                width: 4 + Math.random() * 6,
+                height: 4 + Math.random() * 6,
+                background: `hsla(${16 + Math.random() * 20}, 85%, 58%, ${0.1 + Math.random() * 0.15})`,
+              }}
               initial={{ x: Math.random() * 400, y: Math.random() * 800, opacity: 0 }}
-              animate={{ y: [Math.random() * 800, -20], opacity: [0, 0.3, 0] }}
-              transition={{ duration: 8 + Math.random() * 4, repeat: Infinity, delay: i * 1.5 }}
+              animate={{ y: [Math.random() * 800, -20], opacity: [0, 0.4, 0] }}
+              transition={{ duration: 8 + Math.random() * 6, repeat: Infinity, delay: i * 1.2 }}
             />
           ))}
+          {/* Subtle radial glow */}
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full opacity-[0.06]"
+            style={{ background: "radial-gradient(circle, hsl(16 85% 58%), transparent 70%)" }} />
         </div>
 
-        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center space-y-6 relative z-10">
-          {/* Timer Ring */}
-          <div className="relative w-64 h-64 mx-auto">
-            <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-              <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="3" />
-              <motion.circle
-                cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="3" strokeLinecap="round"
-                strokeDasharray={Math.PI * 90}
-                animate={{ strokeDashoffset: Math.PI * 90 * (1 - progress / 100) }}
-                transition={{ duration: 0.5 }}
-              />
-            </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-6xl font-display font-bold tabular-nums text-white">
-                {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
-              </span>
-              <span className="text-sm text-white/60 mt-2 font-medium">Deep Focus</span>
-              {linkedTask && <span className="text-xs text-white/70 mt-1">🎯 {linkedTask.label}</span>}
-            </div>
+        {/* Header */}
+        <div className="relative z-10 flex items-center justify-between px-5 pt-[env(safe-area-inset-top,16px)] pb-2">
+          <div>
+            <p className="text-white/40 text-[10px] uppercase tracking-[0.2em] font-medium">Deep Focus</p>
           </div>
-
-          {estimatedPoints > 0 && (
-            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-sm text-white/70">
-              🔥 +{estimatedPoints} pts earned
-            </motion.p>
-          )}
-
-          <p className="text-sm text-white/50 italic max-w-xs mx-auto">"{quote}"</p>
-
-          {/* End Session + Feedback - relative z-index to ensure clickability */}
-          <div className="flex flex-col gap-3 items-center relative z-20">
-            <Button
-              size="lg"
-              onClick={() => setShowExitConfirm(true)}
-              variant="outline"
-              className="border-white/30 text-white hover:bg-white/10 hover:text-white px-8"
-            >
-              <Square className="h-5 w-5 mr-2" /> End Session
-            </Button>
-          </div>
-
-          {/* Sound controls */}
-          <div className="flex items-center justify-center gap-4 relative z-20">
+          <div className="flex items-center gap-2">
             {soundIdx > 0 && (
-              <button onClick={() => toggleSound(0)} className="text-xs text-white/50 flex items-center gap-1 hover:text-white/70 transition-colors">
-                <Volume2 className="h-3 w-3" /> {SOUNDS[soundIdx].icon} {SOUNDS[soundIdx].name}
+              <button onClick={() => toggleSound(0)} className="text-[10px] text-white/40 flex items-center gap-1 hover:text-white/60 transition-colors px-2 py-1 rounded-full bg-white/5">
+                <Volume2 className="h-3 w-3" /> {SOUNDS[soundIdx].icon}
               </button>
             )}
-            <button onClick={() => setShowSounds(!showSounds)} className="text-xs text-white/50 flex items-center gap-1 hover:text-white/70 transition-colors">
+            <button onClick={() => setShowSounds(!showSounds)} className="text-[10px] text-white/40 flex items-center gap-1 hover:text-white/60 transition-colors px-2 py-1 rounded-full bg-white/5">
               <Music className="h-3 w-3" /> Sounds
             </button>
           </div>
+        </div>
 
+        {/* Main content */}
+        <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-6">
+          {/* Timer Ring */}
+          <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="relative w-72 h-72 mb-6">
+            {/* Outer glow */}
+            <div className="absolute inset-[-8px] rounded-full opacity-20"
+              style={{ background: "radial-gradient(circle, hsl(16 85% 58%) 0%, transparent 70%)" }} />
+            
+            <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+              {/* Background ring */}
+              <circle cx="50" cy="50" r={lockdownRadius} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="3" />
+              {/* Progress ring */}
+              <motion.circle
+                cx="50" cy="50" r={lockdownRadius} fill="none"
+                stroke="url(#lockdownGrad)"
+                strokeWidth="3.5" strokeLinecap="round"
+                strokeDasharray={lockdownCircumference}
+                animate={{ strokeDashoffset: lockdownOffset }}
+                transition={{ duration: 0.5 }}
+              />
+              <defs>
+                <linearGradient id="lockdownGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="hsl(16, 85%, 58%)" />
+                  <stop offset="100%" stopColor="hsl(0, 85%, 55%)" />
+                </linearGradient>
+              </defs>
+            </svg>
+
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-6xl font-display font-bold tabular-nums text-white tracking-tight">
+                {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
+              </span>
+              <span className="text-xs text-white/40 mt-2 font-medium tracking-wide uppercase">Focus Session</span>
+              {linkedTask && (
+                <span className="text-xs text-white/50 mt-1.5 flex items-center gap-1">
+                  🎯 {linkedTask.label}
+                </span>
+              )}
+            </div>
+          </motion.div>
+
+          {/* Points earned */}
+          {estimatedPoints > 0 && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white/5 mb-4">
+              <Zap className="h-3.5 w-3.5 text-primary" />
+              <span className="text-xs text-white/60 font-medium">+{estimatedPoints} pts earned</span>
+            </motion.div>
+          )}
+
+          {/* Quote */}
+          <p className="text-xs text-white/30 italic max-w-[280px] text-center mb-8 leading-relaxed">"{quote}"</p>
+
+          {/* End Session button */}
+          <motion.div whileTap={{ scale: 0.95 }} className="relative z-20">
+            <Button
+              size="lg"
+              onClick={() => setShowExitConfirm(true)}
+              className="border border-white/15 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white px-8 rounded-2xl h-12 backdrop-blur-sm"
+              variant="ghost"
+            >
+              <Square className="h-4 w-4 mr-2" /> End Session
+            </Button>
+          </motion.div>
+
+          {/* Sounds panel */}
           <AnimatePresence>
             {showSounds && (
-              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="grid grid-cols-2 gap-2 max-w-xs mx-auto overflow-hidden relative z-20">
+              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
+                className="grid grid-cols-2 gap-2 max-w-xs mx-auto overflow-hidden mt-6 relative z-20">
                 {SOUNDS.map((s, i) => (
                   <button key={s.name} onClick={() => { toggleSound(i); setShowSounds(false); }}
-                    className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${soundIdx === i ? "bg-white/20 text-white" : "bg-white/5 text-white/60 hover:bg-white/10"}`}>
+                    className={`px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${soundIdx === i ? "bg-primary/20 text-white border border-primary/30" : "bg-white/5 text-white/50 hover:bg-white/10 border border-transparent"}`}>
                     {s.icon} {s.name}
                   </button>
                 ))}
@@ -390,10 +438,10 @@ export default function TimerPage() {
             )}
           </AnimatePresence>
 
-          <div className="relative z-20">
+          <div className="relative z-20 mt-4">
             <FocusFeedbackForm />
           </div>
-        </motion.div>
+        </div>
 
         <FocusExitConfirmDialog
           showExitConfirm={showExitConfirm}
@@ -414,34 +462,42 @@ export default function TimerPage() {
   // ===== NORMAL UI =====
   return (
     <PageTransition>
-      <div className="max-w-lg mx-auto space-y-5 pb-4">
+      <div className="max-w-lg mx-auto pb-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-display font-bold tracking-tight">FOCUS Timer</h1>
-          <div className="flex items-center gap-2">
-            <FocusSettingsHub />
-            <FocusFeedbackForm />
+        <div className="flex items-center justify-between mb-1">
+          <h1 className="text-2xl font-display font-bold tracking-tight">Focus Timer</h1>
+          <div className="flex items-center gap-1">
+            <NotificationBell />
+            <ThemeToggle />
           </div>
         </div>
 
-        {/* Focus / Stats tabs */}
-        <div className="flex gap-2">
-          <Button
-            variant={activeTab === "focus" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setActiveTab("focus")}
-            className={activeTab === "focus" ? "bg-gradient-primary text-primary-foreground px-6" : "px-6"}
-          >
-            Focus
-          </Button>
-          <Button
-            variant={activeTab === "stats" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setActiveTab("stats")}
-            className={activeTab === "stats" ? "bg-gradient-primary text-primary-foreground px-6" : "px-6"}
-          >
-            Stats
-          </Button>
+        {/* Settings & Feedback pills */}
+        <div className="flex items-center gap-2 mb-5">
+          <FocusSettingsHub />
+          <FocusFeedbackForm />
+        </div>
+
+        {/* Focus / Stats toggle */}
+        <div className="flex p-1 rounded-2xl bg-muted/60 mb-5">
+          {(["focus", "stats"] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`relative flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all duration-300 ${
+                activeTab === tab ? "text-primary-foreground" : "text-muted-foreground"
+              }`}
+            >
+              {activeTab === tab && (
+                <motion.div
+                  layoutId="timerTabBg"
+                  className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary to-[hsl(0,85%,50%)] shadow-md"
+                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                />
+              )}
+              <span className="relative z-10 capitalize">{tab}</span>
+            </button>
+          ))}
         </div>
 
         <AnimatePresence mode="wait">
@@ -450,191 +506,262 @@ export default function TimerPage() {
               <FocusStatsTab />
             </motion.div>
           ) : (
-            <motion.div key="focus" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.2 }} className="space-y-5">
+            <motion.div key="focus" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.2 }} className="space-y-4">
+
               {/* Mode selector */}
-              <div className="flex gap-2">
-                {(["focus", "shortBreak"] as const).map((m) => (
-                  <Button
-                    key={m}
-                    variant={mode === m ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => attemptSwitchMode(m)}
-                    className={mode === m ? "bg-gradient-primary text-primary-foreground" : ""}
+              <div className="flex p-1 rounded-2xl bg-muted/40 gap-1">
+                {([
+                  { key: "focus" as Mode, label: "Focus", icon: <Zap className="h-3.5 w-3.5" /> },
+                  { key: "shortBreak" as Mode, label: "Break", icon: <Coffee className="h-3.5 w-3.5" /> },
+                  { key: "custom" as Mode, label: "Custom", icon: <Clock className="h-3.5 w-3.5" /> },
+                ]).map((m) => (
+                  <button
+                    key={m.key}
+                    onClick={() => attemptSwitchMode(m.key)}
+                    className={`relative flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-xl transition-all duration-300 ${
+                      mode === m.key ? "text-primary-foreground" : "text-muted-foreground"
+                    }`}
                   >
-                    {m === "shortBreak" ? "⏱️ Short Break" : PRESET_MODES[m].label}
-                  </Button>
+                    {mode === m.key && (
+                      <motion.div
+                        layoutId="modeBg"
+                        className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary to-[hsl(0,85%,50%)] shadow-sm"
+                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                      />
+                    )}
+                    <span className="relative z-10 flex items-center gap-1">{m.icon} {m.label}</span>
+                  </button>
                 ))}
-                <Button
-                  variant={mode === "custom" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => attemptSwitchMode("custom")}
-                  className={mode === "custom" ? "bg-gradient-primary text-primary-foreground" : ""}
-                >
-                  Custom
-                </Button>
               </div>
 
               {/* Custom time input */}
               <AnimatePresence>
                 {mode === "custom" && !isRunning && (
                   <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
-                    <Card className="p-4">
-                      <p className="text-sm font-medium text-muted-foreground mb-3">Set duration (minutes):</p>
+                    <div className="rounded-2xl bg-card border border-border/50 p-4 shadow-sm">
+                      <p className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wider">Set Duration</p>
                       <div className="flex gap-2 flex-wrap">
                         {[30, 45, 60, 90, 120].map((m) => (
-                          <Button key={m} variant={customMinutes === m ? "default" : "outline"} size="sm"
+                          <button key={m}
                             onClick={() => { setCustomMinutes(m); setTimeLeft(m * 60); setInitialSeconds(m * 60); }}
-                            className={customMinutes === m ? "bg-gradient-primary text-primary-foreground" : ""}>
+                            className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+                              customMinutes === m
+                                ? "bg-primary text-primary-foreground shadow-sm"
+                                : "bg-muted/60 text-muted-foreground hover:bg-muted"
+                            }`}>
                             {m >= 60 ? `${m / 60}h` : `${m}m`}
-                          </Button>
+                          </button>
                         ))}
                       </div>
                       <div className="flex gap-2 mt-3">
                         <Input type="number" min={1} max={240} value={customMinutes}
-                          onChange={(e) => setCustomMinutes(parseInt(e.target.value) || 1)} className="w-24" />
-                        <Button variant="outline" size="sm" onClick={applyCustomTime}>Set</Button>
+                          onChange={(e) => setCustomMinutes(parseInt(e.target.value) || 1)}
+                          className="w-24 rounded-xl" />
+                        <Button variant="outline" size="sm" onClick={applyCustomTime} className="rounded-xl">Set</Button>
                       </div>
-                    </Card>
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
 
-              {/* Reward message */}
+              {/* Points message */}
               {isFocusMode && !isRunning && focusPoints > 0 && (
-                <div className="text-center text-sm text-muted-foreground">
-                  🔥 Complete this session to earn <span className="font-semibold text-primary">+{focusPoints} points</span>
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                  className="flex items-center justify-center gap-1.5 py-2">
+                  <span className="text-xs text-muted-foreground">
+                    🔥 Complete this session to earn <span className="font-bold text-primary">+{focusPoints} points</span>
+                  </span>
+                </motion.div>
+              )}
+
+              {/* Main Timer Card */}
+              <div className="relative rounded-3xl bg-card border border-border/40 shadow-lg overflow-hidden">
+                {/* Subtle top glow */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-24 opacity-[0.08] pointer-events-none"
+                  style={{ background: "radial-gradient(ellipse, hsl(16 85% 58%), transparent 70%)" }} />
+
+                <div className="p-6 flex flex-col items-center gap-4">
+                  {/* Timer circle */}
+                  <div className="relative w-60 h-60">
+                    {/* Outer glow ring */}
+                    <div className="absolute inset-[-6px] rounded-full opacity-20 pointer-events-none"
+                      style={{ background: `radial-gradient(circle, hsl(16 85% 58%) 0%, transparent 70%)` }} />
+
+                    <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                      {/* Track */}
+                      <circle cx="50" cy="50" r={radius} fill="none" className="stroke-muted/50" strokeWidth="4" />
+                      {/* Progress */}
+                      <motion.circle
+                        cx="50" cy="50" r={radius} fill="none"
+                        stroke="url(#timerGradient)"
+                        strokeWidth="4.5" strokeLinecap="round"
+                        strokeDasharray={circumference}
+                        animate={{ strokeDashoffset }}
+                        transition={{ duration: 0.5, ease: "linear" }}
+                      />
+                      <defs>
+                        <linearGradient id="timerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="hsl(16, 85%, 58%)" />
+                          <stop offset="100%" stopColor="hsl(0, 85%, 50%)" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-5xl font-display font-bold tabular-nums tracking-tight">
+                        {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
+                      </span>
+                      <span className="text-xs text-muted-foreground mt-1.5 font-medium">
+                        {mode === "custom" ? `Custom (${customMinutes}m)` : PRESET_MODES[mode as Exclude<Mode, "custom">]?.label || "Focus"}
+                      </span>
+                      {linkedTask && (
+                        <span className="text-[10px] text-primary mt-1 font-semibold truncate max-w-[160px]">🎯 {linkedTask.label}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Completion animation */}
+                  <AnimatePresence>
+                    {timerCompleteAnimation && (
+                      <motion.div initial={{ scale: 0, opacity: 0 }} animate={{ scale: [0, 1.3, 1], opacity: 1 }} exit={{ scale: 0, opacity: 0 }} className="text-4xl">
+                        🎉
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Start + Reset */}
+                  <div className="flex items-center gap-3">
+                    <motion.div whileTap={{ scale: 0.95 }}>
+                      <Button size="lg" onClick={requestStart} disabled={isRunning}
+                        className="px-10 h-12 rounded-2xl bg-gradient-to-r from-primary to-[hsl(0,85%,50%)] text-primary-foreground shadow-lg font-semibold text-sm">
+                        <Play className="h-4 w-4 mr-2" /> Start Focus
+                      </Button>
+                    </motion.div>
+                    <motion.div whileTap={{ scale: 0.9 }}>
+                      <button onClick={reset}
+                        className="w-12 h-12 rounded-2xl bg-muted/60 flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors">
+                        <RotateCcw className="h-4 w-4" />
+                      </button>
+                    </motion.div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Ambient Sounds card */}
+              {isFocusMode && (
+                <div className="rounded-2xl bg-card border border-border/40 shadow-sm overflow-hidden">
+                  <button onClick={() => setShowSounds(!showSounds)}
+                    className="w-full flex items-center gap-3 p-4 text-left transition-colors hover:bg-muted/30">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                      <Music className="h-4 w-4 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold">Ambient Sounds</p>
+                      <p className="text-xs text-muted-foreground">
+                        {soundIdx > 0 ? `${SOUNDS[soundIdx].icon} ${SOUNDS[soundIdx].name} playing` : "Choose background sounds"}
+                      </p>
+                    </div>
+                    {soundIdx > 0 && <span className="w-2 h-2 rounded-full bg-[hsl(var(--success))]" />}
+                  </button>
+                  <AnimatePresence>
+                    {showSounds && (
+                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+                        <div className="grid grid-cols-2 gap-2 p-4 pt-0">
+                          {SOUNDS.map((s, i) => (
+                            <button key={s.name} onClick={() => toggleSound(i)}
+                              className={`px-3 py-2.5 rounded-xl text-xs font-semibold transition-all text-left ${
+                                soundIdx === i
+                                  ? "bg-primary/15 text-primary border border-primary/20"
+                                  : "bg-muted/40 text-muted-foreground hover:bg-muted/70 border border-transparent"
+                              }`}>
+                              {s.icon} {s.name}
+                            </button>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               )}
 
-              {/* Timer Circle */}
-              <Card className="p-8 flex flex-col items-center gap-5">
-                <div className="relative w-56 h-56">
-                  <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="45" fill="none" className="stroke-muted" strokeWidth="4" />
-                    <motion.circle
-                      cx="50" cy="50" r="45" fill="none" className="stroke-primary" strokeWidth="4" strokeLinecap="round"
-                      strokeDasharray={Math.PI * 90}
-                      animate={{ strokeDashoffset: Math.PI * 90 * (1 - progress / 100) }}
-                      transition={{ duration: 0.5 }}
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-5xl font-display font-bold tabular-nums">
-                      {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
-                    </span>
-                    <span className="text-sm text-muted-foreground mt-1">
-                      {mode === "custom" ? `Custom (${customMinutes}m)` : PRESET_MODES[mode as Exclude<Mode, "custom">]?.label || "Focus"}
-                    </span>
-                    {linkedTask && (
-                      <span className="text-xs text-primary mt-1 font-medium truncate max-w-[180px]">🎯 {linkedTask.label}</span>
-                    )}
-                  </div>
-                </div>
-
-                <AnimatePresence>
-                  {timerCompleteAnimation && (
-                    <motion.div initial={{ scale: 0, opacity: 0 }} animate={{ scale: [0, 1.3, 1], opacity: 1 }} exit={{ scale: 0, opacity: 0 }} className="text-4xl">
-                      🎉
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {/* Start + Reset */}
-                <div className="flex gap-3">
-                  <motion.div whileTap={{ scale: 0.95 }}>
-                    <Button size="lg" onClick={requestStart} className="px-8 bg-gradient-primary text-primary-foreground shadow-glow-primary" disabled={isRunning}>
-                      <Play className="h-5 w-5 mr-2" /> Start Focus
-                    </Button>
-                  </motion.div>
-                  <motion.div whileTap={{ scale: 0.95 }}>
-                    <Button size="lg" variant="outline" onClick={reset}>
-                      <RotateCcw className="h-5 w-5" />
-                    </Button>
-                  </motion.div>
-                </div>
-
-                {/* Ambient Sounds */}
-                {isFocusMode && (
-                  <div className="w-full space-y-3">
-                    <Button variant={showSounds ? "default" : "outline"} size="sm" onClick={() => setShowSounds(!showSounds)}
-                      className={`w-full ${showSounds ? "bg-gradient-primary text-primary-foreground" : ""}`}>
-                      <Music className="h-3.5 w-3.5 mr-1.5" />
-                      {soundIdx > 0 ? `${SOUNDS[soundIdx].icon} ${SOUNDS[soundIdx].name}` : "🎵 Ambient Sounds"}
-                      {soundIdx > 0 && !showSounds && <span className="ml-1.5 w-2 h-2 rounded-full bg-success inline-block" />}
-                    </Button>
-                    <AnimatePresence>
-                      {showSounds && (
-                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
-                          <div className="grid grid-cols-2 gap-2">
-                            {SOUNDS.map((s, i) => (
-                              <Button key={s.name} variant={soundIdx === i ? "default" : "outline"} size="sm" onClick={() => toggleSound(i)}
-                                className={`justify-start ${soundIdx === i ? "bg-gradient-primary text-primary-foreground" : ""}`}>
-                                {s.icon} {s.name}
-                              </Button>
-                            ))}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                )}
-              </Card>
-
-              {/* Blocked apps */}
+              {/* Blocked apps card */}
               {isFocusMode && settings.blockedApps.length > 0 && (
-                <Card className="p-4">
-                  <h3 className="text-sm font-display font-semibold mb-2 flex items-center gap-1.5">🚫 Blocked During Focus</h3>
+                <div className="rounded-2xl bg-card border border-border/40 shadow-sm p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center">
+                      <Shield className="h-3.5 w-3.5 text-destructive" />
+                    </div>
+                    <p className="text-sm font-semibold">Blocked During Focus</p>
+                  </div>
                   <div className="flex flex-wrap gap-1.5">
                     {settings.blockedApps.slice(0, 8).map((app) => (
-                      <span key={app} className="px-2 py-0.5 text-xs rounded-full bg-destructive/10 text-destructive">{app}</span>
+                      <span key={app} className="px-2.5 py-1 text-[10px] font-medium rounded-full bg-destructive/8 text-destructive/80 border border-destructive/10">
+                        {app}
+                      </span>
                     ))}
                     {settings.blockedApps.length > 8 && (
-                      <span className="px-2 py-0.5 text-xs rounded-full bg-muted text-muted-foreground">+{settings.blockedApps.length - 8} more</span>
+                      <span className="px-2.5 py-1 text-[10px] font-medium rounded-full bg-muted text-muted-foreground">
+                        +{settings.blockedApps.length - 8} more
+                      </span>
                     )}
                   </div>
-                </Card>
+                </div>
               )}
 
-              {/* Today's Focus stats */}
-              <Card className="p-4 text-center space-y-3">
-                <p className="text-sm text-muted-foreground">Today's Focus</p>
-                <div className="flex justify-center gap-6">
-                  <div>
-                    <p className="font-display font-bold text-2xl text-primary">{todaySessions}</p>
-                    <p className="text-xs text-muted-foreground">Sessions</p>
+              {/* Today's Focus card */}
+              <div className="rounded-2xl bg-card border border-border/40 shadow-sm p-5">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4 text-center">Today's Focus</p>
+                <div className="flex justify-center gap-8 mb-4">
+                  <div className="text-center">
+                    <p className="font-display font-bold text-3xl text-primary">{todaySessions}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5 font-medium">Sessions</p>
                   </div>
-                  <div>
-                    <p className="font-display font-bold text-2xl">
+                  <div className="w-px bg-border/60" />
+                  <div className="text-center">
+                    <p className="font-display font-bold text-3xl">
                       {todayMinutes >= 60 ? `${(todayMinutes / 60).toFixed(1)}h` : `${todayMinutes}m`}
                     </p>
-                    <p className="text-xs text-muted-foreground">Total Focus</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5 font-medium">Total Focus</p>
                   </div>
                 </div>
-                <div className="flex justify-center gap-2 mt-2">
+                {/* Progress dots */}
+                <div className="flex justify-center gap-2">
                   {Array.from({ length: 8 }).map((_, i) => (
                     <motion.div key={i}
                       initial={i === todaySessions - 1 ? { scale: 0 } : false}
                       animate={{ scale: 1 }}
                       transition={{ type: "spring", stiffness: 400 }}
-                      className={`w-5 h-5 rounded-full ${i < todaySessions ? "bg-gradient-primary shadow-glow-primary" : "bg-muted"}`}
+                      className={`w-4 h-4 rounded-full transition-colors ${
+                        i < todaySessions
+                          ? "bg-gradient-to-br from-primary to-[hsl(0,85%,50%)] shadow-sm"
+                          : "bg-muted/60"
+                      }`}
                     />
                   ))}
                 </div>
-              </Card>
+                {/* Mini progress bar */}
+                <div className="mt-3 h-1 rounded-full bg-muted/50 overflow-hidden">
+                  <motion.div
+                    className="h-full rounded-full bg-gradient-to-r from-primary to-[hsl(0,85%,50%)]"
+                    animate={{ width: `${Math.min(100, (todaySessions / 8) * 100)}%` }}
+                    transition={{ duration: 0.6, ease: "easeOut" }}
+                  />
+                </div>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
 
         {/* Dialogs */}
         <AlertDialog open={!!confirmSwitch} onOpenChange={(o) => !o && setConfirmSwitch(null)}>
-          <AlertDialogContent>
+          <AlertDialogContent className="rounded-2xl">
             <AlertDialogHeader>
               <AlertDialogTitle className="font-display">Stop Custom Session?</AlertDialogTitle>
               <AlertDialogDescription>You are currently in a Custom Focus Session. Switch modes?</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>No, Continue</AlertDialogCancel>
-              <AlertDialogAction onClick={() => confirmSwitch && doSwitchMode(confirmSwitch)} className="bg-gradient-primary text-primary-foreground">Yes, Switch</AlertDialogAction>
+              <AlertDialogCancel className="rounded-xl">No, Continue</AlertDialogCancel>
+              <AlertDialogAction onClick={() => confirmSwitch && doSwitchMode(confirmSwitch)} className="bg-gradient-to-r from-primary to-[hsl(0,85%,50%)] text-primary-foreground rounded-xl">Yes, Switch</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
