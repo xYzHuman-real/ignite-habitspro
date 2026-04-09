@@ -97,9 +97,29 @@ export function useFocusThemes() {
       })),
   ];
 
+  // Sync across hook instances via custom storage event
+  useEffect(() => {
+    const handler = (e: StorageEvent) => {
+      if (e.key === "focus_theme" && e.newValue) {
+        setActiveTheme(e.newValue);
+      }
+    };
+    const customHandler = (e: Event) => {
+      const val = localStorage.getItem("focus_theme");
+      if (val) setActiveTheme(val);
+    };
+    window.addEventListener("storage", handler);
+    window.addEventListener("focus_theme_changed", customHandler);
+    return () => {
+      window.removeEventListener("storage", handler);
+      window.removeEventListener("focus_theme_changed", customHandler);
+    };
+  }, []);
+
   const selectTheme = (themeValue: string) => {
     setActiveTheme(themeValue);
     localStorage.setItem("focus_theme", themeValue);
+    window.dispatchEvent(new Event("focus_theme_changed"));
   };
 
   const currentTheme = allThemes.find((t) => t.value === activeTheme) || DEFAULT_THEME;
