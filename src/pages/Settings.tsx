@@ -267,18 +267,59 @@ export default function Settings() {
         {section === "about" && (
           <motion.div key="about" {...pageVariants} transition={{ duration: 0.2 }}>
             <SectionHeader title="About Ignite" onBack={() => setSection("main")} />
-            <Card className="p-5 text-center space-y-3">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-accent mx-auto flex items-center justify-center">
-                <Zap className="h-8 w-8 text-primary-foreground" />
+            <Card className="p-5 space-y-4">
+              <div className="text-center space-y-3">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-accent mx-auto flex items-center justify-center shadow-glow-primary">
+                  <Flame className="h-8 w-8 text-primary-foreground" />
+                </div>
+                <div>
+                  <h3 className="font-display font-bold text-lg">Ignite HabitPro</h3>
+                  <p className="text-xs text-muted-foreground">Version 1.0.0</p>
+                </div>
+                <p className="text-sm text-muted-foreground max-w-sm mx-auto leading-relaxed">
+                  Your all-in-one productivity companion designed for students, professionals, and deep workers who want to build lasting habits and master their focus.
+                </p>
               </div>
-              <div>
-                <h3 className="font-display font-bold text-lg">Ignite HabitPro</h3>
-                <p className="text-xs text-muted-foreground">Version 1.0.0</p>
-              </div>
-              <p className="text-sm text-muted-foreground max-w-xs mx-auto">
-                The all-in-one productivity app for students and deep workers. Build habits, stay focused, and level up.
-              </p>
+
               <Separator />
+
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-primary" /> What's Inside
+                </h4>
+                <div className="grid grid-cols-1 gap-2.5">
+                  {[
+                    { icon: Target, title: "Habit Tracking", desc: "Build streaks with daily habits, priorities & smart reminders" },
+                    { icon: Clock, title: "Deep Focus Timer", desc: "Distraction-free Pomodoro with app blocking & ambient themes" },
+                    { icon: BookOpen, title: "Smart To-Do List", desc: "Tasks with attachments, calendar view & productivity insights" },
+                    { icon: Trophy, title: "Gamification", desc: "Earn XP, climb leaderboards, unlock achievements & shop rewards" },
+                    { icon: Globe, title: "Focus Rooms", desc: "Study together in real-time virtual rooms with friends" },
+                    { icon: BarChart3, title: "AI Daily Planner", desc: "Smart daily schedule generated from your habits & goals" },
+                  ].map(({ icon: Icon, title, desc }) => (
+                    <div key={title} className="flex items-start gap-3 p-3 rounded-xl bg-muted/40">
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <Icon className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium">{title}</p>
+                        <p className="text-xs text-muted-foreground leading-snug">{desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold">Why Ignite?</h4>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Built with love for people who refuse mediocrity. Combining habit science, deep work principles, and gamification — Ignite turns your goals into a journey worth showing up for, every single day.
+                </p>
+              </div>
+
+              <Separator />
+
               <div className="space-y-2">
                 <a href="mailto:support.ignitehabitproapp@gmail.com" className="flex items-center justify-center gap-2 text-sm text-primary hover:underline">
                   <Mail className="h-4 w-4" /> Contact Support
