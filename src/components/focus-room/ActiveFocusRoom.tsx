@@ -22,18 +22,39 @@ export function ActiveFocusRoom({ room, participants, participantCount, onLeave,
   const chatMessages = useFocusRoomChat(room.id);
   const [chatMsg, setChatMsg] = useState("");
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const [isOnBreak, setIsOnBreak] = useState(false);
+  const [cycleCount, setCycleCount] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Timer logic
+  // Timer logic — auto-cycles between focus and break
   useEffect(() => {
     if (!room || room.status !== "active" || !room.started_at) {
       setTimeLeft(null);
+      setIsOnBreak(false);
+      setCycleCount(0);
       return;
     }
+    const focusSec = room.session_duration_minutes * 60;
+    const breakSec = (room.break_duration_minutes || 0) * 60;
+    const cycleSec = focusSec + breakSec;
+
     const tick = () => {
       const elapsed = (Date.now() - new Date(room.started_at).getTime()) / 1000;
-      const total = room.session_duration_minutes * 60;
-      setTimeLeft(Math.max(0, Math.round(total - elapsed)));
+      if (breakSec > 0) {
+        const cyclePos = elapsed % cycleSec;
+        const cycle = Math.floor(elapsed / cycleSec);
+        setCycleCount(cycle);
+        if (cyclePos < focusSec) {
+          setIsOnBreak(false);
+          setTimeLeft(Math.max(0, Math.round(focusSec - cyclePos)));
+        } else {
+          setIsOnBreak(true);
+          setTimeLeft(Math.max(0, Math.round(cycleSec - cyclePos)));
+        }
+      } else {
+        setIsOnBreak(false);
+        setTimeLeft(Math.max(0, Math.round(focusSec - elapsed)));
+      }
     };
     tick();
     const iv = setInterval(tick, 1000);
@@ -45,9 +66,11 @@ export function ActiveFocusRoom({ room, participants, participantCount, onLeave,
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [chatMessages]);
 
-  const isOnBreak = room?.status === "active" && timeLeft !== null && timeLeft <= 0;
-  const totalSeconds = room.session_duration_minutes * 60;
-  const progress = timeLeft !== null ? (totalSeconds - timeLeft) / totalSeconds : 0;
+  const phaseSeconds = isOnBreak
+    ? (room.break_duration_minutes || 0) * 60
+    : room.session_duration_minutes * 60;
+  const totalSeconds = phaseSeconds;
+  const progress = timeLeft !== null && phaseSeconds > 0 ? (phaseSeconds - timeLeft) / phaseSeconds : 0;
   const minutes = timeLeft !== null ? Math.floor(timeLeft / 60) : 0;
   const seconds = timeLeft !== null ? timeLeft % 60 : 0;
 
