@@ -61,19 +61,25 @@ export default function Habits() {
     <div className="max-w-lg mx-auto px-4 pb-32 space-y-5">
       <HabitMomentumHeader habits={habits} completions={completions} />
 
-      {/* Tab Switcher */}
-      <div className="flex bg-muted rounded-xl p-1">
+      {/* Animated pill tab switcher */}
+      <div className="relative flex bg-muted/60 backdrop-blur-sm rounded-2xl p-1">
         {(["habits", "calendar"] as const).map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`flex-1 text-sm font-medium py-2 rounded-lg transition-all capitalize ${
-              activeTab === tab
-                ? "bg-card text-foreground shadow-sm"
-                : "text-muted-foreground"
+            className={`relative flex-1 text-sm font-semibold py-2.5 rounded-xl transition-colors capitalize z-10 ${
+              activeTab === tab ? "text-white" : "text-muted-foreground"
             }`}
           >
-            {tab}
+            {activeTab === tab && (
+              <motion.div
+                layoutId="habitTabBg"
+                className="absolute inset-0 rounded-xl shadow-md"
+                style={{ background: "linear-gradient(135deg, #ff6a3d 0%, #ff3d00 100%)" }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              />
+            )}
+            <span className="relative">{tab}</span>
           </button>
         ))}
       </div>
@@ -85,9 +91,11 @@ export default function Habits() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="p-4 rounded-2xl bg-gradient-accent text-accent-foreground text-center font-display font-semibold shadow-glow-accent"
+            className="relative overflow-hidden p-4 rounded-2xl text-center font-display font-semibold text-white shadow-lg"
+            style={{ background: "linear-gradient(135deg, #ff6a3d 0%, #ff3d00 100%)" }}
           >
-            🎉 All habits completed! Streak +1!
+            <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/20 blur-2xl" />
+            <span className="relative">🎉 All habits completed! Streak +1!</span>
           </motion.div>
         )}
       </AnimatePresence>

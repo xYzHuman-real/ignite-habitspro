@@ -1,11 +1,11 @@
 import { motion, useMotionValue, useTransform, useAnimation, PanInfo } from "framer-motion";
-import { Check, Flame, Bell, Trash2, GripVertical } from "lucide-react";
-import { useState, useRef, useCallback } from "react";
+import { Check, Flame, Bell, Trash2 } from "lucide-react";
+import { useState } from "react";
 
-const PRIORITY_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  very_important: { label: "Very Important", color: "text-destructive", bg: "bg-destructive/10" },
-  important: { label: "Important", color: "text-orange-600 dark:text-orange-400", bg: "bg-orange-100 dark:bg-orange-900/30" },
-  less_important: { label: "Less Important", color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-100 dark:bg-blue-900/30" },
+const PRIORITY_CONFIG: Record<string, { label: string; dot: string; chip: string }> = {
+  very_important: { label: "High", dot: "bg-destructive", chip: "bg-destructive/10 text-destructive" },
+  important: { label: "Med", dot: "bg-orange-500", chip: "bg-orange-500/10 text-orange-600 dark:text-orange-400" },
+  less_important: { label: "Low", dot: "bg-blue-500", chip: "bg-blue-500/10 text-blue-600 dark:text-blue-400" },
 };
 
 interface Habit {
@@ -32,12 +32,13 @@ interface HabitCardProps {
 export default function HabitCard({ habit, onToggle, onDelete, isDragging }: HabitCardProps) {
   const x = useMotionValue(0);
   const controls = useAnimation();
-  const [swiped, setSwiped] = useState(false);
+  const [, setSwiped] = useState(false);
 
   const bgOpacity = useTransform(x, [0, 100], [0, 1]);
   const checkScale = useTransform(x, [0, 100], [0.5, 1]);
 
   const priority = PRIORITY_CONFIG[habit.priority] || PRIORITY_CONFIG.important;
+  const progressPct = habit.target > 0 ? Math.min((habit.current / habit.target) * 100, 100) : 0;
 
   const handleDragEnd = (_: any, info: PanInfo) => {
     if (info.offset.x > 100 && !habit.completed_today) {
@@ -54,8 +55,11 @@ export default function HabitCard({ habit, onToggle, onDelete, isDragging }: Hab
     <div className="relative overflow-hidden rounded-2xl">
       {/* Swipe background */}
       <motion.div
-        className="absolute inset-0 bg-success/20 rounded-2xl flex items-center pl-6"
-        style={{ opacity: bgOpacity }}
+        className="absolute inset-0 rounded-2xl flex items-center pl-6"
+        style={{
+          opacity: bgOpacity,
+          background: "linear-gradient(90deg, rgba(34,197,94,0.25) 0%, rgba(34,197,94,0.1) 100%)",
+        }}
       >
         <motion.div style={{ scale: checkScale }}>
           <Check className="h-6 w-6 text-success" />
@@ -70,60 +74,81 @@ export default function HabitCard({ habit, onToggle, onDelete, isDragging }: Hab
         dragElastic={0.1}
         dragDirectionLock
         onDragEnd={handleDragEnd}
-        className={`relative bg-card rounded-2xl p-4 shadow-sm border border-border/50 transition-all ${
+        className={`relative bg-card rounded-2xl p-3.5 shadow-[0_2px_10px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.3)] border border-border/40 transition-all ${
           habit.completed_today ? "opacity-60" : ""
-        } ${isDragging ? "z-50 shadow-lg scale-[1.02]" : ""}`}
+        } ${isDragging ? "z-50 shadow-xl scale-[1.02]" : ""}`}
       >
         <div className="flex items-center gap-3">
-          {/* Icon */}
-          <span className="text-2xl">{habit.icon}</span>
+          {/* Icon with soft tinted background */}
+          <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center shrink-0">
+            <span className="text-2xl">{habit.icon}</span>
+            <span className={`absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-card ${priority.dot}`} />
+          </div>
 
           {/* Content */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <p className={`font-medium text-foreground ${habit.completed_today ? "line-through text-muted-foreground" : ""}`}>
+            <div className="flex items-center gap-1.5">
+              <p className={`font-semibold text-[15px] text-foreground truncate ${habit.completed_today ? "line-through text-muted-foreground" : ""}`}>
                 {habit.name}
               </p>
               {habit.reminder_enabled && (
-                <Bell className="h-3.5 w-3.5 text-primary/60" />
+                <Bell className="h-3 w-3 text-primary/60 shrink-0" />
               )}
             </div>
-            <div className="flex items-center gap-2 mt-1.5">
-              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${priority.bg} ${priority.color}`}>
+            <div className="flex items-center gap-2 mt-1">
+              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${priority.chip}`}>
                 {priority.label}
               </span>
-              <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+              <div className="flex items-center gap-0.5 text-[11px] text-muted-foreground font-medium">
                 <Flame className="h-3 w-3 text-primary" />
                 {habit.streak}
               </div>
               {habit.target > 1 && (
-                <span className="text-[10px] text-muted-foreground">
+                <span className="text-[11px] text-muted-foreground font-medium">
                   {habit.current}/{habit.target}
                 </span>
               )}
             </div>
+            {/* Mini progress bar for multi-target habits */}
+            {habit.target > 1 && (
+              <div className="mt-1.5 h-1 rounded-full bg-muted overflow-hidden">
+                <motion.div
+                  className="h-full rounded-full"
+                  style={{
+                    background: "linear-gradient(90deg, #ff6a3d 0%, #ff3d00 100%)",
+                  }}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progressPct}%` }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                />
+              </div>
+            )}
           </div>
 
           {/* Completion button */}
-          <button
+          <motion.button
+            whileTap={{ scale: 0.85 }}
             onClick={() => onToggle(habit)}
-            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all shrink-0 ${
+            className={`w-11 h-11 rounded-full flex items-center justify-center transition-all shrink-0 ${
               habit.completed_today
-                ? "bg-success text-success-foreground shadow-md"
+                ? "text-white shadow-md"
                 : "border-2 border-muted-foreground/20 hover:border-primary/50"
             }`}
+            style={
+              habit.completed_today
+                ? { background: "linear-gradient(135deg, #ff6a3d 0%, #ff3d00 100%)" }
+                : undefined
+            }
           >
-            {habit.completed_today && (
-              <Check className="h-5 w-5" />
-            )}
-          </button>
+            {habit.completed_today && <Check className="h-5 w-5" strokeWidth={3} />}
+          </motion.button>
 
           {/* Delete */}
           <button
             onClick={() => onDelete(habit.id)}
-            className="text-muted-foreground/40 hover:text-destructive transition-colors p-1"
+            className="text-muted-foreground/30 hover:text-destructive transition-colors p-1 -mr-1"
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash2 className="h-3.5 w-3.5" />
           </button>
         </div>
       </motion.div>
