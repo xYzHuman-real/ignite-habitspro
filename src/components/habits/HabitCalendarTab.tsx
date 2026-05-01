@@ -98,20 +98,21 @@ export default function HabitCalendarTab({ habits, completions, onToggle }: Habi
           const isSelected = dateStr === selectedDate;
           const isTodayCell = dateStr === todayStr;
 
-          // Heatmap intensity
-          let bg = "bg-muted/50";
-          if (pct >= 1) bg = "bg-success/60";
-          else if (pct >= 0.66) bg = "bg-success/35";
-          else if (pct >= 0.33) bg = "bg-primary/25";
-          else if (pct > 0) bg = "bg-primary/10";
+          // Orange-themed heatmap intensity
+          let bg = "bg-muted/40";
+          let textColor = "text-muted-foreground";
+          if (pct >= 1) { bg = "bg-gradient-to-br from-[#ff6a3d] to-[#ff3d00]"; textColor = "text-white"; }
+          else if (pct >= 0.66) { bg = "bg-[#ff6a3d]/60"; textColor = "text-white"; }
+          else if (pct >= 0.33) { bg = "bg-[#ff6a3d]/30"; textColor = "text-foreground"; }
+          else if (pct > 0) { bg = "bg-[#ff6a3d]/15"; textColor = "text-foreground"; }
 
           return (
             <button
               key={i}
               onClick={() => setSelectedDate(dateStr)}
-              className={`aspect-square rounded-xl text-xs font-medium transition-all flex items-center justify-center ${bg} ${
-                isSelected ? "ring-2 ring-primary shadow-sm" : ""
-              } ${isTodayCell ? "font-bold" : ""}`}
+              className={`aspect-square rounded-xl text-xs transition-all flex items-center justify-center ${bg} ${textColor} ${
+                isSelected ? "ring-2 ring-[#ff3d00] shadow-md scale-105" : ""
+              } ${isTodayCell ? "font-bold ring-1 ring-[#ff3d00]/40" : "font-medium"}`}
             >
               {day}
             </button>
