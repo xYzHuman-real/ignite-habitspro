@@ -30,6 +30,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import DailyPlanner from "./pages/DailyPlanner";
 import NotFound from "./pages/NotFound";
+import Install from "./pages/Install";
 import { SplashScreen } from "@/components/SplashScreen";
 
 const queryClient = new QueryClient();
@@ -68,6 +69,7 @@ function ProtectedRoutes() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/daily-planner" element={<DailyPlanner />} />
+        <Route path="/install" element={<Install />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Layout>

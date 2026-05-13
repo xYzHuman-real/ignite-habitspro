@@ -1,0 +1,18 @@
+{
+  "name": "Ignite Habit Pro",
+  "short_name": "Ignite",
+  "description": "Build habits, stay focused, achieve more.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#0b0b10",
+  "theme_color": "#ea6a3a",
+  "categories": ["productivity", "lifestyle", "health"],
+  "icons": [
+    { "src": "/app-icon.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/app-icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/app-icon.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
