@@ -217,7 +217,7 @@ export default function AddHabitDrawer({ onAdd }: AddHabitDrawerProps) {
         </div>
 
         {/* Sticky bottom action bar */}
-        <div className="sticky bottom-0 border-t border-border bg-card px-4 py-3 flex gap-3">
+        <div className="sticky bottom-0 border-t border-border bg-card px-4 py-3 flex gap-3 pb-[calc(env(safe-area-inset-bottom)+5rem)]">
           <Button
             variant="outline"
             onClick={handleCancel}
