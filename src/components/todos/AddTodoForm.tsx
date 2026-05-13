@@ -123,7 +123,7 @@ export function AddTodoForm({ onAdd }: Props) {
 
       {/* Full creation sheet */}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent side="bottom" className="rounded-t-3xl max-h-[90vh] overflow-y-auto">
+        <SheetContent side="bottom" className="rounded-t-3xl max-h-[90vh] overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+6rem)]">
           <SheetHeader>
             <SheetTitle className="text-lg font-display">New Task</SheetTitle>
           </SheetHeader>
