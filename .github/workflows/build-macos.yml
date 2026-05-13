@@ -1,0 +1,86 @@
+name: Build macOS App
+
+on:
+  push:
+    branches: [main]
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  build-macos:
+    runs-on: macos-14
+    strategy:
+      matrix:
+        arch: [arm64, x64]
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci || npm install
+
+      - name: Install Electron tooling
+        run: npm install --no-save electron@^33 electron-builder@^25
+
+      - name: Remove dev server config (Capacitor)
+        run: |
+          node -e "
+          const fs = require('fs');
+          if (fs.existsSync('capacitor.config.ts')) {
+            const cfg = fs.readFileSync('capacitor.config.ts','utf8');
+            fs.writeFileSync('capacitor.config.ts', cfg.replace(/server:\s*\{[^}]*\},?/s, ''));
+          }"
+
+      - name: Set Vite base for Electron
+        run: |
+          node -e "
+          const fs = require('fs');
+          let c = fs.readFileSync('vite.config.ts','utf8');
+          if (!c.includes('base:')) {
+            c = c.replace('export default defineConfig(({ mode }) => ({', 'export default defineConfig(({ mode }) => ({\n  base: \"./\",');
+            fs.writeFileSync('vite.config.ts', c);
+          }"
+
+      - name: Add electron main to package.json
+        run: |
+          node -e "
+          const fs = require('fs');
+          const p = JSON.parse(fs.readFileSync('package.json','utf8'));
+          p.main = 'electron/main.cjs';
+          fs.writeFileSync('package.json', JSON.stringify(p, null, 2));
+          "
+
+      - name: Build web app
+        run: npm run build
+
+      - name: Package macOS app (${{ matrix.arch }})
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+        run: npx electron-builder --mac --${{ matrix.arch }} --publish never
+
+      - name: List artifacts
+        run: ls -la release/
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ignite-habitspro-macos-${{ matrix.arch }}
+          path: |
+            release/*.dmg
+            release/*.zip
+          if-no-files-found: error
+
+      - name: Attach to GitHub Release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release/*.dmg
+            release/*.zip

@@ -1,0 +1,27 @@
+appId: app.lovable.ignitehabitspro
+productName: Ignite HabitsPro
+directories:
+  output: release
+  buildResources: electron
+files:
+  - dist/**/*
+  - electron/**/*
+  - package.json
+mac:
+  category: public.app-category.productivity
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: electron/entitlements.mac.plist
+  entitlementsInherit: electron/entitlements.mac.plist
+  target:
+    - target: dmg
+      arch:
+        - arm64
+        - x64
+    - target: zip
+      arch:
+        - arm64
+        - x64
+dmg:
+  writeUpdateInfo: false
+  sign: false
