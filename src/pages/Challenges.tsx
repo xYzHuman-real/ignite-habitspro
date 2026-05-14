@@ -11,6 +11,7 @@ import { useChallenges, useBadges, useProfile } from "@/lib/supabase-hooks";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { Lock } from "lucide-react";
+import PageHero from "@/components/PageHero";
 
 const container = {
   hidden: {},
@@ -222,53 +223,28 @@ export default function Challenges() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        <h1 className="text-3xl font-display font-bold flex items-center gap-2">
-          <Trophy className="h-7 w-7 text-accent" />
-          Challenges
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Push your limits, earn rewards, and level up your habits
-        </p>
-      </motion.div>
-
-      {/* Stats row */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.05 }}
-        className="grid grid-cols-3 gap-3"
-      >
-        <Card className="p-4 text-center">
-          <p className="text-2xl font-display font-bold text-primary">
-            {myChallenges.length}
-          </p>
-          <p className="text-xs text-muted-foreground">Joined</p>
-        </Card>
-        <Card className="p-4 text-center">
-          <p className="text-2xl font-display font-bold text-success">
-            {userChallenges.filter((uc) => uc.completed).length}
-          </p>
-          <p className="text-xs text-muted-foreground">Completed</p>
-        </Card>
-        <Card className="p-4 text-center">
-          <p className="text-2xl font-display font-bold text-accent">
-            {userChallenges.reduce(
+      <PageHero
+        eyebrow="Push Your Limits"
+        title="Challenges"
+        subtitle="Earn rewards and level up your habits"
+        icon={Trophy}
+        stats={[
+          { icon: Users, label: "Joined", value: myChallenges.length },
+          { icon: CheckCircle2, label: "Done", value: userChallenges.filter((uc) => uc.completed).length },
+          {
+            icon: Zap,
+            label: "Points",
+            value: userChallenges.reduce(
               (sum, uc) =>
                 sum +
                 (uc.completed
-                  ? challenges.find((c) => c.id === uc.challenge_id)
-                      ?.points_reward || 0
+                  ? challenges.find((c) => c.id === uc.challenge_id)?.points_reward || 0
                   : 0),
               0
-            )}
-          </p>
-          <p className="text-xs text-muted-foreground">Points Earned</p>
-        </Card>
-      </motion.div>
+            ),
+          },
+        ]}
+      />
 
       <Tabs defaultValue="browse" className="space-y-4">
         <TabsList>

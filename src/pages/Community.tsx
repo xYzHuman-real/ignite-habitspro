@@ -12,6 +12,7 @@ import { useCommunityGroups } from "@/lib/supabase-hooks";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Skeleton } from "@/components/ui/skeleton";
+import PageHero from "@/components/PageHero";
 
 interface ChatMessage {
   id: string;
@@ -187,10 +188,17 @@ export default function Community() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-3xl font-display font-bold">Community</h1>
-        <p className="text-muted-foreground">Join groups and stay accountable together</p>
-      </div>
+      <PageHero
+        eyebrow="Stay Accountable"
+        title="Community"
+        subtitle="Join groups and grow together"
+        icon={Users}
+        stats={[
+          { icon: Users, label: "Groups", value: groups.length },
+          { icon: MessageCircle, label: "Joined", value: joinedGroups.length },
+          { icon: Send, label: "Available", value: availableGroups.length },
+        ]}
+      />
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="w-full">
