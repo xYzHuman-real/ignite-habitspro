@@ -10,6 +10,7 @@ import { useJournal } from "@/lib/use-journal";
 import { useHabits } from "@/lib/supabase-hooks";
 import { useToast } from "@/hooks/use-toast";
 import { format, addDays, subDays } from "date-fns";
+import PageHero from "@/components/PageHero";
 
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } };
 const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.35 } } };
@@ -101,11 +102,17 @@ export default function Journal() {
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="max-w-3xl mx-auto space-y-6">
       <motion.div variants={item}>
-        <h1 className="text-3xl font-display font-bold flex items-center gap-2">
-          <BookOpen className="h-7 w-7 text-primary" />
-          Daily Journal
-        </h1>
-        <p className="text-muted-foreground mt-1">Reflect on your day and track your growth</p>
+        <PageHero
+          eyebrow="Daily Reflection"
+          title="Journal"
+          subtitle="Reflect on your day and track your growth"
+          icon={BookOpen}
+          stats={[
+            { icon: Sparkles, label: "Today", value: dailyEntry ? "Saved" : "Pending" },
+            { icon: Trophy, label: "Habit Notes", value: habitEntries.length },
+            { icon: Heart, label: "Recent", value: recentEntries.length },
+          ]}
+        />
       </motion.div>
 
       {/* Date Navigation */}

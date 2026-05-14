@@ -12,6 +12,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar } from "@/components/ui/calendar";
+import PageHero from "@/components/PageHero";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -104,34 +105,24 @@ export default function Goals() {
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="max-w-4xl mx-auto space-y-6">
-      <motion.div variants={item} className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-display font-bold flex items-center gap-2">
-            <Crosshair className="h-7 w-7 text-primary" /> Goals
-          </h1>
-          <p className="text-muted-foreground mt-1">Set targets, track milestones, and crush your goals</p>
-        </div>
+      <motion.div variants={item}>
+        <PageHero
+          eyebrow="Your Targets"
+          title="Goals"
+          subtitle="Set targets, track milestones, and crush them"
+          icon={Crosshair}
+          progress={goals.length > 0 ? Math.round(goals.reduce((sum: number, g: any) => sum + (g.current_value / g.target_value) * 100, 0) / goals.length) : 0}
+          stats={[
+            { icon: Target, label: "Active", value: activeGoals.length },
+            { icon: CheckCircle2, label: "Done", value: completedGoals.length },
+            { icon: Flag, label: "Total", value: goals.length },
+          ]}
+        />
+      </motion.div>
+      <motion.div variants={item} className="flex justify-end">
         <Button onClick={() => { resetForm(); setShowForm(true); }} className="bg-gradient-primary text-primary-foreground">
           <Plus className="h-4 w-4 mr-1" /> New Goal
         </Button>
-      </motion.div>
-
-      {/* Stats */}
-      <motion.div variants={item} className="grid grid-cols-3 gap-3">
-        <Card className="p-4 text-center">
-          <p className="text-2xl font-display font-bold text-primary">{activeGoals.length}</p>
-          <p className="text-xs text-muted-foreground">Active</p>
-        </Card>
-        <Card className="p-4 text-center">
-          <p className="text-2xl font-display font-bold text-success">{completedGoals.length}</p>
-          <p className="text-xs text-muted-foreground">Completed</p>
-        </Card>
-        <Card className="p-4 text-center">
-          <p className="text-2xl font-display font-bold text-accent">
-            {goals.length > 0 ? Math.round(goals.reduce((sum: number, g: any) => sum + (g.current_value / g.target_value) * 100, 0) / goals.length) : 0}%
-          </p>
-          <p className="text-xs text-muted-foreground">Avg Progress</p>
-        </Card>
       </motion.div>
 
       {/* Create / Edit Form Dialog */}

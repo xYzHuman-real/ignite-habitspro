@@ -5,6 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWeeklyReport } from "@/lib/use-weekly-report";
 import { format, parseISO } from "date-fns";
+import PageHero from "@/components/PageHero";
 
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.07 } } };
 const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.35 } } };
@@ -48,13 +49,18 @@ export default function WeeklyReport() {
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="max-w-4xl mx-auto space-y-6">
       <motion.div variants={item}>
-        <h1 className="text-3xl font-display font-bold flex items-center gap-2">
-          <BarChart3 className="h-7 w-7 text-primary" />
-          Weekly Report
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Week of {weekLabel} — Here's how you did this week
-        </p>
+        <PageHero
+          eyebrow={`Week of ${weekLabel}`}
+          title="Weekly Report"
+          subtitle="Here's how you did this week"
+          icon={BarChart3}
+          progress={consistencyPct}
+          stats={[
+            { icon: Target, label: "Habits", value: report.totalCompletions },
+            { icon: Clock, label: "Focus", value: focusHours > 0 ? `${focusHours}h${focusMins}m` : `${focusMins}m` },
+            { icon: Flame, label: "Streak", value: `${report.bestStreak}d` },
+          ]}
+        />
       </motion.div>
 
       {/* Key Stats */}

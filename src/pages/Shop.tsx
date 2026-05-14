@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { getLevelForPoints, getNextLevel, getProgressToNext, XP_LEVELS } from "@/lib/xp-levels";
+import PageHero from "@/components/PageHero";
 
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } };
 const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.35 } } };
@@ -76,13 +77,19 @@ export default function Shop() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-3xl font-display font-bold flex items-center gap-2">
-          <ShoppingBag className="h-7 w-7 text-accent" />
-          Rewards Shop
-        </h1>
-        <p className="text-muted-foreground mt-1">Spend your hard-earned points on upgrades and perks</p>
-      </motion.div>
+      <PageHero
+        eyebrow="Rewards Shop"
+        title="Spend Your Points"
+        subtitle="Upgrades, boosts, and perks await"
+        icon={ShoppingBag}
+        progress={progressToNext}
+        progressLabel={`Lv ${currentLevel.level}`}
+        stats={[
+          { icon: Coins, label: "Coins", value: points },
+          { icon: Sparkles, label: "Level", value: currentLevel.title },
+          { icon: Zap, label: "Items", value: shopItems.length },
+        ]}
+      />
 
       {/* Points & Level Card */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
