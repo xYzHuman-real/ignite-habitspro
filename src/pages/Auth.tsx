@@ -157,6 +157,12 @@ export default function Auth() {
             </Button>
           </form>
 
+          {mode !== "reset" && isNativeApp && (
+            <p className="text-xs text-muted-foreground text-center">
+              Tip: Google sign-in isn't available in the installed app. Please use email & password here.
+            </p>
+          )}
+
           {mode !== "reset" && !isNativeApp && (
             <>
               <div className="relative">
