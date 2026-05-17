@@ -63,8 +63,9 @@ const sections = [
 ];
 
 export function AppSidebar() {
-  const { state } = useSidebar();
+  const { state, setOpenMobile, isMobile } = useSidebar();
   const collapsed = state === "collapsed";
+  const closeOnMobile = () => { if (isMobile) setOpenMobile(false); };
 
   return (
     <Sidebar collapsible="icon">
@@ -86,6 +87,7 @@ export function AppSidebar() {
                       <NavLink
                         to={item.url}
                         end={item.url === "/"}
+                        onClick={closeOnMobile}
                         className="hover:bg-sidebar-accent/50 transition-colors"
                         activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
                       >
