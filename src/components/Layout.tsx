@@ -3,6 +3,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { NotificationBell } from "@/components/NotificationBell";
 import { BottomNav } from "@/components/BottomNav";
+import { SidebarTutorial } from "@/components/SidebarTutorial";
 import { useTheme } from "@/lib/store";
 import { useStreakAlerts } from "@/lib/use-streak-alerts";
 import { usePushNotifications } from "@/lib/use-push-notifications";
