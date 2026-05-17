@@ -3,6 +3,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { NotificationBell } from "@/components/NotificationBell";
 import { BottomNav } from "@/components/BottomNav";
+import { SidebarTutorial } from "@/components/SidebarTutorial";
 import { useTheme } from "@/lib/store";
 import { useStreakAlerts } from "@/lib/use-streak-alerts";
 import { usePushNotifications } from "@/lib/use-push-notifications";
@@ -24,6 +25,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-14 flex items-center justify-between border-b px-4 glass sticky top-0 z-[50]">
             <SidebarTrigger />
+            <SidebarTutorial />
             <div className="flex items-center gap-2">
               <NotificationBell />
               <ThemeToggle theme={theme} toggle={toggle} />

@@ -40,6 +40,7 @@ serve(async (req) => {
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
     const tables = [
+      "subtasks",
       "habit_completions",
       "habits",
       "todos",
@@ -52,22 +53,35 @@ serve(async (req) => {
       "notifications",
       "community_messages",
       "community_memberships",
+      "focus_room_messages",
+      "focus_room_participants",
       "user_challenges",
       "user_badges",
       "shop_purchases",
+      "push_tokens",
       "followers",
       "accountability_partners",
       "profiles",
     ];
 
+    const errors: Record<string, string> = {};
+
+    // Creator-owned focus rooms
+    {
+      const { error } = await adminClient.from("focus_rooms").delete().eq("creator_id", user.id);
+      if (error) errors["focus_rooms"] = error.message;
+    }
+
     for (const table of tables) {
+      let res;
       if (table === "accountability_partners") {
-        await adminClient.from(table).delete().or(`requester_id.eq.${user.id},partner_id.eq.${user.id}`);
+        res = await adminClient.from(table).delete().or(`requester_id.eq.${user.id},partner_id.eq.${user.id}`);
       } else if (table === "followers") {
-        await adminClient.from(table).delete().or(`follower_id.eq.${user.id},following_id.eq.${user.id}`);
+        res = await adminClient.from(table).delete().or(`follower_id.eq.${user.id},following_id.eq.${user.id}`);
       } else {
-        await adminClient.from(table).delete().eq("user_id", user.id);
+        res = await adminClient.from(table).delete().eq("user_id", user.id);
       }
+      if (res.error) errors[table] = res.error.message;
     }
 
     // Delete the auth user
