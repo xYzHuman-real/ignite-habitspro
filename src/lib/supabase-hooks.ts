@@ -39,7 +39,7 @@ export function useHabits() {
     queryKey: ["habits", user?.id],
     queryFn: async () => {
       if (!user) return [];
-      const { data } = await supabase.from("habits").select("*").eq("user_id", user.id).order("created_at");
+      const { data } = await supabase.from("habits").select("*").eq("user_id", user.id).order("sort_order").order("created_at");
       if (!data) return [];
 
       // Reset habits that were completed on a previous day (local time)
@@ -48,14 +48,13 @@ export function useHabits() {
 
       const staleHabits = data.filter((h) => {
         if (!h.completed_today) return false;
-        // Check if updated_at is from a previous local day
         const updated = new Date(h.updated_at);
         const updatedLocal = `${updated.getFullYear()}-${String(updated.getMonth() + 1).padStart(2, "0")}-${String(updated.getDate()).padStart(2, "0")}`;
         return updatedLocal !== todayLocal;
       });
 
+      let result = data;
       if (staleHabits.length > 0) {
-        // Reset stale habits in the database
         await Promise.all(
           staleHabits.map((h) =>
             supabase.from("habits").update({
@@ -64,15 +63,21 @@ export function useHabits() {
             }).eq("id", h.id)
           )
         );
-        // Return corrected data
-        return data.map((h) =>
+        result = data.map((h) =>
           staleHabits.find((s) => s.id === h.id)
             ? { ...h, completed_today: false, current: 0 }
             : h
         );
       }
 
-      return data;
+      // Sort by priority weight (very_important > important > less_important), then sort_order
+      const priorityWeight: Record<string, number> = { very_important: 0, important: 1, less_important: 2 };
+      return [...result].sort((a, b) => {
+        const pa = priorityWeight[(a as any).priority] ?? 1;
+        const pb = priorityWeight[(b as any).priority] ?? 1;
+        if (pa !== pb) return pa - pb;
+        return ((a as any).sort_order ?? 0) - ((b as any).sort_order ?? 0);
+      });
     },
     enabled: !!user,
   });
