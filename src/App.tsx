@@ -32,6 +32,7 @@ import DailyPlanner from "./pages/DailyPlanner";
 import NotFound from "./pages/NotFound";
 import Install from "./pages/Install";
 import { SplashScreen } from "@/components/SplashScreen";
+import { SignupBenefitsDialog, isGuest } from "@/components/SignupBenefitsDialog";
 
 const queryClient = new QueryClient();
 
@@ -47,10 +48,11 @@ function ProtectedRoutes() {
     );
   }
 
-  if (!user) return <Navigate to="/auth" replace />;
+  if (!user && !isGuest()) return <Navigate to="/auth" replace />;
 
   return (
     <Layout>
+      <SignupBenefitsDialog />
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/habits" element={<Habits />} />

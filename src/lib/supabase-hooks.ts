@@ -39,7 +39,7 @@ export function useHabits() {
     queryKey: ["habits", user?.id],
     queryFn: async () => {
       if (!user) return [];
-      const { data } = await supabase.from("habits").select("*").eq("user_id", user.id).order("created_at");
+      const { data } = await supabase.from("habits").select("*").eq("user_id", user.id).order("sort_order").order("created_at");
       if (!data) return [];
 
       // Reset habits that were completed on a previous day (local time)
@@ -48,14 +48,13 @@ export function useHabits() {
 
       const staleHabits = data.filter((h) => {
         if (!h.completed_today) return false;
-        // Check if updated_at is from a previous local day
         const updated = new Date(h.updated_at);
         const updatedLocal = `${updated.getFullYear()}-${String(updated.getMonth() + 1).padStart(2, "0")}-${String(updated.getDate()).padStart(2, "0")}`;
         return updatedLocal !== todayLocal;
       });
 
+      let result = data;
       if (staleHabits.length > 0) {
-        // Reset stale habits in the database
         await Promise.all(
           staleHabits.map((h) =>
             supabase.from("habits").update({
@@ -64,15 +63,21 @@ export function useHabits() {
             }).eq("id", h.id)
           )
         );
-        // Return corrected data
-        return data.map((h) =>
+        result = data.map((h) =>
           staleHabits.find((s) => s.id === h.id)
             ? { ...h, completed_today: false, current: 0 }
             : h
         );
       }
 
-      return data;
+      // Sort by priority weight (very_important > important > less_important), then sort_order
+      const priorityWeight: Record<string, number> = { very_important: 0, important: 1, less_important: 2 };
+      return [...result].sort((a, b) => {
+        const pa = priorityWeight[(a as any).priority] ?? 1;
+        const pb = priorityWeight[(b as any).priority] ?? 1;
+        if (pa !== pb) return pa - pb;
+        return ((a as any).sort_order ?? 0) - ((b as any).sort_order ?? 0);
+      });
     },
     enabled: !!user,
   });
@@ -131,11 +136,23 @@ export function useHabits() {
         const now = new Date();
         const localDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 
-        await supabase.from("habit_completions").upsert({
-          user_id: user.id,
-          habit_id: habit.id,
-          completed_date: localDate,
-        }, { onConflict: "habit_id,completed_date" });
+        // Check if this habit already had a completion row today (=> already counted, prevent double-streak bump)
+        const { data: existing } = await supabase
+          .from("habit_completions")
+          .select("id")
+          .eq("habit_id", habit.id)
+          .eq("completed_date", localDate)
+          .maybeSingle();
+
+        const alreadyCountedToday = !!existing;
+
+        if (!alreadyCountedToday) {
+          await supabase.from("habit_completions").insert({
+            user_id: user.id,
+            habit_id: habit.id,
+            completed_date: localDate,
+          });
+        }
 
         await supabase.from("activity_log").upsert({
           user_id: user.id,
@@ -144,12 +161,15 @@ export function useHabits() {
           count: 1,
         }, { onConflict: "user_id,activity_type,activity_date" });
 
+        // Skip streak/profile updates if this habit was already counted today
+        if (alreadyCountedToday) return;
+
         // Check if ALL habits are now completed for today
         const { data: allHabits } = await supabase.from("habits").select("id, completed_today, streak, longest_streak").eq("user_id", user.id);
         const allCompleted = allHabits && allHabits.length > 0 && allHabits.every((h) => h.id === habit.id ? true : h.completed_today);
 
         if (allCompleted && allHabits) {
-          // Increase streak for ALL habits
+          // Increase streak for ALL habits — once per day
           await Promise.all(
             allHabits.map((h) => {
               const newStreak = h.id === habit.id ? habit.streak + 1 : h.streak + 1;
@@ -182,6 +202,24 @@ export function useHabits() {
           }).eq("user_id", user.id);
         }
       }
+    },
+    onMutate: async (habit) => {
+      // Optimistic update for snappy UI
+      await qc.cancelQueries({ queryKey: ["habits", user?.id] });
+      const previous = qc.getQueryData(["habits", user?.id]);
+      qc.setQueryData(["habits", user?.id], (old: any) => {
+        if (!Array.isArray(old)) return old;
+        return old.map((h: any) => {
+          if (h.id !== habit.id) return h;
+          if (habit.completed_today) return { ...h, completed_today: false, current: 0 };
+          const newCurrent = habit.current + 1;
+          return { ...h, current: newCurrent, completed_today: newCurrent >= habit.target };
+        });
+      });
+      return { previous };
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.previous) qc.setQueryData(["habits", user?.id], ctx.previous);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["habits", user?.id] });
