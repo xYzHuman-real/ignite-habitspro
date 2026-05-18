@@ -52,6 +52,7 @@ function ProtectedRoutes() {
 
   return (
     <Layout>
+      <SignupBenefitsDialog />
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/habits" element={<Habits />} />
