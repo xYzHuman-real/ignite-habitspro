@@ -278,10 +278,9 @@ export function useHabits() {
       }
     },
     onMutate: async (habit) => {
-      // Optimistic update for snappy UI
-      await qc.cancelQueries({ queryKey: ["habits", user?.id] });
-      const previous = qc.getQueryData(["habits", user?.id]);
-      qc.setQueryData(["habits", user?.id], (old: any) => {
+      await qc.cancelQueries({ queryKey: ["habits", queryUserId] });
+      const previous = qc.getQueryData(["habits", queryUserId]);
+      qc.setQueryData(["habits", queryUserId], (old: any) => {
         if (!Array.isArray(old)) return old;
         return old.map((h: any) => {
           if (h.id !== habit.id) return h;
@@ -293,10 +292,10 @@ export function useHabits() {
       return { previous };
     },
     onError: (_e, _v, ctx) => {
-      if (ctx?.previous) qc.setQueryData(["habits", user?.id], ctx.previous);
+      if (ctx?.previous) qc.setQueryData(["habits", queryUserId], ctx.previous);
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["habits", user?.id] });
+      qc.invalidateQueries({ queryKey: ["habits", queryUserId] });
       qc.invalidateQueries({ queryKey: ["profile", user?.id] });
     },
   });
