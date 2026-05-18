@@ -192,6 +192,14 @@ export default function Auth() {
               </p>
             )}
           </div>
+
+          <button
+            type="button"
+            onClick={() => { enterGuestMode(); navigate("/"); }}
+            className="w-full text-xs text-muted-foreground hover:text-primary transition-colors"
+          >
+            Skip for now and try as guest →
+          </button>
         </Card>
       </motion.div>
     </div>
