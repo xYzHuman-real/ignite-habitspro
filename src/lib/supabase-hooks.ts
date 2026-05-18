@@ -30,14 +30,45 @@ export function useProfile() {
   return { profile, isLoading, updateProfile: updateProfile.mutate };
 }
 
+// ---- Guest mode helpers ----
+const GUEST_HABITS_KEY = "guest_habits";
+const isGuest = () => typeof window !== "undefined" && localStorage.getItem("guest_mode") === "true";
+const readGuestHabits = (): any[] => {
+  try { return JSON.parse(localStorage.getItem(GUEST_HABITS_KEY) || "[]"); } catch { return []; }
+};
+const writeGuestHabits = (h: any[]) => localStorage.setItem(GUEST_HABITS_KEY, JSON.stringify(h));
+const guestId = () => "guest";
+
 // ---- Habits ----
 export function useHabits() {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const guest = !user && isGuest();
+  const queryUserId = user?.id ?? (guest ? guestId() : undefined);
 
   const { data: habits = [], isLoading } = useQuery({
-    queryKey: ["habits", user?.id],
+    queryKey: ["habits", queryUserId],
     queryFn: async () => {
+      if (guest) {
+        const now = new Date();
+        const todayLocal = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+        const list = readGuestHabits().map((h: any) => {
+          if (h.completed_today) {
+            const updated = new Date(h.updated_at);
+            const updatedLocal = `${updated.getFullYear()}-${String(updated.getMonth() + 1).padStart(2, "0")}-${String(updated.getDate()).padStart(2, "0")}`;
+            if (updatedLocal !== todayLocal) return { ...h, completed_today: false, current: 0 };
+          }
+          return h;
+        });
+        writeGuestHabits(list);
+        const priorityWeight: Record<string, number> = { very_important: 0, important: 1, less_important: 2 };
+        return [...list].sort((a, b) => {
+          const pa = priorityWeight[a.priority] ?? 1;
+          const pb = priorityWeight[b.priority] ?? 1;
+          if (pa !== pb) return pa - pb;
+          return (a.sort_order ?? 0) - (b.sort_order ?? 0);
+        });
+      }
       if (!user) return [];
       const { data } = await supabase.from("habits").select("*").eq("user_id", user.id).order("sort_order").order("created_at");
       if (!data) return [];
