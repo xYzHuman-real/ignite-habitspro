@@ -2,7 +2,8 @@ import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Capacitor } from "@capacitor/core";
 import { Mail, Lock, User, Eye, EyeOff, Flame } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { enterGuestMode } from "@/components/SignupBenefitsDialog";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,7 @@ type Mode = "login" | "signup" | "reset";
 export default function Auth() {
   const { signIn, signUp, signInWithGoogle, resetPassword } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const { theme, toggle } = useTheme();
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
