@@ -110,36 +110,79 @@ export function useHabits() {
         return ((a as any).sort_order ?? 0) - ((b as any).sort_order ?? 0);
       });
     },
-    enabled: !!user,
+    enabled: !!user || guest,
   });
+
+  const invalidate = () => qc.invalidateQueries({ queryKey: ["habits", queryUserId] });
 
   const addHabit = useMutation({
     mutationFn: async (habit: { name: string; icon: string; target: number; difficulty: string; [key: string]: unknown }) => {
+      if (guest) {
+        const list = readGuestHabits();
+        const nowIso = new Date().toISOString();
+        list.unshift({
+          id: `guest-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          user_id: guestId(),
+          completed_today: false,
+          current: 0,
+          streak: 0,
+          longest_streak: 0,
+          sort_order: 0,
+          priority: "important",
+          reminder_enabled: false,
+          reminder_days: ["mon","tue","wed","thu","fri","sat","sun"],
+          created_at: nowIso,
+          updated_at: nowIso,
+          ...habit,
+        });
+        writeGuestHabits(list);
+        return;
+      }
       if (!user) throw new Error("Not authenticated");
       const { error } = await supabase.from("habits").insert({ ...habit, user_id: user.id } as any);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["habits", user?.id] }),
+    onSuccess: invalidate,
   });
 
   const updateHabit = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Record<string, unknown> }) => {
+      if (guest) {
+        const list = readGuestHabits().map((h: any) => h.id === id ? { ...h, ...updates, updated_at: new Date().toISOString() } : h);
+        writeGuestHabits(list);
+        return;
+      }
       const { error } = await supabase.from("habits").update(updates).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["habits", user?.id] }),
+    onSuccess: invalidate,
   });
 
   const deleteHabit = useMutation({
     mutationFn: async (id: string) => {
+      if (guest) {
+        writeGuestHabits(readGuestHabits().filter((h: any) => h.id !== id));
+        return;
+      }
       const { error } = await supabase.from("habits").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["habits", user?.id] }),
+    onSuccess: invalidate,
   });
 
   const toggleHabit = useMutation({
     mutationFn: async (habit: { id: string; completed_today: boolean; current: number; target: number; streak: number; longest_streak: number }) => {
+      if (guest) {
+        const list = readGuestHabits().map((h: any) => {
+          if (h.id !== habit.id) return h;
+          if (habit.completed_today) return { ...h, completed_today: false, current: 0, updated_at: new Date().toISOString() };
+          const newCurrent = habit.current + 1;
+          const nowComplete = newCurrent >= habit.target;
+          return { ...h, current: newCurrent, completed_today: nowComplete, streak: nowComplete ? h.streak + 1 : h.streak, longest_streak: Math.max(h.longest_streak, nowComplete ? h.streak + 1 : h.streak), updated_at: new Date().toISOString() };
+        });
+        writeGuestHabits(list);
+        return;
+      }
       if (!user) throw new Error("Not authenticated");
 
       // If already completed, reset (un-complete)
