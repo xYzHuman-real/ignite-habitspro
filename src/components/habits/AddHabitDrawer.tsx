@@ -92,8 +92,8 @@ export default function AddHabitDrawer({ onAdd }: AddHabitDrawerProps) {
     <Drawer open={open} onOpenChange={setOpen}>
       <DrawerTrigger asChild>
         <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
+          whileTap={{ y: 1 }}
+          transition={{ duration: 0.1 }}
           className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 w-14 h-14 rounded-full bg-gradient-primary text-primary-foreground shadow-glow-primary flex items-center justify-center"
         >
           <Plus className="h-6 w-6" />
