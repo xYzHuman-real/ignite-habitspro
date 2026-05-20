@@ -234,13 +234,13 @@ export default function Community() {
       </Tabs>
 
       <Dialog open={!!chatGroupId} onOpenChange={(open) => !open && setChatGroupId(null)}>
-        <DialogContent className="sm:max-w-lg max-h-[80vh] flex flex-col">
+        <DialogContent className="sm:max-w-lg w-full h-[100dvh] sm:h-[85vh] max-h-[100dvh] sm:max-h-[85vh] flex flex-col p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]">
           <DialogHeader>
             <DialogTitle className="font-display flex items-center gap-2">
               {chatGroup?.icon} {chatGroup?.name}
             </DialogTitle>
           </DialogHeader>
-          <ScrollArea className="flex-1 min-h-0 max-h-[50vh] pr-3" ref={scrollRef}>
+          <ScrollArea className="flex-1 min-h-0 pr-3" ref={scrollRef}>
             <div className="space-y-3 py-2">
               {messagesLoading && (
                 <div className="text-center py-4">

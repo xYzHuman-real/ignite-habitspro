@@ -614,7 +614,22 @@ export function useChallenges() {
         }
       }
     },
-    onSuccess: () => {
+    onMutate: async ({ userChallengeId, currentProgress, targetDays }) => {
+      await qc.cancelQueries({ queryKey: ["user_challenges", user?.id] });
+      const prev = qc.getQueryData(["user_challenges", user?.id]);
+      qc.setQueryData(["user_challenges", user?.id], (old: any) =>
+        (old || []).map((u: any) =>
+          u.id === userChallengeId
+            ? { ...u, progress: currentProgress + 1, completed: currentProgress + 1 >= targetDays, last_checkin_date: new Date().toISOString().slice(0, 10) }
+            : u
+        )
+      );
+      return { prev };
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.prev) qc.setQueryData(["user_challenges", user?.id], ctx.prev);
+    },
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: ["user_challenges", user?.id] });
       qc.invalidateQueries({ queryKey: ["profile", user?.id] });
       qc.invalidateQueries({ queryKey: ["user_badges", user?.id] });
