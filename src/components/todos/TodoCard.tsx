@@ -41,7 +41,8 @@ export function TodoCard({ todo, subtasks, onToggle, onDelete, onEdit, onAddSubt
   const leftBg = useTransform(x, [-100, 0], [1, 0]);
 
   const handleDragEnd = (_: any, info: PanInfo) => {
-    if (info.offset.x > 100 && !todo.completed) {
+    const future = todo.due_date && !todo.completed && !isToday(new Date(todo.due_date)) && new Date(todo.due_date) > new Date();
+    if (info.offset.x > 100 && !todo.completed && !future) {
       controls.start({ x: 0, transition: { duration: 0.2 } });
       onToggle(todo);
     } else if (info.offset.x < -100) {
@@ -53,10 +54,16 @@ export function TodoCard({ todo, subtasks, onToggle, onDelete, onEdit, onAddSubt
   };
 
   const isOverdue = todo.due_date && !todo.completed && isPast(new Date(todo.due_date)) && !isToday(new Date(todo.due_date));
+  const isFuture = todo.due_date && !todo.completed && !isToday(new Date(todo.due_date)) && new Date(todo.due_date) > new Date();
   const completedSubs = subtasks.filter(s => s.completed).length;
   const xpReward = POINTS_MAP[todo.priority] || 10;
   const hasAttachments = (todo.attachments || []).length > 0;
   const hasExpandable = subtasks.length > 0 || todo.notes || hasAttachments;
+
+  const handleToggle = () => {
+    if (isFuture) return;
+    onToggle(todo);
+  };
 
   const handleAddSubtask = () => {
     if (!newSubtask.trim()) return;
@@ -93,10 +100,12 @@ export function TodoCard({ todo, subtasks, onToggle, onDelete, onEdit, onAddSubt
           <div className="flex items-start gap-3">
             {/* Checkbox */}
             <button
-              onClick={() => onToggle(todo)}
+              onClick={handleToggle}
+              disabled={isFuture}
+              title={isFuture ? `Available on ${format(new Date(todo.due_date!), "MMM d")}` : undefined}
               className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all mt-0.5 shrink-0 ${
                 todo.completed ? "bg-success border-success scale-95" : "border-muted-foreground/25 hover:border-primary"
-              }`}
+              } ${isFuture ? "opacity-40 cursor-not-allowed" : ""}`}
             >
               {todo.completed && <Check className="h-3 w-3 text-success-foreground" />}
             </button>

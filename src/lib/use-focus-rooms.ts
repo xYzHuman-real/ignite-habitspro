@@ -23,6 +23,20 @@ export function useFocusRooms() {
     },
   });
 
+  // Realtime: refresh on any room or participant change
+  useEffect(() => {
+    const channel = supabase
+      .channel("focus_rooms_realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "focus_rooms" }, () => {
+        qc.invalidateQueries({ queryKey: ["focus_rooms"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "focus_room_participants" }, () => {
+        qc.invalidateQueries({ queryKey: ["focus_room_participants"] });
+      })
+      .subscribe();
+    return () => { channel.unsubscribe(); };
+  }, [qc]);
+
   const { data: participants = [] } = useQuery({
     queryKey: ["focus_room_participants"],
     queryFn: async () => {
