@@ -158,7 +158,7 @@ export default function Goals() {
                     {form.deadline ? format(form.deadline, "PPP") : "Pick a date"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-auto p-0 z-[100]" align="start">
                   <Calendar mode="single" selected={form.deadline} onSelect={(d) => setForm({ ...form, deadline: d })} disabled={(d) => d < new Date()} initialFocus className={cn("p-3 pointer-events-auto")} />
                 </PopoverContent>
               </Popover>
