@@ -40,7 +40,17 @@ export function useGoals() {
 
   const updateGoal = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Record<string, unknown> }) => {
-      const { error } = await supabase.from("goals").update(updates).eq("id", id);
+      // Re-activate goal if target raised above current value
+      const finalUpdates: Record<string, unknown> = { ...updates };
+      if (typeof updates.target_value === "number") {
+        const current = goals.find((g: any) => g.id === id);
+        const newCurrent = typeof updates.current_value === "number" ? updates.current_value : (current?.current_value ?? 0);
+        if (newCurrent < (updates.target_value as number)) {
+          finalUpdates.completed = false;
+          finalUpdates.completed_at = null;
+        }
+      }
+      const { error } = await supabase.from("goals").update(finalUpdates).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["goals", user?.id] }),
