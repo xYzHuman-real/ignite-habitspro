@@ -632,14 +632,23 @@ export default function TimerPage() {
                     )}
                   </AnimatePresence>
 
-                  {/* Start + Reset */}
+                  {/* Start + Reset + Stop (during break) */}
                   <div className="flex items-center gap-3">
-                    <motion.div whileTap={{ scale: 0.95 }}>
-                      <Button size="lg" onClick={requestStart} disabled={isRunning}
-                        className="px-10 h-12 rounded-2xl bg-gradient-to-r from-primary to-[hsl(0,85%,50%)] text-primary-foreground shadow-lg font-semibold text-sm">
-                        <Play className="h-4 w-4 mr-2" /> Start Focus
-                      </Button>
-                    </motion.div>
+                    {isRunning && mode === "shortBreak" ? (
+                      <motion.div whileTap={{ scale: 0.95 }}>
+                        <Button size="lg" onClick={reset}
+                          className="px-10 h-12 rounded-2xl bg-destructive text-destructive-foreground shadow-lg font-semibold text-sm">
+                          <Square className="h-4 w-4 mr-2" /> Stop Break
+                        </Button>
+                      </motion.div>
+                    ) : (
+                      <motion.div whileTap={{ scale: 0.95 }}>
+                        <Button size="lg" onClick={requestStart} disabled={isRunning}
+                          className="px-10 h-12 rounded-2xl bg-gradient-to-r from-primary to-[hsl(0,85%,50%)] text-primary-foreground shadow-lg font-semibold text-sm">
+                          <Play className="h-4 w-4 mr-2" /> {mode === "shortBreak" ? "Start Break" : "Start Focus"}
+                        </Button>
+                      </motion.div>
+                    )}
                     <motion.div whileTap={{ scale: 0.9 }}>
                       <button onClick={reset}
                         className="w-12 h-12 rounded-2xl bg-muted/60 flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors">
