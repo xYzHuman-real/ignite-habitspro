@@ -398,7 +398,7 @@ export function useLeaderboard() {
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("user_id, display_name, avatar_url, total_streak, leaderboard_points, habits_completed, show_profile, show_stats, show_avatar")
+        .select("user_id, display_name, avatar_url, total_streak, leaderboard_points, habits_completed, show_profile, show_stats, show_avatar, title, xp_level")
         .eq("show_profile", true)
         .order("leaderboard_points", { ascending: false })
         .limit(50);
