@@ -131,8 +131,11 @@ export default function Leaderboard() {
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm">{u.isMe ? "You" : u.name}</p>
-                <p className="text-xs text-muted-foreground">{u.points.toLocaleString()} points</p>
+                <p className="font-medium text-sm truncate">{u.isMe ? "You" : u.name}</p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {u.title && <span className="text-primary/80 font-medium">{u.title} · </span>}
+                  {u.points.toLocaleString()} pts
+                </p>
               </div>
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
