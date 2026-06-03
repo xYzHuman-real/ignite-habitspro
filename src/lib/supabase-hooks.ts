@@ -496,14 +496,25 @@ export function useActivityLog() {
     queryKey: ["activity_log", user?.id],
     queryFn: async () => {
       if (!user) return [];
-      const threeMonthsAgo = new Date();
-      threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-      const { data } = await supabase
-        .from("activity_log")
-        .select("activity_date, count")
-        .eq("user_id", user.id)
-        .gte("activity_date", threeMonthsAgo.toISOString().split("T")[0]);
-      return data || [];
+      const since = new Date();
+      since.setDate(since.getDate() - 120);
+      const sinceStr = since.toISOString().split("T")[0];
+      const sinceIso = since.toISOString();
+
+      const [logRes, habitRes, pomoRes] = await Promise.all([
+        supabase.from("activity_log").select("activity_date, count").eq("user_id", user.id).gte("activity_date", sinceStr),
+        supabase.from("habit_completions").select("completed_date").eq("user_id", user.id).gte("completed_date", sinceStr),
+        supabase.from("pomodoro_sessions").select("created_at").eq("user_id", user.id).eq("session_type", "focus").gte("created_at", sinceIso),
+      ]);
+
+      const map = new Map<string, number>();
+      (logRes.data || []).forEach((r: any) => map.set(r.activity_date, (map.get(r.activity_date) || 0) + (r.count || 1)));
+      (habitRes.data || []).forEach((r: any) => map.set(r.completed_date, (map.get(r.completed_date) || 0) + 1));
+      (pomoRes.data || []).forEach((r: any) => {
+        const d = new Date(r.created_at).toISOString().split("T")[0];
+        map.set(d, (map.get(d) || 0) + 1);
+      });
+      return Array.from(map.entries()).map(([activity_date, count]) => ({ activity_date, count }));
     },
     enabled: !!user,
   });
