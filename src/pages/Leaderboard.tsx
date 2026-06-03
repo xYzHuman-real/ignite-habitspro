@@ -70,6 +70,8 @@ export default function Leaderboard() {
     streak: u.total_streak,
     points: u.leaderboard_points,
     habits: u.habits_completed,
+    title: (u as any).title as string | undefined,
+    level: (u as any).xp_level as number | undefined,
     isMe: u.user_id === user?.id,
   }));
 
