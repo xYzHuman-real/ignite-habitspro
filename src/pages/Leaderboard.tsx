@@ -109,6 +109,7 @@ export default function Leaderboard() {
                   </AvatarFallback>
                 </Avatar>
                 <p className="font-display font-semibold text-sm mt-2">{u.isMe ? "You" : u.name}</p>
+                {u.title && <p className="text-[10px] text-primary/80 font-medium">{u.title}</p>}
                 <p className="text-xs text-muted-foreground">{u.points.toLocaleString()} pts</p>
                 {!u.isMe && <div className="mt-1"><FollowButton userId={u.userId} /></div>}
                 <div className={`${heights[i]} w-20 rounded-t-lg mt-2 ${i === 1 ? "bg-gradient-accent" : "bg-muted"}`} />
