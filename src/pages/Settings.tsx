@@ -30,6 +30,19 @@ export default function Settings() {
   const [deleting, setDeleting] = useState(false);
   const [exporting, setExporting] = useState(false);
 
+  // Persisted preferences
+  const [showLeaderboard, setShowLeaderboard] = useLocalPref("show_leaderboard", true);
+  const [showActivity, setShowActivity] = useLocalPref("show_activity", true);
+  const [habitReminders, setHabitReminders] = useLocalPref("habit_reminders", true);
+  const [streakAlerts, setStreakAlerts] = useLocalPref("streak_alerts", true);
+  const [focusSounds, setFocusSounds] = useLocalPref("focus_sounds", true);
+  const [dailySummary, setDailySummary] = useLocalPref("daily_summary", false);
+  const [socialNotifs, setSocialNotifs] = useLocalPref("social_notifs", true);
+  const [haptic, setHaptic] = useLocalPref("haptic", true);
+  const [animations, setAnimations] = useLocalPref("animations", true);
+  const [autoStart, setAutoStart] = useLocalPref("auto_start_timer", false);
+  const [lockScreen, setLockScreen] = useLocalPref("focus_lock_screen", true);
+
   const handleDeleteAccount = async () => {
     setDeleting(true);
     try {
