@@ -398,10 +398,17 @@ export function useLeaderboard() {
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("user_id, display_name, avatar_url, total_streak, leaderboard_points, habits_completed")
+        .select("user_id, display_name, avatar_url, total_streak, leaderboard_points, habits_completed, show_profile, show_stats, show_avatar")
+        .eq("show_profile", true)
         .order("leaderboard_points", { ascending: false })
-        .limit(20);
-      return data || [];
+        .limit(50);
+      // Respect privacy: hide stats/avatar when user opted out
+      return (data || []).map((u: any) => ({
+        ...u,
+        avatar_url: u.show_avatar === false ? null : u.avatar_url,
+        total_streak: u.show_stats === false ? 0 : u.total_streak,
+        habits_completed: u.show_stats === false ? 0 : u.habits_completed,
+      }));
     },
   });
 }
