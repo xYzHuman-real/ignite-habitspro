@@ -70,6 +70,8 @@ export default function Leaderboard() {
     streak: u.total_streak,
     points: u.leaderboard_points,
     habits: u.habits_completed,
+    title: (u as any).title as string | undefined,
+    level: (u as any).xp_level as number | undefined,
     isMe: u.user_id === user?.id,
   }));
 
@@ -107,6 +109,7 @@ export default function Leaderboard() {
                   </AvatarFallback>
                 </Avatar>
                 <p className="font-display font-semibold text-sm mt-2">{u.isMe ? "You" : u.name}</p>
+                {u.title && <p className="text-[10px] text-primary/80 font-medium">{u.title}</p>}
                 <p className="text-xs text-muted-foreground">{u.points.toLocaleString()} pts</p>
                 {!u.isMe && <div className="mt-1"><FollowButton userId={u.userId} /></div>}
                 <div className={`${heights[i]} w-20 rounded-t-lg mt-2 ${i === 1 ? "bg-gradient-accent" : "bg-muted"}`} />
@@ -128,8 +131,11 @@ export default function Leaderboard() {
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm">{u.isMe ? "You" : u.name}</p>
-                <p className="text-xs text-muted-foreground">{u.points.toLocaleString()} points</p>
+                <p className="font-medium text-sm truncate">{u.isMe ? "You" : u.name}</p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {u.title && <span className="text-primary/80 font-medium">{u.title} · </span>}
+                  {u.points.toLocaleString()} pts
+                </p>
               </div>
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-3 text-xs text-muted-foreground">

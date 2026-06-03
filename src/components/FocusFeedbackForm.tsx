@@ -20,7 +20,15 @@ export function FocusFeedbackForm() {
     if (!message.trim()) return;
     setSending(true);
     try {
-      // Store feedback as a notification to the user (confirmation) and log it
+      const { error } = await supabase.from("feedback").insert({
+        user_id: user?.id ?? null,
+        type,
+        message: message.trim(),
+        user_email: user?.email ?? null,
+        user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
+      });
+      if (error) throw error;
+
       if (user) {
         await supabase.from("notifications").insert({
           user_id: user.id,
@@ -32,7 +40,7 @@ export function FocusFeedbackForm() {
       }
       toast({
         title: "Sent Successfully! ✉️",
-        description: `Your ${type} report has been submitted to support@ignitehabitpro. Thank you!`,
+        description: `Your ${type} has been logged. Our team will review it shortly.`,
       });
       setMessage("");
       setOpen(false);

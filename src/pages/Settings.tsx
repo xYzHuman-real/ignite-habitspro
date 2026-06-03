@@ -17,6 +17,7 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { useLocalPref } from "@/lib/use-local-pref";
 
 type SettingsSection = "main" | "privacy" | "notifications" | "preferences" | "about";
 
@@ -28,6 +29,19 @@ export default function Settings() {
   const [section, setSection] = useState<SettingsSection>("main");
   const [deleting, setDeleting] = useState(false);
   const [exporting, setExporting] = useState(false);
+
+  // Persisted preferences
+  const [showLeaderboard, setShowLeaderboard] = useLocalPref("show_leaderboard", true);
+  const [showActivity, setShowActivity] = useLocalPref("show_activity", true);
+  const [habitReminders, setHabitReminders] = useLocalPref("habit_reminders", true);
+  const [streakAlerts, setStreakAlerts] = useLocalPref("streak_alerts", true);
+  const [focusSounds, setFocusSounds] = useLocalPref("focus_sounds", true);
+  const [dailySummary, setDailySummary] = useLocalPref("daily_summary", false);
+  const [socialNotifs, setSocialNotifs] = useLocalPref("social_notifs", true);
+  const [haptic, setHaptic] = useLocalPref("haptic", true);
+  const [animations, setAnimations] = useLocalPref("animations", true);
+  const [autoStart, setAutoStart] = useLocalPref("auto_start_timer", false);
+  const [lockScreen, setLockScreen] = useLocalPref("focus_lock_screen", true);
 
   const handleDeleteAccount = async () => {
     setDeleting(true);
@@ -222,9 +236,9 @@ export default function Settings() {
                 <Separator />
                 <ToggleRow id="show-profile" icon={EyeOff} label="Profile Visibility" desc="Allow others to view your full profile" checked={profile.show_profile !== false} onChange={(v) => updateProfile({ show_profile: v })} />
                 <Separator />
-                <ToggleRow id="show-leaderboard" icon={Trophy} label="Leaderboard Visibility" desc="Appear in public leaderboard rankings" checked={true} onChange={() => toast({ title: "Coming soon!" })} />
+                <ToggleRow id="show-leaderboard" icon={Trophy} label="Leaderboard Visibility" desc="Appear in public leaderboard rankings" checked={showLeaderboard} onChange={setShowLeaderboard} />
                 <Separator />
-                <ToggleRow id="show-activity" icon={BarChart3} label="Activity Heatmap" desc="Show your activity to profile visitors" checked={true} onChange={() => toast({ title: "Coming soon!" })} />
+                <ToggleRow id="show-activity" icon={BarChart3} label="Activity Heatmap" desc="Show your activity to profile visitors" checked={showActivity} onChange={setShowActivity} />
               </div>
             </Card>
           </motion.div>
@@ -235,15 +249,15 @@ export default function Settings() {
             <SectionHeader title="Notifications" onBack={() => setSection("main")} />
             <Card className="p-5">
               <div className="space-y-1">
-                <ToggleRow id="habit-reminders" icon={Bell} label="Habit Reminders" desc="Get reminded to complete your habits" checked={true} onChange={() => toast({ title: "Manage per-habit in Habits page" })} />
+                <ToggleRow id="habit-reminders" icon={Bell} label="Habit Reminders" desc="Get reminded to complete your habits" checked={habitReminders} onChange={setHabitReminders} />
                 <Separator />
-                <ToggleRow id="streak-alerts" icon={Flame} label="Streak Alerts" desc="Warning before losing your streak" checked={true} onChange={() => toast({ title: "Coming soon!" })} />
+                <ToggleRow id="streak-alerts" icon={Flame} label="Streak Alerts" desc="Warning before losing your streak" checked={streakAlerts} onChange={setStreakAlerts} />
                 <Separator />
-                <ToggleRow id="focus-sounds" icon={Volume2} label="Focus Session Sounds" desc="Play ambient sounds during focus" checked={true} onChange={() => toast({ title: "Coming soon!" })} />
+                <ToggleRow id="focus-sounds" icon={Volume2} label="Focus Session Sounds" desc="Play ambient sounds during focus" checked={focusSounds} onChange={setFocusSounds} />
                 <Separator />
-                <ToggleRow id="daily-summary" icon={Clock} label="Daily Summary" desc="Evening recap of your productivity" checked={false} onChange={() => toast({ title: "Coming soon!" })} />
+                <ToggleRow id="daily-summary" icon={Clock} label="Daily Summary" desc="Evening recap of your productivity" checked={dailySummary} onChange={setDailySummary} />
                 <Separator />
-                <ToggleRow id="social-notifs" icon={Globe} label="Social Notifications" desc="Followers, partner requests & messages" checked={true} onChange={() => toast({ title: "Coming soon!" })} />
+                <ToggleRow id="social-notifs" icon={Globe} label="Social Notifications" desc="Followers, partner requests & messages" checked={socialNotifs} onChange={setSocialNotifs} />
               </div>
             </Card>
           </motion.div>
@@ -253,13 +267,13 @@ export default function Settings() {
           <motion.div key="preferences" {...pageVariants} transition={{ duration: 0.2 }}>
             <SectionHeader title="Preferences" onBack={() => setSection("main")} />
             <Card className="p-5 space-y-1">
-              <ToggleRow id="haptic" icon={Smartphone} label="Haptic Feedback" desc="Vibration on interactions" checked={true} onChange={() => toast({ title: "Coming soon!" })} />
+              <ToggleRow id="haptic" icon={Smartphone} label="Haptic Feedback" desc="Vibration on interactions" checked={haptic} onChange={setHaptic} />
               <Separator />
-              <ToggleRow id="animations" icon={Zap} label="Animations" desc="Smooth transitions & micro-animations" checked={true} onChange={() => toast({ title: "Coming soon!" })} />
+              <ToggleRow id="animations" icon={Zap} label="Animations" desc="Smooth transitions & micro-animations" checked={animations} onChange={setAnimations} />
               <Separator />
-              <ToggleRow id="auto-start" icon={Target} label="Auto-start Timer" desc="Start focus timer when opening app" checked={false} onChange={() => toast({ title: "Coming soon!" })} />
+              <ToggleRow id="auto-start" icon={Target} label="Auto-start Timer" desc="Start focus timer when opening app" checked={autoStart} onChange={setAutoStart} />
               <Separator />
-              <ToggleRow id="lock-screen" icon={Lock} label="Focus Lock Screen" desc="Lock navigation during focus sessions" checked={true} onChange={() => toast({ title: "Coming soon!" })} />
+              <ToggleRow id="lock-screen" icon={Lock} label="Focus Lock Screen" desc="Lock navigation during focus sessions" checked={lockScreen} onChange={setLockScreen} />
             </Card>
           </motion.div>
         )}
