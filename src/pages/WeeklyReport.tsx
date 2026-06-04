@@ -1,11 +1,13 @@
 import { motion } from "framer-motion";
-import { BarChart3, Flame, Target, Clock, Coins, TrendingUp, TrendingDown, Minus, Calendar, Award } from "lucide-react";
+import { BarChart3, Flame, Target, Clock, Coins, TrendingUp, TrendingDown, Minus, Calendar, Award, Info } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useWeeklyReport } from "@/lib/use-weekly-report";
 import { format, parseISO } from "date-fns";
 import PageHero from "@/components/PageHero";
+
 
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.07 } } };
 const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.35 } } };
@@ -108,7 +110,20 @@ export default function WeeklyReport() {
           <h2 className="font-display font-semibold text-lg mb-4 flex items-center gap-2">
             <Calendar className="h-5 w-5 text-muted-foreground" />
             Daily Activity
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button type="button" className="text-muted-foreground/70 hover:text-foreground transition-colors">
+                    <Info className="h-3.5 w-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-[240px] text-xs">
+                  Daily Activity counts the total actions logged each day: habits completed, focus sessions finished, to-dos closed, and journal entries written. Higher bars = busier, more productive days.
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </h2>
+
           <div className="flex items-end gap-3 h-40">
             {report.dailyBreakdown.map((d) => {
               const barHeight = maxDailyCompletions > 0 ? (d.completions / maxDailyCompletions) * 100 : 0;

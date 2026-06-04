@@ -206,7 +206,8 @@ export default function Todos() {
 
       {/* Floating Add Button */}
       <motion.button
-        whileTap={{ scale: 0.9 }}
+        whileTap={{ y: 1 }}
+
         onClick={() => {
           const input = document.querySelector<HTMLInputElement>('input[placeholder="Add a task..."]');
           input?.focus();
