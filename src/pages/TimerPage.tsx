@@ -13,7 +13,7 @@ import { FocusSettingsHub } from "@/components/FocusSettingsHub";
 import { FocusFeedbackForm } from "@/components/FocusFeedbackForm";
 import { FocusStatsTab } from "@/components/FocusStatsTab";
 import { MotivationalQuotes } from "@/components/MotivationalQuotes";
-import { useTheme } from "@/lib/store";
+
 
 import { useFocusThemes } from "@/lib/use-focus-themes";
 import { useFocusSettings } from "@/lib/use-focus-settings";
