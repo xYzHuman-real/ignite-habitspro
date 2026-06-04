@@ -219,16 +219,24 @@ export default function Profile() {
                 </div>
               </div>
 
-              {/* Points & Level Progress */}
+              {/* XP & Coins */}
               <div className="mt-4 space-y-2">
                 <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
-                    <Coins className="h-4 w-4 text-accent" />
-                    <span className="font-semibold">{profile.leaderboard_points} points</span>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1.5">
+                      <Flame className="h-4 w-4 text-primary" />
+                      <span className="font-semibold">{profile.leaderboard_points}</span>
+                      <span className="text-xs text-muted-foreground">XP</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Coins className="h-4 w-4 text-accent" />
+                      <span className="font-semibold">{profile.coins || 0}</span>
+                      <span className="text-xs text-muted-foreground">coins</span>
+                    </div>
                   </div>
                   {nextLevel && (
                     <span className="text-xs text-muted-foreground">
-                      {nextLevel.minPoints - profile.leaderboard_points} pts to Lv.{nextLevel.level}
+                      {nextLevel.minPoints - profile.leaderboard_points} to Lv.{nextLevel.level}
                     </span>
                   )}
                 </div>
