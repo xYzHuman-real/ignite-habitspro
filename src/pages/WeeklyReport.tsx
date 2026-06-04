@@ -110,7 +110,20 @@ export default function WeeklyReport() {
           <h2 className="font-display font-semibold text-lg mb-4 flex items-center gap-2">
             <Calendar className="h-5 w-5 text-muted-foreground" />
             Daily Activity
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button type="button" className="text-muted-foreground/70 hover:text-foreground transition-colors">
+                    <Info className="h-3.5 w-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-[240px] text-xs">
+                  Daily Activity counts the total actions logged each day: habits completed, focus sessions finished, to-dos closed, and journal entries written. Higher bars = busier, more productive days.
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </h2>
+
           <div className="flex items-end gap-3 h-40">
             {report.dailyBreakdown.map((d) => {
               const barHeight = maxDailyCompletions > 0 ? (d.completions / maxDailyCompletions) * 100 : 0;
