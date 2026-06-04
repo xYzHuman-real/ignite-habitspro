@@ -786,7 +786,32 @@ export function useDailyLogin() {
       const yesterdayStr = yesterday.toISOString().split("T")[0];
       const { data: yesterdayLogin } = await supabase.from("daily_logins").select("streak").eq("user_id", user.id).eq("login_date", yesterdayStr).single();
 
-      const newStreak = yesterdayLogin ? yesterdayLogin.streak + 1 : 1;
+      let newStreak = yesterdayLogin ? yesterdayLogin.streak + 1 : 1;
+      let freezeUsed = false;
+
+      // Auto-use streak freeze if yesterday was missed but streak exists from 2 days ago
+      if (!yesterdayLogin) {
+        const twoDaysAgo = new Date();
+        twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+        const twoAgoStr = twoDaysAgo.toISOString().split("T")[0];
+        const { data: twoAgoLogin } = await supabase.from("daily_logins").select("streak").eq("user_id", user.id).eq("login_date", twoAgoStr).single();
+        if (twoAgoLogin) {
+          const { data: prof } = await supabase.from("profiles").select("streak_freezes").eq("user_id", user.id).single();
+          if (prof && prof.streak_freezes > 0) {
+            newStreak = twoAgoLogin.streak + 1;
+            freezeUsed = true;
+            await supabase.from("profiles").update({ streak_freezes: prof.streak_freezes - 1 }).eq("user_id", user.id);
+            await supabase.from("notifications").insert({
+              user_id: user.id,
+              type: "streak_freeze",
+              title: "🧊 Streak Freeze Used",
+              message: `We saved your streak! ${prof.streak_freezes - 1} freeze${prof.streak_freezes - 1 === 1 ? "" : "s"} left.`,
+              icon: "🧊",
+            });
+          }
+        }
+      }
+
       const bonus = getDailyLoginBonus(newStreak);
 
       await supabase.from("daily_logins").insert({ user_id: user.id, login_date: today, streak: newStreak, points_earned: bonus });
@@ -805,7 +830,8 @@ export function useDailyLogin() {
         }).eq("user_id", user.id);
       }
 
-      return { streak: newStreak, bonus };
+      return { streak: newStreak, bonus, freezeUsed };
+
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["profile", user?.id] });
