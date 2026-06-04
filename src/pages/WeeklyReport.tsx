@@ -1,11 +1,13 @@
 import { motion } from "framer-motion";
-import { BarChart3, Flame, Target, Clock, Coins, TrendingUp, TrendingDown, Minus, Calendar, Award } from "lucide-react";
+import { BarChart3, Flame, Target, Clock, Coins, TrendingUp, TrendingDown, Minus, Calendar, Award, Info } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useWeeklyReport } from "@/lib/use-weekly-report";
 import { format, parseISO } from "date-fns";
 import PageHero from "@/components/PageHero";
+
 
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.07 } } };
 const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.35 } } };
