@@ -469,11 +469,8 @@ export default function TimerPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-1">
           <h1 className="text-2xl font-display font-bold tracking-tight">Focus Timer</h1>
-          <div className="flex items-center gap-1">
-            <NotificationBell />
-            <ThemeToggle theme={theme} toggle={toggle} />
-          </div>
         </div>
+
 
         {/* Settings & Feedback pills */}
         <div className="flex items-center gap-2 mb-5">
