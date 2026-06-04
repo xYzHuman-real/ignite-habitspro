@@ -52,6 +52,9 @@ const priorityDots: Record<string, string> = {
   low: "bg-blue-400",
 };
 
+const COOLDOWN_MS = 30 * 60 * 1000;
+const COOLDOWN_KEY = "daily_plan_last_generated";
+
 export default function DailyPlanner() {
   const [plan, setPlan] = useState<DailyPlan | null>(null);
   const [loading, setLoading] = useState(false);
@@ -60,6 +63,14 @@ export default function DailyPlanner() {
   const navigate = useNavigate();
 
   const generatePlan = async () => {
+    const last = Number(localStorage.getItem(COOLDOWN_KEY) || 0);
+    const elapsed = Date.now() - last;
+    if (last && elapsed < COOLDOWN_MS) {
+      const minsLeft = Math.ceil((COOLDOWN_MS - elapsed) / 60000);
+      toast({ title: "Cooldown active ⏳", description: `Try again in ${minsLeft} min.`, variant: "destructive" });
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
@@ -79,6 +90,7 @@ export default function DailyPlanner() {
       }
 
       setPlan(res.data);
+      localStorage.setItem(COOLDOWN_KEY, String(Date.now()));
       toast({ title: "Schedule generated! ✨", description: "Your personalized plan is ready." });
     } catch (e: any) {
       const msg = e.message || "Failed to generate plan";
@@ -88,6 +100,7 @@ export default function DailyPlanner() {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="max-w-2xl mx-auto pb-24 space-y-4">
