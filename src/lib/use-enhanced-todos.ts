@@ -111,17 +111,19 @@ export function useEnhancedTodos() {
       if (!completed) {
         const todo = todos.find(t => t.id === id);
         const pts = POINTS_MAP[todo?.priority || "medium"] || 10;
-        const { data: profile } = await supabase.from("profiles").select("leaderboard_points, coins").eq("user_id", user.id).single();
+        const { data: profile } = await supabase.from("profiles").select("leaderboard_points, coins, lifetime_xp").eq("user_id", user.id).single();
         if (profile) {
           const newPoints = profile.leaderboard_points + pts;
           const newCoins = (profile.coins || 0) + pts;
-          const newLevel = getLevelForPoints(newPoints);
+          const newLifetime = ((profile as any).lifetime_xp || 0) + pts;
+          const newLevel = getLevelForPoints(newLifetime);
           await supabase.from("profiles").update({
             leaderboard_points: newPoints,
             coins: newCoins,
+            lifetime_xp: newLifetime,
             xp_level: newLevel.level,
             title: newLevel.title,
-          }).eq("user_id", user.id);
+          } as any).eq("user_id", user.id);
         }
 
         if (todo && todo.recurring && todo.recurring !== "none" && todo.due_date) {
