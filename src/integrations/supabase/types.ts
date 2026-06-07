@@ -730,6 +730,7 @@ export type Database = {
           habits_completed: number
           id: string
           leaderboard_points: number
+          lifetime_xp: number
           pomodoro_sessions_count: number
           show_avatar: boolean
           show_profile: boolean
@@ -751,6 +752,7 @@ export type Database = {
           habits_completed?: number
           id?: string
           leaderboard_points?: number
+          lifetime_xp?: number
           pomodoro_sessions_count?: number
           show_avatar?: boolean
           show_profile?: boolean
@@ -772,6 +774,7 @@ export type Database = {
           habits_completed?: number
           id?: string
           leaderboard_points?: number
+          lifetime_xp?: number
           pomodoro_sessions_count?: number
           show_avatar?: boolean
           show_profile?: boolean

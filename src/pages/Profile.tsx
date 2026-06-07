@@ -112,9 +112,10 @@ export default function Profile() {
   const avatarText = profile.display_name ? profile.display_name.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2) : "?";
   const earnedBadges = allBadges.filter((b) => earnedBadgeIds.includes(b.id));
   const joinDate = format(new Date(profile.created_at), "MMM yyyy");
-  const currentLevel = getLevelForPoints(profile.leaderboard_points);
-  const nextLevel = getNextLevel(profile.leaderboard_points);
-  const progressToNext = getProgressToNext(profile.leaderboard_points);
+  const lifetimeXp = (profile as any).lifetime_xp ?? profile.leaderboard_points;
+  const currentLevel = getLevelForPoints(lifetimeXp);
+  const nextLevel = getNextLevel(lifetimeXp);
+  const progressToNext = getProgressToNext(lifetimeXp);
 
   // Build heatmap from activity log
   const activityMap = new Map<string, number>();
@@ -222,13 +223,17 @@ export default function Profile() {
               {/* XP & Coins */}
               <div className="mt-4 space-y-2">
                 <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <div className="flex items-center gap-1.5" title="Lifetime XP (never resets)">
                       <Flame className="h-4 w-4 text-primary" />
-                      <span className="font-semibold">{profile.leaderboard_points}</span>
-                      <span className="text-xs text-muted-foreground">XP</span>
+                      <span className="font-semibold">{lifetimeXp}</span>
+                      <span className="text-xs text-muted-foreground">Lifetime XP</span>
                     </div>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5" title="Weekly leaderboard points">
+                      <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">WK</span>
+                      <span className="font-semibold">{profile.leaderboard_points}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5" title="Spendable coins">
                       <Coins className="h-4 w-4 text-accent" />
                       <span className="font-semibold">{profile.coins || 0}</span>
                       <span className="text-xs text-muted-foreground">coins</span>
@@ -236,7 +241,7 @@ export default function Profile() {
                   </div>
                   {nextLevel && (
                     <span className="text-xs text-muted-foreground">
-                      {nextLevel.minPoints - profile.leaderboard_points} to Lv.{nextLevel.level}
+                      {nextLevel.minPoints - lifetimeXp} to Lv.{nextLevel.level}
                     </span>
                   )}
                 </div>

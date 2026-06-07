@@ -260,20 +260,22 @@ export function useHabits() {
         const habitPriority = (habit as any).priority || "important";
         const pointsMap: Record<string, number> = { very_important: 10, important: 5, less_important: 2 };
         const earnedPoints = pointsMap[habitPriority] || 5;
-        const { data: profileData } = await supabase.from("profiles").select("total_streak, habits_completed, leaderboard_points, coins").eq("user_id", user.id).single();
+        const { data: profileData } = await supabase.from("profiles").select("total_streak, habits_completed, leaderboard_points, coins, lifetime_xp").eq("user_id", user.id).single();
         if (profileData) {
           const newPoints = profileData.leaderboard_points + earnedPoints;
           const newCoins = (profileData.coins || 0) + earnedPoints;
-          const newLevel = getLevelForPoints(newPoints);
+          const newLifetime = ((profileData as any).lifetime_xp || 0) + earnedPoints;
+          const newLevel = getLevelForPoints(newLifetime);
           const maxStreak = allHabits ? Math.max(...allHabits.map(h => h.id === habit.id ? habit.streak + 1 : h.streak)) : habit.streak + 1;
           await supabase.from("profiles").update({
             total_streak: Math.max(profileData.total_streak, maxStreak),
             habits_completed: profileData.habits_completed + 1,
             leaderboard_points: newPoints,
             coins: newCoins,
+            lifetime_xp: newLifetime,
             xp_level: newLevel.level,
             title: newLevel.title,
-          }).eq("user_id", user.id);
+          } as any).eq("user_id", user.id);
         }
       }
     },
@@ -607,11 +609,12 @@ export function useChallenges() {
           return uc && c.id === uc.challenge_id;
         });
         if (challenge) {
-          const { data: profile } = await supabase.from("profiles").select("leaderboard_points").eq("user_id", user.id).single();
+          const { data: profile } = await supabase.from("profiles").select("leaderboard_points, lifetime_xp").eq("user_id", user.id).single();
           if (profile) {
             await supabase.from("profiles").update({
               leaderboard_points: profile.leaderboard_points + challenge.points_reward,
-            }).eq("user_id", user.id);
+              lifetime_xp: ((profile as any).lifetime_xp || 0) + challenge.points_reward,
+            } as any).eq("user_id", user.id);
           }
           if (challenge.badge_reward) {
             await supabase.from("user_badges").upsert({
@@ -817,17 +820,19 @@ export function useDailyLogin() {
       await supabase.from("daily_logins").insert({ user_id: user.id, login_date: today, streak: newStreak, points_earned: bonus });
 
       // Add points to profile (both leaderboard_points for ranking and coins for shop)
-      const { data: profile } = await supabase.from("profiles").select("leaderboard_points, coins").eq("user_id", user.id).single();
+      const { data: profile } = await supabase.from("profiles").select("leaderboard_points, coins, lifetime_xp").eq("user_id", user.id).single();
       if (profile) {
         const newPoints = profile.leaderboard_points + bonus;
         const newCoins = (profile.coins || 0) + bonus;
-        const newLevel = getLevelForPoints(newPoints);
+        const newLifetime = ((profile as any).lifetime_xp || 0) + bonus;
+        const newLevel = getLevelForPoints(newLifetime);
         await supabase.from("profiles").update({
           leaderboard_points: newPoints,
           coins: newCoins,
+          lifetime_xp: newLifetime,
           xp_level: newLevel.level,
           title: newLevel.title,
-        }).eq("user_id", user.id);
+        } as any).eq("user_id", user.id);
       }
 
       return { streak: newStreak, bonus, freezeUsed };
