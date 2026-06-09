@@ -1,0 +1,75 @@
+name: Cleanup Old Artifacts & Runs
+
+on:
+  schedule:
+    - cron: '0 3 * * *' # daily at 03:00 UTC
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Build Android APK"]
+    types: [completed]
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  cleanup-artifacts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete artifacts older than 1 day
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+            const iter = github.paginate.iterator(
+              github.rest.actions.listArtifactsForRepo,
+              { owner: context.repo.owner, repo: context.repo.repo, per_page: 100 }
+            );
+            let deleted = 0;
+            for await (const { data } of iter) {
+              for (const a of data) {
+                if (new Date(a.created_at).getTime() < cutoff || a.expired) {
+                  try {
+                    await github.rest.actions.deleteArtifact({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      artifact_id: a.id,
+                    });
+                    deleted++;
+                    console.log(`Deleted artifact ${a.name} (${a.id})`);
+                  } catch (e) {
+                    console.log(`Failed ${a.id}: ${e.message}`);
+                  }
+                }
+              }
+            }
+            console.log(`Total artifacts deleted: ${deleted}`);
+
+      - name: Delete workflow runs older than 7 days (keep latest 5 per workflow)
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+            const { data: wfs } = await github.rest.actions.listRepoWorkflows({
+              owner: context.repo.owner, repo: context.repo.repo, per_page: 100,
+            });
+            let deleted = 0;
+            for (const wf of wfs.workflows) {
+              const runs = await github.paginate(
+                github.rest.actions.listWorkflowRuns,
+                { owner: context.repo.owner, repo: context.repo.repo, workflow_id: wf.id, per_page: 100 }
+              );
+              const sorted = runs.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+              const old = sorted.slice(5).filter(r => new Date(r.created_at).getTime() < cutoff);
+              for (const r of old) {
+                try {
+                  await github.rest.actions.deleteWorkflowRun({
+                    owner: context.repo.owner, repo: context.repo.repo, run_id: r.id,
+                  });
+                  deleted++;
+                } catch (e) {
+                  console.log(`Failed run ${r.id}: ${e.message}`);
+                }
+              }
+            }
+            console.log(`Total runs deleted: ${deleted}`);
