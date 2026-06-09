@@ -5,38 +5,12 @@ on:
 
 permissions:
   contents: write
-  actions: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Purge ALL existing artifacts (free storage quota)
-        uses: actions/github-script@v8
-        with:
-          script: |
-            const iter = github.paginate.iterator(
-              github.rest.actions.listArtifactsForRepo,
-              { owner: context.repo.owner, repo: context.repo.repo, per_page: 100 }
-            );
-            let deleted = 0;
-            for await (const { data } of iter) {
-              for (const a of data) {
-                try {
-                  await github.rest.actions.deleteArtifact({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    artifact_id: a.id,
-                  });
-                  deleted++;
-                } catch (e) {
-                  console.log(`Failed ${a.id}: ${e.message}`);
-                }
-              }
-            }
-            console.log(`Purged ${deleted} artifacts`);
 
 
 
@@ -117,13 +91,12 @@ jobs:
         working-directory: android
         run: ./gradlew assembleDebug
 
-      - name: Publish APK to GitHub release
+      - name: Publish APK to GitHub Release
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          gh release view apk-latest >/dev/null 2>&1 && gh release delete apk-latest --yes --cleanup-tag || true
-          gh release create apk-latest \
-            android/app/build/outputs/apk/debug/app-debug.apk \
-            --title "Latest APK" \
-            --notes "Debug APK from workflow run #${{ github.run_number }}"
-          echo "APK uploaded to the repository Releases page as 'Latest APK'." >> "$GITHUB_STEP_SUMMARY"
+          gh release delete apk-latest --yes --cleanup-tag || true
+          gh release create apk-latest android/app/build/outputs/apk/debug/app-debug.apk \
+            --title "Latest Android APK" \
+            --notes "Latest debug APK built from commit ${{ github.sha }}."
+          echo "APK download: ${{ github.server_url }}/${{ github.repository }}/releases/tag/apk-latest" >> "$GITHUB_STEP_SUMMARY"
