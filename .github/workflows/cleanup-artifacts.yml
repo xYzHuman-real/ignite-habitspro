@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Delete artifacts older than 1 day
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const cutoff = Date.now() - 24 * 60 * 60 * 1000;
@@ -46,7 +46,7 @@ jobs:
             console.log(`Total artifacts deleted: ${deleted}`);
 
       - name: Delete workflow runs older than 7 days (keep latest 5 per workflow)
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
