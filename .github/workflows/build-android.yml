@@ -13,6 +13,33 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Purge ALL existing artifacts (free storage quota)
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const iter = github.paginate.iterator(
+              github.rest.actions.listArtifactsForRepo,
+              { owner: context.repo.owner, repo: context.repo.repo, per_page: 100 }
+            );
+            let deleted = 0;
+            for await (const { data } of iter) {
+              for (const a of data) {
+                try {
+                  await github.rest.actions.deleteArtifact({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    artifact_id: a.id,
+                  });
+                  deleted++;
+                } catch (e) {
+                  console.log(`Failed ${a.id}: ${e.message}`);
+                }
+              }
+            }
+            console.log(`Purged ${deleted} artifacts`);
+
+
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
