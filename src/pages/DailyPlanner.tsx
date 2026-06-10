@@ -59,12 +59,52 @@ const priorityDots: Record<string, string> = {
 const COOLDOWN_MS = 30 * 60 * 1000;
 const COOLDOWN_KEY = "daily_plan_last_generated";
 
+const PREFS_KEY = "daily_plan_prefs_v1";
+
+interface PlannerPrefs {
+  wakeTime: string;
+  sleepTime: string;
+  studyStart: string;
+  studyEnd: string;
+  workStart: string;
+  workEnd: string;
+  breakPreference: string;
+  goalFocus: string;
+}
+
+const DEFAULT_PREFS: PlannerPrefs = {
+  wakeTime: "07:00",
+  sleepTime: "23:00",
+  studyStart: "",
+  studyEnd: "",
+  workStart: "",
+  workEnd: "",
+  breakPreference: "balanced",
+  goalFocus: "",
+};
+
 export default function DailyPlanner() {
   const [plan, setPlan] = useState<DailyPlan | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [prefsOpen, setPrefsOpen] = useState(false);
+  const [prefs, setPrefs] = useState<PlannerPrefs>(() => {
+    try {
+      const stored = localStorage.getItem(PREFS_KEY);
+      if (stored) return { ...DEFAULT_PREFS, ...JSON.parse(stored) };
+    } catch {}
+    return DEFAULT_PREFS;
+  });
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  const updatePref = <K extends keyof PlannerPrefs>(key: K, value: PlannerPrefs[K]) => {
+    setPrefs((prev) => {
+      const next = { ...prev, [key]: value };
+      localStorage.setItem(PREFS_KEY, JSON.stringify(next));
+      return next;
+    });
+  };
 
   const generatePlan = async () => {
     const last = Number(localStorage.getItem(COOLDOWN_KEY) || 0);
