@@ -100,43 +100,35 @@ export default function Habits() {
         )}
       </AnimatePresence>
 
-      {/* Content */}
-      <AnimatePresence mode="wait">
-        {activeTab === "habits" ? (
-          <motion.div
-            key="habits"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="space-y-3"
-          >
-            {habits.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-4xl mb-3">🌱</p>
-                <p className="text-muted-foreground text-sm">No habits yet. Tap + to start building your routine!</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {sortedHabits.map(habit => (
-                  <HabitCard
-                    key={habit.id}
-                    habit={habit as any}
-                    onToggle={(h) => toggleHabit(h as any)}
-                    onDelete={deleteHabit}
-                  />
-                ))}
-              </div>
-            )}
-          </motion.div>
-        ) : (
+      {/* Content — both tabs always mounted for instant switching */}
+      <div className="relative">
+        <div className={activeTab === "habits" ? "block animate-in fade-in duration-150" : "hidden"}>
+          {habits.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-4xl mb-3">🌱</p>
+              <p className="text-muted-foreground text-sm">No habits yet. Tap + to start building your routine!</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {sortedHabits.map(habit => (
+                <HabitCard
+                  key={habit.id}
+                  habit={habit as any}
+                  onToggle={(h) => toggleHabit(h as any)}
+                  onDelete={deleteHabit}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+        <div className={activeTab === "calendar" ? "block animate-in fade-in duration-150" : "hidden"}>
           <HabitCalendarTab
-            key="calendar"
             habits={habits as any}
             completions={completions}
             onToggle={(h) => toggleHabit(h as any)}
           />
-        )}
-      </AnimatePresence>
+        </div>
+      </div>
 
       <AddHabitDrawer onAdd={handleAdd} />
     </div>

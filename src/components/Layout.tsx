@@ -32,7 +32,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <ThemeToggle theme={theme} toggle={toggle} />
             </div>
           </header>
-          <main className="flex-1 overflow-auto p-4 md:p-6 pb-20 md:pb-6">
+          <main className="flex-1 overflow-auto overflow-x-hidden p-4 md:p-6 pb-24 md:pb-6">
             {children}
           </main>
           {/* Bottom nav for mobile */}

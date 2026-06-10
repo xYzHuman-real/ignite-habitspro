@@ -68,11 +68,7 @@ export default function HabitCalendarTab({ habits, completions, onToggle }: Habi
   const nextMonth = () => setViewDate(new Date(year, month + 1, 1));
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      className="space-y-4"
-    >
+    <div className="space-y-4">
       {/* Month navigation */}
       <div className="flex items-center justify-between">
         <button onClick={prevMonth} className="p-2 rounded-xl hover:bg-muted transition-colors">
@@ -159,6 +155,6 @@ export default function HabitCalendarTab({ habits, completions, onToggle }: Habi
           ))
         )}
       </div>
-    </motion.div>
+    </div>
   );
 }

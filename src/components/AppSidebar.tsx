@@ -70,10 +70,13 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarContent>
-        <div className="p-4 flex items-center gap-2">
-          <img src={appLogo} alt="Ignite HabitPro" className="w-8 h-8 rounded-lg shadow-glow-primary" />
+        <div
+          className="px-4 pb-4 flex items-center gap-2"
+          style={{ paddingTop: "max(1rem, env(safe-area-inset-top))" }}
+        >
+          <img src={appLogo} alt="Ignite HabitPro" className="w-8 h-8 rounded-lg shadow-glow-primary shrink-0" />
           {!collapsed && (
-            <span className="font-display font-bold text-lg">Ignite HabitPro</span>
+            <span className="font-display font-bold text-lg truncate">Ignite HabitPro</span>
           )}
         </div>
         {sections.map((section) => (

@@ -104,7 +104,7 @@ export default function Goals() {
   }
 
   return (
-    <motion.div variants={container} initial="hidden" animate="show" className="max-w-4xl mx-auto space-y-6">
+    <motion.div variants={container} initial="hidden" animate="show" className="max-w-4xl mx-auto px-4 sm:px-0 space-y-6 overflow-x-hidden">
       <motion.div variants={item}>
         <PageHero
           eyebrow="Your Targets"
@@ -143,7 +143,7 @@ export default function Goals() {
                 <label className="text-sm font-medium mb-1 block">Unit</label>
                 <Select value={form.unit} onValueChange={(v) => setForm({ ...form, unit: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[300]">
                     {UNITS.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -158,7 +158,7 @@ export default function Goals() {
                     {form.deadline ? format(form.deadline, "PPP") : "Pick a date"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 z-[100]" align="start">
+                <PopoverContent className="w-auto p-0 z-[300]" align="start">
                   <Calendar mode="single" selected={form.deadline} onSelect={(d) => setForm({ ...form, deadline: d })} disabled={(d) => d < new Date()} initialFocus className={cn("p-3 pointer-events-auto")} />
                 </PopoverContent>
               </Popover>
@@ -219,14 +219,14 @@ function GoalCard({ goal, expanded, onToggle, onEdit, onDelete, onProgress }: {
 
   return (
     <motion.div variants={item}>
-      <Card className={`p-4 space-y-3 transition-shadow hover:shadow-md ${goal.completed ? "opacity-75" : ""} ${overdue ? "border-destructive/40" : ""}`}>
-        <div className="flex items-start justify-between">
+      <Card className={`p-4 space-y-3 transition-shadow hover:shadow-md overflow-hidden ${goal.completed ? "opacity-75" : ""} ${overdue ? "border-destructive/40" : ""}`}>
+        <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              {goal.completed ? <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0" /> : <Target className="h-5 w-5 text-primary flex-shrink-0" />}
-              <h3 className={`font-display font-semibold text-base truncate ${goal.completed ? "line-through text-muted-foreground" : ""}`}>{goal.title}</h3>
+            <div className="flex items-start gap-2">
+              {goal.completed ? <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" /> : <Target className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />}
+              <h3 className={`font-display font-semibold text-base break-words line-clamp-2 ${goal.completed ? "line-through text-muted-foreground" : ""}`}>{goal.title}</h3>
             </div>
-            {goal.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-1 ml-7">{goal.description}</p>}
+            {goal.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2 ml-7 break-words">{goal.description}</p>}
           </div>
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onEdit}><Edit3 className="h-3.5 w-3.5" /></Button>

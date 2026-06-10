@@ -26,6 +26,19 @@ export function ActiveFocusRoom({ room, participants, participantCount, onLeave,
   const [cycleCount, setCycleCount] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Set dark background on root while focus room is active (covers status-bar area on native)
+  useEffect(() => {
+    const prevHtml = document.documentElement.style.backgroundColor;
+    const prevBody = document.body.style.backgroundColor;
+    const dark = "hsl(222 30% 6%)";
+    document.documentElement.style.backgroundColor = dark;
+    document.body.style.backgroundColor = dark;
+    return () => {
+      document.documentElement.style.backgroundColor = prevHtml;
+      document.body.style.backgroundColor = prevBody;
+    };
+  }, []);
+
   // Timer logic — auto-cycles between focus and break
   useEffect(() => {
     if (!room || room.status !== "active" || !room.started_at) {
@@ -101,6 +114,8 @@ export function ActiveFocusRoom({ room, participants, participantCount, onLeave,
       className="fixed inset-0 z-[200] flex flex-col"
       style={{
         background: "linear-gradient(160deg, hsl(222 30% 6%) 0%, hsl(240 25% 12%) 50%, hsl(222 30% 8%) 100%)",
+        paddingTop: "env(safe-area-inset-top, 0px)",
+        paddingBottom: "env(safe-area-inset-bottom, 0px)",
       }}
     >
       {/* Ambient glow */}
@@ -112,7 +127,7 @@ export function ActiveFocusRoom({ room, participants, participantCount, onLeave,
       </div>
 
       {/* Header */}
-      <div className="relative z-10 flex items-center justify-between px-4 pt-[env(safe-area-inset-top,12px)] pb-3">
+      <div className="relative z-10 flex items-center justify-between px-4 pt-3 pb-3">
         <button onClick={onClose} className="w-10 h-10 rounded-xl flex items-center justify-center bg-white/5 backdrop-blur-sm">
           <ArrowLeft className="h-5 w-5 text-white/80" />
         </button>
@@ -291,7 +306,7 @@ export function ActiveFocusRoom({ room, participants, participantCount, onLeave,
           </ScrollArea>
 
           {/* Chat input */}
-          <div className="px-4 pb-[env(safe-area-inset-bottom,16px)] pt-2">
+          <div className="px-4 pb-3 pt-2">
             <div className="flex gap-2">
               <Input
                 placeholder={isOnBreak ? "Say something..." : "Chat during break"}

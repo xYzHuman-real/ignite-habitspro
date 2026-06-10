@@ -90,15 +90,16 @@ export default function AddHabitDrawer({ onAdd }: AddHabitDrawerProps) {
 
   return (
     <Drawer open={open} onOpenChange={setOpen}>
-      <DrawerTrigger asChild>
-        <motion.button
-          whileTap={{ y: 1 }}
-          transition={{ duration: 0.1 }}
-          className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 w-14 h-14 rounded-full bg-gradient-primary text-primary-foreground shadow-glow-primary flex items-center justify-center"
-        >
-          <Plus className="h-6 w-6" />
-        </motion.button>
-      </DrawerTrigger>
+      {/* Viewport-anchored FAB: stays centered, opens on first tap (controlled, not asChild) */}
+      <button
+        type="button"
+        aria-label="Add habit"
+        onClick={() => setOpen(true)}
+        className="fixed bottom-24 left-0 right-0 mx-auto z-40 w-14 h-14 rounded-full bg-gradient-primary text-primary-foreground shadow-glow-primary flex items-center justify-center active:scale-95 transition-transform"
+        style={{ marginBottom: "env(safe-area-inset-bottom, 0px)" }}
+      >
+        <Plus className="h-6 w-6" />
+      </button>
       <DrawerContent className="max-h-[85vh] flex flex-col">
         <DrawerHeader className="pb-2">
           <DrawerTitle className="font-display text-lg">New Habit</DrawerTitle>

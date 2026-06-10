@@ -37,23 +37,23 @@ export default function PageHero({
     <motion.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="relative overflow-hidden rounded-3xl p-5 shadow-xl"
+      className="relative overflow-hidden rounded-3xl p-5 shadow-xl max-w-full"
       style={{ background: "linear-gradient(135deg, #ff6a3d 0%, #ff3d00 100%)" }}
     >
       {/* Decorative glow blobs */}
       <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/10 blur-2xl pointer-events-none" />
       <div className="absolute -bottom-12 -left-8 w-32 h-32 rounded-full bg-white/10 blur-2xl pointer-events-none" />
 
-      <div className={`relative flex items-center justify-between ${stats.length ? "mb-5" : ""}`}>
+      <div className={`relative flex items-start justify-between gap-3 ${stats.length ? "mb-5" : ""}`}>
         <div className="min-w-0 flex-1">
           {eyebrow && (
             <p className="text-[11px] font-semibold uppercase tracking-wider text-white/80">{eyebrow}</p>
           )}
-          <h1 className="text-2xl font-display font-bold text-white mt-0.5 flex items-center gap-2">
+          <h1 className="text-2xl font-display font-bold text-white mt-0.5 flex items-center gap-2 min-w-0">
             {Icon && <Icon className="h-6 w-6 text-white shrink-0" />}
-            <span className="truncate">{title}</span>
+            <span className="truncate min-w-0">{title}</span>
           </h1>
-          {subtitle && <p className="text-sm text-white/80 mt-1">{subtitle}</p>}
+          {subtitle && <p className="text-sm text-white/80 mt-1 break-words">{subtitle}</p>}
         </div>
 
         {showRing && (
