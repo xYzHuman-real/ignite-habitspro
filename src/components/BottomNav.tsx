@@ -16,32 +16,55 @@ export function BottomNav() {
   const navigate = useNavigate();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-[100] glass border-t border-border/50 safe-area-bottom">
-      <div className="flex items-center justify-around h-14 max-w-lg mx-auto">
+    <div
+      className="fixed left-0 right-0 z-[100] pointer-events-none flex justify-center px-4"
+      style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 12px)" }}
+    >
+      <nav
+        className="pointer-events-auto glass-nav rounded-full shadow-premium-nav px-2 py-1.5 flex items-center justify-between gap-1 w-full max-w-sm"
+        aria-label="Primary"
+      >
         {tabs.map((tab) => {
           const active = location.pathname === tab.path;
+          const Icon = tab.icon;
           return (
             <button
               key={tab.path}
               onClick={() => navigate(tab.path)}
               className={cn(
-                "flex flex-col items-center gap-0.5 flex-1 py-1.5 relative transition-colors",
-                active ? "text-primary" : "text-muted-foreground"
+                "relative flex-1 flex flex-col items-center justify-center gap-0.5 rounded-full py-2 px-1",
+                "transition-colors duration-300 outline-none",
+                active ? "text-primary" : "text-muted-foreground hover:text-foreground"
               )}
+              aria-current={active ? "page" : undefined}
+              aria-label={tab.label}
             >
               {active && (
-                <motion.div
-                  layoutId="bottomNavIndicator"
-                  className="absolute -top-0.5 w-8 h-0.5 rounded-full bg-gradient-primary"
-                  transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                <motion.span
+                  layoutId="bottomNavPill"
+                  className="absolute inset-0 rounded-full bg-primary/10"
+                  transition={{ type: "spring", stiffness: 400, damping: 32 }}
                 />
               )}
-              <tab.icon className={cn("h-5 w-5 transition-transform", active && "scale-110")} />
-              <span className="text-[10px] font-medium">{tab.label}</span>
+              <motion.span
+                className="relative z-10 flex items-center justify-center"
+                animate={{ scale: active ? 1.08 : 1, y: active ? -1 : 0 }}
+                transition={{ type: "spring", stiffness: 320, damping: 22 }}
+              >
+                <Icon className="h-[20px] w-[20px]" strokeWidth={active ? 2.4 : 2} />
+              </motion.span>
+              <span
+                className={cn(
+                  "relative z-10 text-[10px] leading-none tracking-tight transition-all",
+                  active ? "font-semibold opacity-100" : "font-medium opacity-80"
+                )}
+              >
+                {tab.label}
+              </span>
             </button>
           );
         })}
-      </div>
-    </nav>
+      </nav>
+    </div>
   );
 }
