@@ -35,41 +35,44 @@ export default function PageHero({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: -10 }}
+      initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="relative overflow-hidden rounded-3xl p-5 shadow-xl max-w-full"
-      style={{ background: "linear-gradient(135deg, #F97316 0%, #EA580C 100%)" }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="relative overflow-hidden rounded-3xl p-6 bg-card border border-border/60 shadow-premium max-w-full"
     >
-      {/* Decorative glow blobs */}
-      <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/10 blur-2xl pointer-events-none" />
-      <div className="absolute -bottom-12 -left-8 w-32 h-32 rounded-full bg-white/10 blur-2xl pointer-events-none" />
+      {/* Subtle warm wash */}
+      <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
 
       <div className={`relative flex items-start justify-between gap-3 ${stats.length ? "mb-5" : ""}`}>
         <div className="min-w-0 flex-1">
           {eyebrow && (
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-white/80">{eyebrow}</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">{eyebrow}</p>
           )}
-          <h1 className="text-2xl font-display font-bold text-white mt-0.5 flex items-center gap-2 min-w-0">
-            {Icon && <Icon className="h-6 w-6 text-white shrink-0" />}
+          <h1 className="text-[26px] font-display font-bold text-foreground mt-1 flex items-center gap-2.5 min-w-0 leading-tight tracking-tight">
+            {Icon && (
+              <span className="shrink-0 h-9 w-9 rounded-2xl bg-primary/10 flex items-center justify-center">
+                <Icon className="h-5 w-5 text-primary" />
+              </span>
+            )}
             <span className="truncate min-w-0">{title}</span>
           </h1>
-          {subtitle && <p className="text-sm text-white/80 mt-1 break-words">{subtitle}</p>}
+          {subtitle && <p className="text-[14px] text-muted-foreground mt-1.5 break-words leading-relaxed">{subtitle}</p>}
         </div>
 
         {showRing && (
-          <div className="relative w-[72px] h-[72px] flex items-center justify-center shrink-0 ml-3">
+          <div className="relative w-[76px] h-[76px] flex items-center justify-center shrink-0 ml-3">
             <svg className="absolute inset-0 -rotate-90" viewBox="0 0 64 64">
-              <circle cx="32" cy="32" r={radius} stroke="rgba(255,255,255,0.2)" strokeWidth="5" fill="none" />
+              <circle cx="32" cy="32" r={radius} stroke="hsl(var(--muted))" strokeWidth="5" fill="none" />
               <motion.circle
                 cx="32" cy="32" r={radius}
-                stroke="white" strokeWidth="5" fill="none" strokeLinecap="round"
+                stroke="hsl(var(--primary))" strokeWidth="5" fill="none" strokeLinecap="round"
                 strokeDasharray={circumference}
                 initial={{ strokeDashoffset: circumference }}
                 animate={{ strokeDashoffset }}
                 transition={{ duration: 0.8, ease: "easeOut" }}
               />
             </svg>
-            <div className="text-white font-display font-bold text-sm text-center leading-tight">
+            <div className="text-foreground font-display font-bold text-sm text-center leading-tight">
               {progressLabel ?? `${pct}%`}
             </div>
           </div>
@@ -81,11 +84,11 @@ export default function PageHero({
           {stats.map((s, i) => {
             const SIcon = s.icon;
             return (
-              <div key={i} className="flex-1 backdrop-blur-md bg-white/15 rounded-xl px-3 py-2 flex items-center gap-2 min-w-0">
-                <SIcon className="h-4 w-4 text-white shrink-0" />
+              <div key={i} className="flex-1 bg-secondary/70 rounded-2xl px-3 py-2.5 flex items-center gap-2 min-w-0">
+                <SIcon className="h-4 w-4 text-primary shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-[9px] uppercase tracking-wider text-white/70 font-semibold leading-none truncate">{s.label}</p>
-                  <p className="text-sm font-bold text-white leading-tight truncate">{s.value}</p>
+                  <p className="text-[9px] uppercase tracking-[0.12em] text-muted-foreground font-semibold leading-none truncate">{s.label}</p>
+                  <p className="text-sm font-bold text-foreground leading-tight truncate mt-1">{s.value}</p>
                 </div>
               </div>
             );
