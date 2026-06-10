@@ -41,6 +41,94 @@ jobs:
       - name: Add Android platform
         run: npx cap add android
 
+      - name: Write AndroidManifest.xml with app queries
+        run: |
+          cat << 'EOF' > android/app/src/main/AndroidManifest.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+              package="app.lovable.ignitehabitspro">
+
+              <uses-permission android:name="android.permission.INTERNET" />
+              <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+              <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
+              <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+              <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+              <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+
+              <queries>
+                  <package android:name="com.instagram.android" />
+                  <package android:name="com.facebook.katana" />
+                  <package android:name="com.twitter.android" />
+                  <package android:name="com.snapchat.android" />
+                  <package android:name="com.reddit.frontpage" />
+                  <package android:name="com.pinterest" />
+                  <package android:name="com.linkedin.android" />
+                  <package android:name="com.google.android.youtube" />
+                  <package android:name="com.google.android.apps.youtube.creator" />
+                  <package android:name="com.zhiliaoapp.musically" />
+                  <package android:name="com.facebook.orca" />
+                  <package android:name="com.whatsapp" />
+                  <package android:name="org.telegram.messenger" />
+                  <package android:name="com.discord" />
+                  <package android:name="com.netflix.mediaclient" />
+                  <package android:name="com.amazon.avod.thirdpartyclient" />
+                  <package android:name="tv.twitch.android.app" />
+                  <package android:name="com.spotify.music" />
+                  <package android:name="com.pubg.imobile" />
+                  <package android:name="com.dts.freefireth" />
+                  <package android:name="com.supercell.clashofclans" />
+                  <package android:name="com.supercell.clashroyale" />
+                  <package android:name="com.activision.callofduty.shooter" />
+                  <package android:name="in.amazon.mShop.android.shopping" />
+                  <package android:name="com.flipkart.android" />
+                  <package android:name="com.myntra.android" />
+              </queries>
+
+              <application
+                  android:allowBackup="true"
+                  android:icon="@mipmap/ic_launcher"
+                  android:label="@string/app_name"
+                  android:roundIcon="@mipmap/ic_launcher_round"
+                  android:supportsRtl="true"
+                  android:theme="@style/AppTheme"
+                  android:usesCleartextTraffic="true">
+
+                  <activity
+                      android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode"
+                      android:exported="true"
+                      android:label="@string/title_activity_main"
+                      android:launchMode="singleTask"
+                      android:name="app.lovable.ignitehabitspro.MainActivity"
+                      android:screenOrientation="portrait"
+                      android:theme="@style/AppTheme.NoActionBarLaunch"
+                      android:windowSoftInputMode="adjustPan">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                      <intent-filter>
+                          <action android:name="android.intent.action.VIEW" />
+                          <category android:name="android.intent.category.DEFAULT" />
+                          <category android:name="android.intent.category.BROWSABLE" />
+                          <data android:scheme="ignitehabitspro" />
+                      </intent-filter>
+                  </activity>
+
+                  <provider
+                      android:authorities="${applicationId}.fileprovider"
+                      android:exported="false"
+                      android:grantUriPermissions="true"
+                      android:name="androidx.core.content.FileProvider">
+                      <meta-data
+                          android:name="android.support.FILE_PROVIDER_PATHS"
+                          android:resource="@xml/file_paths" />
+                  </provider>
+
+              </application>
+
+          </manifest>
+          EOF
+
       - name: Add google-services.json
         run: |
           cat << 'EOF' > android/app/google-services.json
