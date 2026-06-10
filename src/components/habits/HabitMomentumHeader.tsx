@@ -44,7 +44,7 @@ export default function HabitMomentumHeader({ habits, completions }: HabitMoment
       animate={{ opacity: 1, y: 0 }}
       className="relative overflow-hidden rounded-3xl p-5 shadow-xl"
       style={{
-        background: "linear-gradient(135deg, #ff6a3d 0%, #ff3d00 100%)",
+        background: "linear-gradient(135deg, #9333ea 0%, #7c3aed 100%)",
       }}
     >
       {/* Decorative glow blobs */}
@@ -113,7 +113,7 @@ export default function HabitMomentumHeader({ habits, completions }: HabitMoment
               <div
                 className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold mt-1 transition-all ${
                   day.isToday
-                    ? "bg-white text-[#ff3d00] shadow-lg ring-2 ring-white/40"
+                    ? "bg-white text-[#7c3aed] shadow-lg ring-2 ring-white/40"
                     : pct >= 1
                     ? "bg-white/30 text-white backdrop-blur-sm"
                     : pct > 0

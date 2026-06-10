@@ -38,7 +38,7 @@ export default function PageHero({
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       className="relative overflow-hidden rounded-3xl p-5 shadow-xl max-w-full"
-      style={{ background: "linear-gradient(135deg, #ff6a3d 0%, #ff3d00 100%)" }}
+      style={{ background: "linear-gradient(135deg, #9333ea 0%, #7c3aed 100%)" }}
     >
       {/* Decorative glow blobs */}
       <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/10 blur-2xl pointer-events-none" />
