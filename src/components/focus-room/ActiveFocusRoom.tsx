@@ -306,7 +306,7 @@ export function ActiveFocusRoom({ room, participants, participantCount, onLeave,
           </ScrollArea>
 
           {/* Chat input */}
-          <div className="px-4 pb-[env(safe-area-inset-bottom,16px)] pt-2">
+          <div className="px-4 pb-3 pt-2">
             <div className="flex gap-2">
               <Input
                 placeholder={isOnBreak ? "Say something..." : "Chat during break"}
