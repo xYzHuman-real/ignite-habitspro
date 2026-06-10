@@ -79,7 +79,7 @@ export function ShareProgress({
       ctx.fill();
 
       // Accent circle glow
-      ctx.fillStyle = "rgba(255, 107, 53, 0.15)";
+      ctx.fillStyle = "rgba(147, 51, 234, 0.15)";
       ctx.beginPath();
       ctx.arc(200, 80, 120, 0, Math.PI * 2);
       ctx.fill();
@@ -197,7 +197,7 @@ export function ShareProgress({
                 </p>
 
                 <div className="relative inline-block mb-2">
-                  <div className="absolute inset-0 bg-teal-500/20 blur-2xl rounded-full" />
+                  <div className="absolute inset-0 bg-violet-500/20 blur-2xl rounded-full" />
                   <span className="text-5xl relative">🔥</span>
                 </div>
 

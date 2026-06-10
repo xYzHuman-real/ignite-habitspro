@@ -22,7 +22,7 @@ export function ProductivitySummary({ todos }: Props) {
 
   const items = [
     { icon: CheckCircle, label: "Done", value: String(stats.completed), color: "text-success" },
-    { icon: Clock, label: "Pending", value: String(stats.pending), color: "text-teal-500" },
+    { icon: Clock, label: "Pending", value: String(stats.pending), color: "text-violet-500" },
     { icon: TrendingUp, label: "Score", value: `${stats.pct}%`, color: "text-primary" },
     { icon: Zap, label: "XP", value: `+${stats.xpEarned}`, color: "text-accent" },
   ];
