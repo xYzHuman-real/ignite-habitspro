@@ -23,7 +23,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-14 flex items-center justify-between border-b px-4 glass sticky top-0 z-[50]">
+          <div className="h-safe-top glass sticky top-0 z-[51]" aria-hidden="true" />
+          <header className="h-14 flex items-center justify-between border-b px-4 glass sticky z-[50]" style={{ top: 'env(safe-area-inset-top, 0px)' }}>
             <SidebarTrigger />
             <SidebarTutorial />
             <div className="flex items-center gap-2">
