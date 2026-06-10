@@ -166,6 +166,71 @@ export default function DailyPlanner() {
         </div>
       </div>
 
+
+      {/* Preferences */}
+      <Collapsible open={prefsOpen} onOpenChange={setPrefsOpen}>
+        <Card className="p-4">
+          <CollapsibleTrigger asChild>
+            <button className="flex items-center justify-between w-full text-left">
+              <div className="flex items-center gap-2">
+                <Settings2 className="h-4 w-4 text-primary" />
+                <span className="font-display font-semibold text-sm">Your Day Preferences</span>
+              </div>
+              <span className="text-xs text-muted-foreground">{prefsOpen ? "Hide" : "Customize"}</span>
+            </button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pt-4 space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Wake time</Label>
+                <Input type="time" value={prefs.wakeTime} onChange={(e) => updatePref("wakeTime", e.target.value)} className="h-9 text-sm" />
+              </div>
+              <div>
+                <Label className="text-xs">Sleep time</Label>
+                <Input type="time" value={prefs.sleepTime} onChange={(e) => updatePref("sleepTime", e.target.value)} className="h-9 text-sm" />
+              </div>
+              <div>
+                <Label className="text-xs">Study start</Label>
+                <Input type="time" value={prefs.studyStart} onChange={(e) => updatePref("studyStart", e.target.value)} className="h-9 text-sm" />
+              </div>
+              <div>
+                <Label className="text-xs">Study end</Label>
+                <Input type="time" value={prefs.studyEnd} onChange={(e) => updatePref("studyEnd", e.target.value)} className="h-9 text-sm" />
+              </div>
+              <div>
+                <Label className="text-xs">Work start</Label>
+                <Input type="time" value={prefs.workStart} onChange={(e) => updatePref("workStart", e.target.value)} className="h-9 text-sm" />
+              </div>
+              <div>
+                <Label className="text-xs">Work end</Label>
+                <Input type="time" value={prefs.workEnd} onChange={(e) => updatePref("workEnd", e.target.value)} className="h-9 text-sm" />
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs">Break style</Label>
+              <Select value={prefs.breakPreference} onValueChange={(v) => updatePref("breakPreference", v)}>
+                <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="short-frequent">Short & frequent (5 min / 25 min)</SelectItem>
+                  <SelectItem value="balanced">Balanced (10 min / 50 min)</SelectItem>
+                  <SelectItem value="long-sparse">Long & sparse (20 min / 90 min)</SelectItem>
+                  <SelectItem value="minimal">Minimal — deep work blocks</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">Primary goal focus today</Label>
+              <Input
+                placeholder="e.g. Finish chapter 5, ship landing page"
+                value={prefs.goalFocus}
+                onChange={(e) => updatePref("goalFocus", e.target.value)}
+                className="h-9 text-sm"
+              />
+            </div>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
+
       {/* Empty state / Generate CTA */}
       {!plan && !loading && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
