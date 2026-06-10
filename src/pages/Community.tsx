@@ -234,14 +234,18 @@ export default function Community() {
       </Tabs>
 
       <Dialog open={!!chatGroupId} onOpenChange={(open) => !open && setChatGroupId(null)}>
-        <DialogContent className="sm:max-w-lg w-full h-[100dvh] sm:h-[85vh] max-h-[100dvh] sm:max-h-[85vh] flex flex-col p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]">
-          <DialogHeader>
-            <DialogTitle className="font-display flex items-center gap-2">
-              {chatGroup?.icon} {chatGroup?.name}
+        <DialogContent className="sm:max-w-lg w-full h-[100dvh] sm:h-[85vh] max-h-[100dvh] sm:max-h-[85vh] flex flex-col p-0 gap-0 overflow-hidden">
+          <DialogHeader
+            className="px-4 py-2.5 border-b shrink-0"
+            style={{ paddingTop: "max(0.625rem, env(safe-area-inset-top))" }}
+          >
+            <DialogTitle className="font-display flex items-center gap-2 text-base">
+              <span className="text-xl leading-none">{chatGroup?.icon}</span>
+              <span className="truncate">{chatGroup?.name}</span>
             </DialogTitle>
           </DialogHeader>
-          <ScrollArea className="flex-1 min-h-0 pr-3" ref={scrollRef}>
-            <div className="space-y-3 py-2">
+          <ScrollArea className="flex-1 min-h-0 px-3" ref={scrollRef}>
+            <div className="space-y-1.5 py-2">
               {messagesLoading && (
                 <div className="text-center py-4">
                   <div className="animate-spin w-5 h-5 border-2 border-primary border-t-transparent rounded-full mx-auto" />
@@ -252,47 +256,55 @@ export default function Community() {
                   No messages yet. Start the conversation! 💬
                 </p>
               )}
-              {messages.map((msg) => {
+              {messages.map((msg, idx) => {
                 const isMe = msg.user_id === user?.id;
+                const prev = messages[idx - 1];
+                const showAvatar = !prev || prev.user_id !== msg.user_id;
                 return (
-                  <div key={msg.id} className={`flex gap-2 ${isMe ? "flex-row-reverse" : ""}`}>
-                    <Avatar className="w-8 h-8 shrink-0">
-                      <AvatarFallback className={`text-xs ${isMe ? "bg-gradient-primary text-primary-foreground" : "bg-muted"}`}>
-                        {(msg.display_name || "U")[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className={`max-w-[70%] ${isMe ? "text-right" : "text-left"}`}>
-                      <div className="flex items-center gap-1 mb-0.5">
-                        <span className={`text-xs font-medium ${isMe ? "ml-auto" : ""}`}>
-                          {isMe ? "You" : msg.display_name}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                        </span>
-                      </div>
+                  <div key={msg.id} className={`flex gap-1.5 items-end ${isMe ? "flex-row-reverse" : ""}`}>
+                    <div className="w-6 shrink-0">
+                      {showAvatar && (
+                        <Avatar className="w-6 h-6">
+                          <AvatarFallback className={`text-[10px] ${isMe ? "bg-gradient-primary text-primary-foreground" : "bg-muted"}`}>
+                            {(msg.display_name || "U")[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                      )}
+                    </div>
+                    <div className={`max-w-[78%] ${isMe ? "items-end" : "items-start"} flex flex-col`}>
+                      {showAvatar && !isMe && (
+                        <span className="text-[10px] text-muted-foreground px-2 mb-0.5">{msg.display_name}</span>
+                      )}
                       <div
-                        className={`rounded-2xl px-3 py-2 text-sm ${
+                        className={`rounded-2xl px-3 py-1.5 text-sm leading-snug break-words ${
                           isMe
-                            ? "bg-gradient-primary text-primary-foreground rounded-tr-sm"
-                            : "bg-muted rounded-tl-sm"
+                            ? "bg-gradient-primary text-primary-foreground rounded-br-sm"
+                            : "bg-muted rounded-bl-sm"
                         }`}
                       >
                         {msg.message}
                       </div>
+                      <span className="text-[9px] text-muted-foreground px-2 mt-0.5">
+                        {new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      </span>
                     </div>
                   </div>
                 );
               })}
             </div>
           </ScrollArea>
-          <div className="flex gap-2 pt-2 border-t">
+          <div
+            className="flex gap-2 px-3 py-2 border-t bg-background shrink-0"
+            style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
+          >
             <Input
               placeholder="Type a message..."
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+              className="h-9"
             />
-            <Button onClick={sendMessage} size="icon" className="bg-gradient-primary text-primary-foreground shrink-0">
+            <Button onClick={sendMessage} size="icon" className="h-9 w-9 bg-gradient-primary text-primary-foreground shrink-0">
               <Send className="h-4 w-4" />
             </Button>
           </div>
