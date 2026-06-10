@@ -27,7 +27,7 @@ const THEME_STYLES: Record<string, { gradient: string; bgClass: string; textClas
   },
   yellow_energy: {
     gradient: "linear-gradient(135deg, hsl(40 90% 50%), hsl(30 85% 45%))",
-    bgClass: "from-yellow-500/20 to-orange-500/20",
+    bgClass: "from-yellow-500/20 to-teal-500/20",
     textClass: "text-yellow-100",
   },
   study_room: {
@@ -47,8 +47,8 @@ const THEME_STYLES: Record<string, { gradient: string; bgClass: string; textClas
   },
   sunset_glow: {
     gradient: "linear-gradient(135deg, hsl(20 85% 50%), hsl(340 70% 45%))",
-    bgClass: "from-orange-500/20 to-rose-600/20",
-    textClass: "text-orange-100",
+    bgClass: "from-teal-500/20 to-emerald-600/20",
+    textClass: "text-teal-100",
   },
 };
 

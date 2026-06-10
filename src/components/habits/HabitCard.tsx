@@ -4,7 +4,7 @@ import { useState } from "react";
 
 const PRIORITY_CONFIG: Record<string, { label: string; dot: string; chip: string }> = {
   very_important: { label: "High", dot: "bg-destructive", chip: "bg-destructive/10 text-destructive" },
-  important: { label: "Med", dot: "bg-orange-500", chip: "bg-orange-500/10 text-orange-600 dark:text-orange-400" },
+  important: { label: "Med", dot: "bg-teal-500", chip: "bg-teal-500/10 text-teal-600 dark:text-teal-400" },
   less_important: { label: "Low", dot: "bg-blue-500", chip: "bg-blue-500/10 text-blue-600 dark:text-blue-400" },
 };
 
