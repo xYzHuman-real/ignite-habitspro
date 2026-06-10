@@ -43,6 +43,23 @@ serve(async (req) => {
       });
     }
 
+    // Parse user preferences from request body (all optional)
+    let prefs: {
+      wakeTime?: string;
+      sleepTime?: string;
+      studyStart?: string;
+      studyEnd?: string;
+      workStart?: string;
+      workEnd?: string;
+      breakPreference?: string;
+      goalFocus?: string;
+    } = {};
+    try {
+      if (req.headers.get("content-length") !== "0") {
+        prefs = await req.json();
+      }
+    } catch {}
+
     // Fetch user data in parallel
     const [habitsRes, todosRes, goalsRes, sessionsRes, profileRes] = await Promise.all([
       supabase.from("habits").select("name, icon, priority, streak, target, current, reminder_time, completed_today").eq("user_id", user.id),
@@ -67,13 +84,15 @@ You create personalized daily schedules that are realistic, motivating, and bala
 
 Rules:
 - Return ONLY valid JSON, no markdown, no explanation
-- Schedule from current time through end of day
-- Include breaks every 60-90 minutes
-- Prioritize high-priority items first
+- Respect the user's wake/sleep window — do NOT schedule before wake or after sleep
+- Honor declared study/work hours as the prime deep-focus blocks
+- Match break style to the user's preference (short frequent vs long sparse)
+- Prioritize the user's stated goal focus when choosing what to deep-work on
+- Include breaks every 60-90 minutes (unless preference says otherwise)
 - Mix habits, todos, and focus sessions naturally
 - Include meal breaks and wind-down time
 - Be encouraging but realistic
-- Each block has: time (HH:MM format), duration (minutes), title, type (habit|todo|focus|break|meal|wind_down), icon (emoji), priority (high|medium|low), tip (short motivational/practical tip)
+- Each block has: time (HH:MM format, 24h), duration (minutes), title, type (habit|todo|focus|break|meal|wind_down), icon (emoji), priority (high|medium|low), tip (short motivational/practical tip)
 
 JSON structure:
 {
@@ -83,11 +102,21 @@ JSON structure:
   "motivation": "end-of-day motivational message"
 }`;
 
+    const prefsBlock = `
+USER PREFERENCES:
+- Wake time: ${prefs.wakeTime || "not specified"}
+- Sleep time: ${prefs.sleepTime || "not specified"}
+- Study hours: ${prefs.studyStart && prefs.studyEnd ? `${prefs.studyStart}–${prefs.studyEnd}` : "not specified"}
+- Work hours: ${prefs.workStart && prefs.workEnd ? `${prefs.workStart}–${prefs.workEnd}` : "not specified"}
+- Break style: ${prefs.breakPreference || "balanced (5 min every 25-30 min of focus)"}
+- Primary goal focus today: ${prefs.goalFocus || "balanced across all goals"}
+`;
+
     const userPrompt = `Generate a daily schedule for today (${dayOfWeek}).
 
 User: ${profile?.display_name || "Student"} (${profile?.total_streak || 0}-day streak, ${profile?.leaderboard_points || 0} points)
 Current time: approximately ${currentHour}:00
-
+${prefsBlock}
 HABITS (${habits.length}):
 ${habits.map((h) => `- ${h.icon} ${h.name} (${h.priority}, streak: ${h.streak}, ${h.completed_today ? "DONE TODAY" : "not done yet"}${h.reminder_time ? `, preferred time: ${h.reminder_time}` : ""})`).join("\n") || "No habits yet"}
 
@@ -100,7 +129,7 @@ ${goals.map((g) => `- ${g.title}: ${g.current_value}/${g.target_value} ${g.unit}
 RECENT FOCUS PATTERNS:
 ${recentSessions.map((s) => `- ${s.duration_minutes}min ${s.session_type}${s.linked_subject ? ` on ${s.linked_subject}` : ""}`).join("\n") || "No recent sessions"}
 
-Create a balanced, achievable schedule starting from around ${currentHour}:00. Skip habits already completed today.`;
+Create a balanced, achievable schedule starting from around ${currentHour}:00 and ending by the user's sleep time. Skip habits already completed today.`;
 
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

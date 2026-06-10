@@ -8,13 +8,59 @@ export interface FocusSettings {
 }
 
 const DEFAULT_SETTINGS: FocusSettings = {
-  blockedApps: ["Instagram", "Snapchat", "TikTok", "Twitter/X", "Facebook", "YouTube", "Reddit"],
+  blockedApps: ["Instagram", "TikTok", "YouTube", "Snapchat"],
   whitelistedApps: [],
   soundVolume: 0.3,
   showFeedbackButton: true,
 };
 
 const STORAGE_KEY = "focus_settings";
+
+// Play Store safe app catalog: categorized list with Android package names.
+// On native builds, these package names go into AndroidManifest <queries> entries
+// (NOT QUERY_ALL_PACKAGES) so PackageManager can detect them if installed.
+export interface AppCatalogEntry {
+  name: string;
+  pkg: string;
+  category: "Social" | "Video" | "Messaging" | "Streaming" | "Gaming" | "Shopping" | "News";
+}
+
+export const APP_CATALOG: AppCatalogEntry[] = [
+  // Social
+  { name: "Instagram", pkg: "com.instagram.android", category: "Social" },
+  { name: "Facebook", pkg: "com.facebook.katana", category: "Social" },
+  { name: "X (Twitter)", pkg: "com.twitter.android", category: "Social" },
+  { name: "Snapchat", pkg: "com.snapchat.android", category: "Social" },
+  { name: "Reddit", pkg: "com.reddit.frontpage", category: "Social" },
+  { name: "Pinterest", pkg: "com.pinterest", category: "Social" },
+  { name: "LinkedIn", pkg: "com.linkedin.android", category: "Social" },
+  // Video
+  { name: "YouTube", pkg: "com.google.android.youtube", category: "Video" },
+  { name: "YouTube Shorts", pkg: "com.google.android.apps.youtube.creator", category: "Video" },
+  { name: "TikTok", pkg: "com.zhiliaoapp.musically", category: "Video" },
+  // Messaging
+  { name: "Messenger", pkg: "com.facebook.orca", category: "Messaging" },
+  { name: "WhatsApp", pkg: "com.whatsapp", category: "Messaging" },
+  { name: "Telegram", pkg: "org.telegram.messenger", category: "Messaging" },
+  { name: "Discord", pkg: "com.discord", category: "Messaging" },
+  // Streaming
+  { name: "Netflix", pkg: "com.netflix.mediaclient", category: "Streaming" },
+  { name: "Prime Video", pkg: "com.amazon.avod.thirdpartyclient", category: "Streaming" },
+  { name: "Twitch", pkg: "tv.twitch.android.app", category: "Streaming" },
+  { name: "Spotify", pkg: "com.spotify.music", category: "Streaming" },
+  // Gaming
+  { name: "BGMI", pkg: "com.pubg.imobile", category: "Gaming" },
+  { name: "Free Fire", pkg: "com.dts.freefireth", category: "Gaming" },
+  { name: "Clash of Clans", pkg: "com.supercell.clashofclans", category: "Gaming" },
+  { name: "Clash Royale", pkg: "com.supercell.clashroyale", category: "Gaming" },
+  { name: "Call of Duty Mobile", pkg: "com.activision.callofduty.shooter", category: "Gaming" },
+  // Shopping
+  { name: "Amazon", pkg: "in.amazon.mShop.android.shopping", category: "Shopping" },
+  { name: "Flipkart", pkg: "com.flipkart.android", category: "Shopping" },
+  { name: "Myntra", pkg: "com.myntra.android", category: "Shopping" },
+];
+
+const POPULAR_APPS = APP_CATALOG.map((a) => a.name);
 
 export function useFocusSettings() {
   const [settings, setSettings] = useState<FocusSettings>(() => {
@@ -74,10 +120,7 @@ export function useFocusSettings() {
     addCustomApp,
     removeApp,
     setSoundVolume,
-    POPULAR_APPS: [
-      "Instagram", "Snapchat", "TikTok", "Twitter/X", "Facebook",
-      "YouTube", "Reddit", "WhatsApp", "Telegram", "Discord",
-      "Netflix", "Twitch", "Pinterest", "Spotify", "Games",
-    ],
+    APP_CATALOG,
+    POPULAR_APPS,
   };
 }
