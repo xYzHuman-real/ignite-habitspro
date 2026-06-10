@@ -34,11 +34,11 @@ interface DailyPlan {
 
 const typeStyles: Record<string, { bg: string; border: string; text: string }> = {
   habit: { bg: "bg-primary/5", border: "border-primary/20", text: "text-primary" },
-  todo: { bg: "bg-violet-500/5", border: "border-violet-500/20", text: "text-violet-600 dark:text-violet-400" },
+  todo: { bg: "bg-orange-500/5", border: "border-orange-500/20", text: "text-orange-600 dark:text-orange-400" },
   focus: { bg: "bg-blue-500/5", border: "border-blue-500/20", text: "text-blue-600 dark:text-blue-400" },
   break: { bg: "bg-green-500/5", border: "border-green-500/20", text: "text-green-600 dark:text-green-400" },
-  meal: { bg: "bg-purple-500/5", border: "border-purple-500/20", text: "text-purple-600 dark:text-purple-400" },
-  wind_down: { bg: "bg-purple-500/5", border: "border-purple-500/20", text: "text-purple-600 dark:text-purple-400" },
+  meal: { bg: "bg-amber-500/5", border: "border-amber-500/20", text: "text-amber-600 dark:text-amber-400" },
+  wind_down: { bg: "bg-amber-500/5", border: "border-amber-500/20", text: "text-amber-600 dark:text-amber-400" },
 };
 
 const typeIcons: Record<string, any> = {
@@ -52,7 +52,7 @@ const typeIcons: Record<string, any> = {
 
 const priorityDots: Record<string, string> = {
   high: "bg-destructive",
-  medium: "bg-violet-400",
+  medium: "bg-orange-400",
   low: "bg-blue-400",
 };
 

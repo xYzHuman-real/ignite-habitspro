@@ -8,9 +8,9 @@ import { format, isPast, isToday } from "date-fns";
 
 const TAG_COLORS: Record<string, string> = {
   Study: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
-  Work: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
-  Health: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
-  Personal: "bg-purple-500/10 text-purple-600 dark:text-purple-400",
+  Work: "bg-orange-500/10 text-orange-600 dark:text-orange-400",
+  Health: "bg-orange-500/10 text-orange-600 dark:text-orange-400",
+  Personal: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
 };
 
 const PRIORITY_BAR: Record<string, string> = {

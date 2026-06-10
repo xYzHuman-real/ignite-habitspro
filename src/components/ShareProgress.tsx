@@ -197,7 +197,7 @@ export function ShareProgress({
                 </p>
 
                 <div className="relative inline-block mb-2">
-                  <div className="absolute inset-0 bg-violet-500/20 blur-2xl rounded-full" />
+                  <div className="absolute inset-0 bg-orange-500/20 blur-2xl rounded-full" />
                   <span className="text-5xl relative">🔥</span>
                 </div>
 

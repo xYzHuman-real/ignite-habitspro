@@ -14,9 +14,9 @@ import type { Todo, Attachment } from "@/lib/use-enhanced-todos";
 const AVAILABLE_TAGS = ["Study", "Work", "Health", "Personal"];
 const TAG_COLORS: Record<string, string> = {
   Study: "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400",
-  Work: "bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400",
-  Health: "bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400",
-  Personal: "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400",
+  Work: "bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400",
+  Health: "bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400",
+  Personal: "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400",
 };
 
 interface Props {

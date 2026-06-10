@@ -200,8 +200,8 @@ export function ActiveFocusRoom({ room, participants, participantCount, onLeave,
             animate={{ scale: 1, opacity: 1 }}
             className="flex flex-col items-center pt-8 pb-4"
           >
-            <div className="w-16 h-16 rounded-full bg-violet-500/10 flex items-center justify-center mb-3">
-              <Coffee className="h-8 w-8 text-violet-400" />
+            <div className="w-16 h-16 rounded-full bg-orange-500/10 flex items-center justify-center mb-3">
+              <Coffee className="h-8 w-8 text-orange-400" />
             </div>
             <h3 className="text-white font-display font-bold text-xl">Break Time!</h3>
             <p className="text-white/40 text-sm mt-1">Chat with your focus partners</p>
@@ -235,7 +235,7 @@ export function ActiveFocusRoom({ room, participants, participantCount, onLeave,
                   {p.user_id === user?.id ? "You" : `U${i + 1}`}
                 </AvatarFallback>
               </Avatar>
-              <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-violet-400 border-2"
+              <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-orange-400 border-2"
                 style={{ borderColor: "hsl(222, 30%, 8%)" }} />
             </div>
           ))}
