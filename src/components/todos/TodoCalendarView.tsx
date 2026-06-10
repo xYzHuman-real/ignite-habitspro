@@ -60,7 +60,7 @@ export function TodoCalendarView({ todos, onToggle }: Props) {
               <span className={`text-sm flex-1 ${todo.completed ? "line-through text-muted-foreground" : ""}`}>{todo.text}</span>
               <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
                 todo.priority === "high" ? "bg-destructive/10 text-destructive" :
-                todo.priority === "medium" ? "bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400" :
+                todo.priority === "medium" ? "bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400" :
                 "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
               }`}>{todo.priority}</span>
             </Card>

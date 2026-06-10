@@ -75,7 +75,7 @@ export default function Habits() {
               <motion.div
                 layoutId="habitTabBg"
                 className="absolute inset-0 rounded-xl shadow-md"
-                style={{ background: "linear-gradient(135deg, #ff6a3d 0%, #ff3d00 100%)" }}
+                style={{ background: "linear-gradient(135deg, #9333ea 0%, #7c3aed 100%)" }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
               />
             )}
@@ -92,7 +92,7 @@ export default function Habits() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             className="relative overflow-hidden p-4 rounded-2xl text-center font-display font-semibold text-white shadow-lg"
-            style={{ background: "linear-gradient(135deg, #ff6a3d 0%, #ff3d00 100%)" }}
+            style={{ background: "linear-gradient(135deg, #9333ea 0%, #7c3aed 100%)" }}
           >
             <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/20 blur-2xl" />
             <span className="relative">🎉 All habits completed! Streak +1!</span>

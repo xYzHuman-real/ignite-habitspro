@@ -4,7 +4,7 @@ import { useState } from "react";
 
 const PRIORITY_CONFIG: Record<string, { label: string; dot: string; chip: string }> = {
   very_important: { label: "High", dot: "bg-destructive", chip: "bg-destructive/10 text-destructive" },
-  important: { label: "Med", dot: "bg-teal-500", chip: "bg-teal-500/10 text-teal-600 dark:text-teal-400" },
+  important: { label: "Med", dot: "bg-violet-500", chip: "bg-violet-500/10 text-violet-600 dark:text-violet-400" },
   less_important: { label: "Low", dot: "bg-blue-500", chip: "bg-blue-500/10 text-blue-600 dark:text-blue-400" },
 };
 
@@ -115,7 +115,7 @@ export default function HabitCard({ habit, onToggle, onDelete, isDragging }: Hab
                 <motion.div
                   className="h-full rounded-full"
                   style={{
-                    background: "linear-gradient(90deg, #ff6a3d 0%, #ff3d00 100%)",
+                    background: "linear-gradient(90deg, #9333ea 0%, #7c3aed 100%)",
                   }}
                   initial={{ width: 0 }}
                   animate={{ width: `${progressPct}%` }}
@@ -136,7 +136,7 @@ export default function HabitCard({ habit, onToggle, onDelete, isDragging }: Hab
             }`}
             style={
               habit.completed_today
-                ? { background: "linear-gradient(135deg, #ff6a3d 0%, #ff3d00 100%)" }
+                ? { background: "linear-gradient(135deg, #9333ea 0%, #7c3aed 100%)" }
                 : undefined
             }
           >
