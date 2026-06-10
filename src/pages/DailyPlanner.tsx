@@ -119,7 +119,15 @@ export default function DailyPlanner() {
     setError(null);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("Not authenticated");
+      if (!session) {
+        toast({
+          title: "Sign in required",
+          description: "Please sign in to generate your AI daily schedule.",
+          variant: "destructive",
+        });
+        navigate("/auth");
+        return;
+      }
 
       const res = await supabase.functions.invoke("generate-daily-plan", {
         headers: { Authorization: `Bearer ${session.access_token}` },
