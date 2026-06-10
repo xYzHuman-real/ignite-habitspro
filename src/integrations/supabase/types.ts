@@ -1045,7 +1045,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_shared_streak: {
+        Args: { user_a: string; user_b: string }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
