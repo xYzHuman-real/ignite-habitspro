@@ -23,8 +23,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
-          <div className="h-safe-top glass sticky top-0 z-[51]" aria-hidden="true" />
-          <header className="h-14 flex items-center justify-between border-b px-4 glass sticky z-[50]" style={{ top: 'env(safe-area-inset-top, 0px)' }}>
+          <div className="h-safe-top glass-nav sticky top-0 z-[51]" aria-hidden="true" />
+          <header
+            className="h-14 flex items-center justify-between px-4 glass-nav sticky z-[50]"
+            style={{ top: 'env(safe-area-inset-top, 0px)' }}
+          >
             <SidebarTrigger />
             <SidebarTutorial />
             <div className="flex items-center gap-2">
@@ -32,10 +35,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <ThemeToggle theme={theme} toggle={toggle} />
             </div>
           </header>
-          <main className="flex-1 overflow-auto overflow-x-hidden p-4 md:p-6 pb-24 md:pb-6">
+          <main className="flex-1 overflow-auto overflow-x-hidden p-4 md:p-6 pb-32 md:pb-6">
             {children}
           </main>
-          {/* Bottom nav for mobile */}
+          {/* Floating bottom nav for mobile */}
           <div className="md:hidden">
             <BottomNav />
           </div>
