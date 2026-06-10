@@ -127,7 +127,7 @@ export function ActiveFocusRoom({ room, participants, participantCount, onLeave,
       </div>
 
       {/* Header */}
-      <div className="relative z-10 flex items-center justify-between px-4 pt-[env(safe-area-inset-top,12px)] pb-3">
+      <div className="relative z-10 flex items-center justify-between px-4 pt-3 pb-3">
         <button onClick={onClose} className="w-10 h-10 rounded-xl flex items-center justify-center bg-white/5 backdrop-blur-sm">
           <ArrowLeft className="h-5 w-5 text-white/80" />
         </button>
