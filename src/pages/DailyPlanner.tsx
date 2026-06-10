@@ -2,10 +2,14 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles, RefreshCw, Clock, CheckCircle2, Coffee, Utensils,
-  Moon, Target, BookOpen, Flame, ArrowLeft, Zap, Brain
+  Moon, Target, BookOpen, Flame, ArrowLeft, Zap, Brain, Settings2
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
