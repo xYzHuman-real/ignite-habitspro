@@ -14,7 +14,8 @@ import { useFocusThemes } from "@/lib/use-focus-themes";
 import { cn } from "@/lib/utils";
 
 export function FocusSettingsHub() {
-  const { settings, toggleBlockedApp, toggleWhitelistedApp, addCustomApp, removeApp, setSoundVolume, POPULAR_APPS } = useFocusSettings();
+  const { settings, toggleBlockedApp, toggleWhitelistedApp, addCustomApp, removeApp, setSoundVolume, APP_CATALOG, POPULAR_APPS } = useFocusSettings();
+  const categories = Array.from(new Set(APP_CATALOG.map((a) => a.category)));
   const { ownedThemes, currentTheme, selectTheme } = useFocusThemes();
   const [customApp, setCustomApp] = useState("");
   const [open, setOpen] = useState(false);
@@ -47,27 +48,33 @@ export function FocusSettingsHub() {
               <ShieldOff className="h-4 w-4 text-destructive" /> Distraction Blocklist
             </h3>
             <p className="text-xs text-muted-foreground mb-3">
-              Selected apps will trigger a return-to-focus overlay during sessions. On native builds, these apps can be fully blocked.
+              Tap apps to add them to your blocklist. During focus, opening these triggers a return-to-focus overlay. Detection uses Android package queries (Play Store compliant — no QUERY_ALL_PACKAGES).
             </p>
-            <div className="flex flex-wrap gap-2 mb-3">
-              {POPULAR_APPS.map((app) => {
-                const isBlocked = settings.blockedApps.includes(app);
-                const isWhitelisted = settings.whitelistedApps.includes(app);
-                return (
-                  <button
-                    key={app}
-                    onClick={() => toggleBlockedApp(app)}
-                    className={cn(
-                      "px-3 py-1.5 rounded-full text-xs font-medium transition-all border",
-                      isBlocked
-                        ? "bg-destructive/15 border-destructive/30 text-destructive"
-                        : "bg-muted/50 border-border text-muted-foreground hover:bg-muted"
-                    )}
-                  >
-                    {isBlocked ? "🚫 " : ""}{app}
-                  </button>
-                );
-              })}
+            <div className="space-y-3 mb-3">
+              {categories.map((cat) => (
+                <div key={cat}>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{cat}</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {APP_CATALOG.filter((a) => a.category === cat).map((entry) => {
+                      const isBlocked = settings.blockedApps.includes(entry.name);
+                      return (
+                        <button
+                          key={entry.pkg}
+                          onClick={() => toggleBlockedApp(entry.name)}
+                          className={cn(
+                            "px-2.5 py-1 rounded-full text-xs font-medium transition-all border",
+                            isBlocked
+                              ? "bg-destructive/15 border-destructive/30 text-destructive"
+                              : "bg-muted/50 border-border text-muted-foreground hover:bg-muted"
+                          )}
+                        >
+                          {isBlocked ? "🚫 " : ""}{entry.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
 
             {/* Custom app input */}

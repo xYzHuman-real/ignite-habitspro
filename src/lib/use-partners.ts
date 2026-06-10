@@ -21,22 +21,28 @@ export function usePartners() {
       const partnerIds = data.map((p) =>
         p.requester_id === user.id ? p.partner_id : p.requester_id
       );
-      const [profilesRes, ownRes] = await Promise.all([
-        supabase
-          .from("profiles")
-          .select("user_id, display_name, avatar_url, total_streak, leaderboard_points, habits_completed, show_avatar, show_stats")
-          .in("user_id", partnerIds),
-        supabase.from("profiles").select("total_streak").eq("user_id", user.id).single(),
-      ]);
+      const profilesRes = await supabase
+        .from("profiles")
+        .select("user_id, display_name, avatar_url, total_streak, leaderboard_points, habits_completed, show_avatar, show_stats")
+        .in("user_id", partnerIds);
       const profiles = profilesRes.data || [];
-      const myStreak = ownRes.data?.total_streak || 0;
+
+      // Compute shared streaks via RPC (server-side: both partners had habit OR focus activity each day)
+      const sharedStreaks = await Promise.all(
+        partnerIds.map(async (pid) => {
+          const { data: streak } = await supabase.rpc("get_shared_streak", {
+            user_a: user.id,
+            user_b: pid,
+          });
+          return { pid, streak: (streak as number | null) ?? 0 };
+        })
+      );
 
       return data.map((p) => {
         const partnerId = p.requester_id === user.id ? p.partner_id : p.requester_id;
         const profile = profiles.find((pr) => pr.user_id === partnerId);
-        // Derived shared streak: minimum of both partners' streaks (true mutual consistency)
-        const derivedSharedStreak = profile ? Math.min(myStreak, profile.total_streak || 0) : 0;
-        return { ...p, partner_profile: profile, is_requester: p.requester_id === user.id, shared_streak: derivedSharedStreak };
+        const shared = sharedStreaks.find((s) => s.pid === partnerId)?.streak ?? 0;
+        return { ...p, partner_profile: profile, is_requester: p.requester_id === user.id, shared_streak: shared };
       });
     },
     enabled: !!user,

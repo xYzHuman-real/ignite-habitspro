@@ -2,10 +2,14 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles, RefreshCw, Clock, CheckCircle2, Coffee, Utensils,
-  Moon, Target, BookOpen, Flame, ArrowLeft, Zap, Brain
+  Moon, Target, BookOpen, Flame, ArrowLeft, Zap, Brain, Settings2
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -55,12 +59,52 @@ const priorityDots: Record<string, string> = {
 const COOLDOWN_MS = 30 * 60 * 1000;
 const COOLDOWN_KEY = "daily_plan_last_generated";
 
+const PREFS_KEY = "daily_plan_prefs_v1";
+
+interface PlannerPrefs {
+  wakeTime: string;
+  sleepTime: string;
+  studyStart: string;
+  studyEnd: string;
+  workStart: string;
+  workEnd: string;
+  breakPreference: string;
+  goalFocus: string;
+}
+
+const DEFAULT_PREFS: PlannerPrefs = {
+  wakeTime: "07:00",
+  sleepTime: "23:00",
+  studyStart: "",
+  studyEnd: "",
+  workStart: "",
+  workEnd: "",
+  breakPreference: "balanced",
+  goalFocus: "",
+};
+
 export default function DailyPlanner() {
   const [plan, setPlan] = useState<DailyPlan | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [prefsOpen, setPrefsOpen] = useState(false);
+  const [prefs, setPrefs] = useState<PlannerPrefs>(() => {
+    try {
+      const stored = localStorage.getItem(PREFS_KEY);
+      if (stored) return { ...DEFAULT_PREFS, ...JSON.parse(stored) };
+    } catch {}
+    return DEFAULT_PREFS;
+  });
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  const updatePref = <K extends keyof PlannerPrefs>(key: K, value: PlannerPrefs[K]) => {
+    setPrefs((prev) => {
+      const next = { ...prev, [key]: value };
+      localStorage.setItem(PREFS_KEY, JSON.stringify(next));
+      return next;
+    });
+  };
 
   const generatePlan = async () => {
     const last = Number(localStorage.getItem(COOLDOWN_KEY) || 0);
@@ -79,6 +123,7 @@ export default function DailyPlanner() {
 
       const res = await supabase.functions.invoke("generate-daily-plan", {
         headers: { Authorization: `Bearer ${session.access_token}` },
+        body: prefs,
       });
 
       if (res.error) {
@@ -120,6 +165,71 @@ export default function DailyPlanner() {
           <p className="text-xs text-muted-foreground">AI-powered personalized schedule</p>
         </div>
       </div>
+
+
+      {/* Preferences */}
+      <Collapsible open={prefsOpen} onOpenChange={setPrefsOpen}>
+        <Card className="p-4">
+          <CollapsibleTrigger asChild>
+            <button className="flex items-center justify-between w-full text-left">
+              <div className="flex items-center gap-2">
+                <Settings2 className="h-4 w-4 text-primary" />
+                <span className="font-display font-semibold text-sm">Your Day Preferences</span>
+              </div>
+              <span className="text-xs text-muted-foreground">{prefsOpen ? "Hide" : "Customize"}</span>
+            </button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pt-4 space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Wake time</Label>
+                <Input type="time" value={prefs.wakeTime} onChange={(e) => updatePref("wakeTime", e.target.value)} className="h-9 text-sm" />
+              </div>
+              <div>
+                <Label className="text-xs">Sleep time</Label>
+                <Input type="time" value={prefs.sleepTime} onChange={(e) => updatePref("sleepTime", e.target.value)} className="h-9 text-sm" />
+              </div>
+              <div>
+                <Label className="text-xs">Study start</Label>
+                <Input type="time" value={prefs.studyStart} onChange={(e) => updatePref("studyStart", e.target.value)} className="h-9 text-sm" />
+              </div>
+              <div>
+                <Label className="text-xs">Study end</Label>
+                <Input type="time" value={prefs.studyEnd} onChange={(e) => updatePref("studyEnd", e.target.value)} className="h-9 text-sm" />
+              </div>
+              <div>
+                <Label className="text-xs">Work start</Label>
+                <Input type="time" value={prefs.workStart} onChange={(e) => updatePref("workStart", e.target.value)} className="h-9 text-sm" />
+              </div>
+              <div>
+                <Label className="text-xs">Work end</Label>
+                <Input type="time" value={prefs.workEnd} onChange={(e) => updatePref("workEnd", e.target.value)} className="h-9 text-sm" />
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs">Break style</Label>
+              <Select value={prefs.breakPreference} onValueChange={(v) => updatePref("breakPreference", v)}>
+                <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="short-frequent">Short & frequent (5 min / 25 min)</SelectItem>
+                  <SelectItem value="balanced">Balanced (10 min / 50 min)</SelectItem>
+                  <SelectItem value="long-sparse">Long & sparse (20 min / 90 min)</SelectItem>
+                  <SelectItem value="minimal">Minimal — deep work blocks</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">Primary goal focus today</Label>
+              <Input
+                placeholder="e.g. Finish chapter 5, ship landing page"
+                value={prefs.goalFocus}
+                onChange={(e) => updatePref("goalFocus", e.target.value)}
+                className="h-9 text-sm"
+              />
+            </div>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
 
       {/* Empty state / Generate CTA */}
       {!plan && !loading && (
