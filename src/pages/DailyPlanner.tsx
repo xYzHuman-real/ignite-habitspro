@@ -123,6 +123,7 @@ export default function DailyPlanner() {
 
       const res = await supabase.functions.invoke("generate-daily-plan", {
         headers: { Authorization: `Bearer ${session.access_token}` },
+        body: prefs,
       });
 
       if (res.error) {
