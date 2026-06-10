@@ -27,28 +27,28 @@ const THEME_STYLES: Record<string, { gradient: string; bgClass: string; textClas
   },
   yellow_energy: {
     gradient: "linear-gradient(135deg, hsl(40 90% 50%), hsl(30 85% 45%))",
-    bgClass: "from-violet-500/20 to-purple-500/20",
-    textClass: "text-violet-100",
+    bgClass: "from-orange-500/20 to-amber-500/20",
+    textClass: "text-orange-100",
   },
   study_room: {
     gradient: "linear-gradient(135deg, hsl(30 40% 25%), hsl(25 30% 18%))",
-    bgClass: "from-purple-900/30 to-violet-950/30",
-    textClass: "text-violet-100",
+    bgClass: "from-amber-900/30 to-orange-950/30",
+    textClass: "text-orange-100",
   },
   night_desk: {
     gradient: "linear-gradient(135deg, hsl(240 30% 12%), hsl(260 40% 18%))",
-    bgClass: "from-slate-900/40 to-purple-950/40",
-    textClass: "text-purple-100",
+    bgClass: "from-slate-900/40 to-amber-950/40",
+    textClass: "text-amber-100",
   },
   forest_zen: {
     gradient: "linear-gradient(135deg, hsl(140 40% 20%), hsl(160 50% 15%))",
-    bgClass: "from-violet-900/30 to-purple-900/30",
-    textClass: "text-violet-100",
+    bgClass: "from-orange-900/30 to-amber-900/30",
+    textClass: "text-orange-100",
   },
   sunset_glow: {
     gradient: "linear-gradient(135deg, hsl(20 85% 50%), hsl(340 70% 45%))",
-    bgClass: "from-violet-500/20 to-purple-600/20",
-    textClass: "text-purple-100",
+    bgClass: "from-orange-500/20 to-amber-600/20",
+    textClass: "text-amber-100",
   },
 };
 

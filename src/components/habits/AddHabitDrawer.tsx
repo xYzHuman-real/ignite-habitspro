@@ -21,7 +21,7 @@ const DAYS = [
 
 const PRIORITIES = [
   { key: "very_important", label: "Very Important", color: "bg-destructive text-destructive-foreground" },
-  { key: "important", label: "Important", color: "bg-violet-500 text-white" },
+  { key: "important", label: "Important", color: "bg-orange-500 text-white" },
   { key: "less_important", label: "Less Important", color: "bg-blue-500 text-white" },
 ];
 
