@@ -114,7 +114,10 @@ export default function Pricing() {
 
         await qc.invalidateQueries({ queryKey: ["profile", user!.id] });
         celebratePremium();
-        setWelcomeOpen(true);
+        if (!welcomeDismissed) {
+          setWelcomeOpen(true);
+        }
+        toast({
         toast({
           title: "Welcome to Premium! 🎉",
           description: `Receipt ${result.receiptId} · active until ${until.toLocaleDateString()}.`,
