@@ -135,8 +135,11 @@ export default function Pricing() {
         <button onClick={() => navigate(-1)} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-muted transition-colors">
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <div>
-          <h1 className="text-xl font-display font-bold">Ignite Premium</h1>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-xl font-display font-bold">Ignite Premium</h1>
+            {isPremium && <PremiumBadge size="sm" label={isPaid ? "Premium" : "Trial"} />}
+          </div>
           <p className="text-xs text-muted-foreground">Unlock every feature, forever distraction-free</p>
         </div>
       </div>
