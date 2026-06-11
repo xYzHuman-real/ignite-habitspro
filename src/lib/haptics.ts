@@ -15,9 +15,8 @@ async function load() {
 
 function enabled() {
   try {
-    const v = localStorage.getItem("pref_haptic");
-    // useLocalPref stores JSON
-    return v === null ? true : JSON.parse(v) !== false;
+    const v = localStorage.getItem("pref:haptic");
+    return v === null ? true : v === "true";
   } catch {
     return true;
   }
