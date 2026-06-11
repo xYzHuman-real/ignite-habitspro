@@ -9,6 +9,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Onboarding } from "@/components/Onboarding";
 import { GpaCalculator } from "@/components/GpaCalculator";
 import { ExamCountdown } from "@/components/ExamCountdown";
+import { PremiumStatusBanner } from "@/components/PremiumStatusBanner";
+import { AdSlot } from "@/components/AdSlot";
 
 const container = {
   hidden: {},
@@ -101,6 +103,10 @@ export default function Dashboard() {
         />
       </motion.div>
 
+      <motion.div variants={item}>
+        <PremiumStatusBanner />
+      </motion.div>
+
       <motion.div variants={item} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((s) => (
           <Card key={s.label} className={`p-4 ${s.gradient} ${s.glow} border-0`}>
@@ -167,6 +173,10 @@ export default function Dashboard() {
       <motion.div variants={item} className="grid md:grid-cols-2 gap-4">
         <GpaCalculator />
         <ExamCountdown />
+      </motion.div>
+
+      <motion.div variants={item}>
+        <AdSlot slotId="dashboard-bottom" size="banner" />
       </motion.div>
     </motion.div>
     </>
