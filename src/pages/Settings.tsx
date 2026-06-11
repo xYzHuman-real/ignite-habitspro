@@ -166,6 +166,7 @@ export default function Settings() {
             <Card className="p-2 mb-3">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 pt-2 pb-1">Account</p>
               <SettingsItem icon={Crown} label="Ignite Premium" desc="Manage subscription & view plans" onClick={() => navigate("/pricing")} />
+              <SettingsItem icon={Gift} label="Invite Friends" desc="Give 1 month, get 1 month free" onClick={() => navigate("/refer")} />
               <SettingsItem icon={Eye} label="Privacy" desc="Control profile visibility & data sharing" onClick={() => setSection("privacy")} />
               <SettingsItem icon={Bell} label="Notifications" desc="Alerts, reminders & sounds" onClick={() => setSection("notifications")} />
               <SettingsItem icon={Zap} label="Preferences" desc="Theme, language & display" onClick={() => setSection("preferences")} />
