@@ -732,12 +732,16 @@ export type Database = {
           leaderboard_points: number
           lifetime_xp: number
           pomodoro_sessions_count: number
+          premium_until: string | null
           show_avatar: boolean
           show_profile: boolean
           show_stats: boolean
           streak_freezes: number
+          subscription_plan: string | null
+          subscription_tier: string
           title: string
           total_streak: number
+          trial_ends_at: string | null
           updated_at: string
           user_id: string
           username: string | null
@@ -754,12 +758,16 @@ export type Database = {
           leaderboard_points?: number
           lifetime_xp?: number
           pomodoro_sessions_count?: number
+          premium_until?: string | null
           show_avatar?: boolean
           show_profile?: boolean
           show_stats?: boolean
           streak_freezes?: number
+          subscription_plan?: string | null
+          subscription_tier?: string
           title?: string
           total_streak?: number
+          trial_ends_at?: string | null
           updated_at?: string
           user_id: string
           username?: string | null
@@ -776,12 +784,16 @@ export type Database = {
           leaderboard_points?: number
           lifetime_xp?: number
           pomodoro_sessions_count?: number
+          premium_until?: string | null
           show_avatar?: boolean
           show_profile?: boolean
           show_stats?: boolean
           streak_freezes?: number
+          subscription_plan?: string | null
+          subscription_tier?: string
           title?: string
           total_streak?: number
+          trial_ends_at?: string | null
           updated_at?: string
           user_id?: string
           username?: string | null
