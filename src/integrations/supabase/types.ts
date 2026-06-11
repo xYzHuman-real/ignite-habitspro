@@ -902,6 +902,42 @@ export type Database = {
           },
         ]
       }
+      subscription_history: {
+        Row: {
+          amount_inr: number
+          created_at: string
+          failure_reason: string | null
+          id: string
+          plan: string
+          provider: string
+          receipt_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount_inr?: number
+          created_at?: string
+          failure_reason?: string | null
+          id?: string
+          plan: string
+          provider?: string
+          receipt_id: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount_inr?: number
+          created_at?: string
+          failure_reason?: string | null
+          id?: string
+          plan?: string
+          provider?: string
+          receipt_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       subtasks: {
         Row: {
           completed: boolean
