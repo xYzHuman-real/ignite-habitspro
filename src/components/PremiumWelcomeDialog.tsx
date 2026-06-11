@@ -21,6 +21,7 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onExplore?: () => void;
+  onDontShowAgain?: () => void;
 };
 
 const UNLOCKED = [
