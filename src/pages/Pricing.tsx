@@ -54,6 +54,7 @@ export default function Pricing() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
+  const [welcomeDismissed, setWelcomeDismissed] = useState(() => localStorage.getItem("ignite_premium_welcome_dismissed") === "true");
   const [history, setHistory] = useState<HistoryRow[]>([]);
   const qc = useQueryClient();
 
