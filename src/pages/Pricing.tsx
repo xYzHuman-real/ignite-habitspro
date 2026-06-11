@@ -54,7 +54,11 @@ export default function Pricing() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
-  const [welcomeDismissed, setWelcomeDismissed] = useState(() => localStorage.getItem("ignite_premium_welcome_dismissed") === "true");
+  // Track the subscription_history id for the most recent purchase whose welcome
+  // the user has already seen / dismissed. This way each new purchase shows the
+  // welcome exactly once, instead of a single global "never again" flag.
+  const WELCOME_SEEN_KEY = "ignite_premium_welcome_seen_purchase_id";
+  const [pendingWelcomePurchaseId, setPendingWelcomePurchaseId] = useState<string | null>(null);
   const [history, setHistory] = useState<HistoryRow[]>([]);
   const qc = useQueryClient();
 
@@ -86,15 +90,19 @@ export default function Pricing() {
     setUpgrading(true);
     try {
       // 1. Always log the attempt to subscription_history (success OR failed)
-      await (supabase as any).from("subscription_history").insert({
-        user_id: user!.id,
-        plan,
-        amount_inr: PRICES[plan].inr,
-        receipt_id: result.receiptId,
-        status: result.status,
-        failure_reason: result.failureReason ?? null,
-        provider: "google_play_sandbox",
-      });
+      const { data: historyRow } = await (supabase as any)
+        .from("subscription_history")
+        .insert({
+          user_id: user!.id,
+          plan,
+          amount_inr: PRICES[plan].inr,
+          receipt_id: result.receiptId,
+          status: result.status,
+          failure_reason: result.failureReason ?? null,
+          provider: "google_play_sandbox",
+        })
+        .select("id")
+        .single();
 
       // 2. Only unlock Premium on a successful purchase
       if (result.status === "success") {
@@ -114,7 +122,10 @@ export default function Pricing() {
 
         await qc.invalidateQueries({ queryKey: ["profile", user!.id] });
         celebratePremium();
-        if (!welcomeDismissed) {
+        const purchaseId: string | null = historyRow?.id ?? null;
+        const lastSeen = localStorage.getItem(WELCOME_SEEN_KEY);
+        if (purchaseId && purchaseId !== lastSeen) {
+          setPendingWelcomePurchaseId(purchaseId);
           setWelcomeOpen(true);
         }
         toast({
@@ -389,11 +400,20 @@ export default function Pricing() {
 
       <PremiumWelcomeDialog
         open={welcomeOpen}
-        onOpenChange={setWelcomeOpen}
+        onOpenChange={(open) => {
+          setWelcomeOpen(open);
+          // Mark this specific purchase's welcome as seen when dialog closes,
+          // so it won't show again for the same purchase — but will for the next one.
+          if (!open && pendingWelcomePurchaseId) {
+            localStorage.setItem(WELCOME_SEEN_KEY, pendingWelcomePurchaseId);
+            setPendingWelcomePurchaseId(null);
+          }
+        }}
         onExplore={() => navigate("/")}
         onDontShowAgain={() => {
-          localStorage.setItem("ignite_premium_welcome_dismissed", "true");
-          setWelcomeDismissed(true);
+          if (pendingWelcomePurchaseId) {
+            localStorage.setItem(WELCOME_SEEN_KEY, pendingWelcomePurchaseId);
+          }
         }}
       />
 
