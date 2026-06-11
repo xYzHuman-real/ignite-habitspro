@@ -25,13 +25,10 @@ type ProfileRow = {
   trial_ends_at: string | null;
 };
 
-function isUserPremium(p: ProfileRow) {
+function isUserPaidPremium(p: ProfileRow) {
   const now = Date.now();
-  const trial = p.trial_ends_at ? new Date(p.trial_ends_at).getTime() : 0;
   const until = p.premium_until ? new Date(p.premium_until).getTime() : 0;
-  const isTrial = trial > now && p.subscription_tier !== "premium";
-  const isPaid = p.subscription_tier === "premium" && until > now;
-  return isTrial || isPaid;
+  return p.subscription_tier === "premium" && until > now;
 }
 
 const PAGE_SIZE = 20;
