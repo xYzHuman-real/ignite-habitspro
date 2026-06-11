@@ -193,6 +193,89 @@
 }
 
 @layer utilities {
+  /* Apple iOS-inspired typography scale */
+  .text-large-title {
+    font-family: var(--font-display);
+    font-size: 34px;
+    line-height: 1.06;
+    font-weight: 700;
+    letter-spacing: -0.032em;
+  }
+  .text-title-1 {
+    font-family: var(--font-display);
+    font-size: 28px;
+    line-height: 1.14;
+    font-weight: 700;
+    letter-spacing: -0.026em;
+  }
+  .text-title-2 {
+    font-family: var(--font-display);
+    font-size: 22px;
+    line-height: 1.18;
+    font-weight: 700;
+    letter-spacing: -0.022em;
+  }
+  .text-title-3 {
+    font-family: var(--font-display);
+    font-size: 20px;
+    line-height: 1.25;
+    font-weight: 600;
+    letter-spacing: -0.018em;
+  }
+  .text-headline {
+    font-size: 17px;
+    line-height: 1.29;
+    font-weight: 600;
+    letter-spacing: -0.014em;
+  }
+  .text-body-ios {
+    font-size: 17px;
+    line-height: 1.41;
+    font-weight: 400;
+    letter-spacing: -0.012em;
+  }
+  .text-callout {
+    font-size: 16px;
+    line-height: 1.31;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  .text-subhead {
+    font-size: 15px;
+    line-height: 1.33;
+    font-weight: 500;
+    letter-spacing: -0.006em;
+  }
+  .text-footnote {
+    font-size: 13px;
+    line-height: 1.38;
+    font-weight: 500;
+    letter-spacing: -0.002em;
+  }
+  .text-caption-1 {
+    font-size: 12px;
+    line-height: 1.33;
+    font-weight: 500;
+    letter-spacing: 0;
+  }
+  .text-caption-2 {
+    font-size: 11px;
+    line-height: 1.27;
+    font-weight: 600;
+    letter-spacing: 0.005em;
+  }
+  .text-eyebrow {
+    font-size: 11px;
+    line-height: 1;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+
   .text-gradient-primary {
     @apply bg-clip-text text-transparent;
     background-image: linear-gradient(135deg, hsl(var(--primary)), hsl(21 95% 60%));
