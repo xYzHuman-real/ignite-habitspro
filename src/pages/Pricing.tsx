@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { FakePlayPurchaseSheet, PurchaseResult } from "@/components/FakePlayPurchaseSheet";
 import { CancelPremiumSheet, CancelResult } from "@/components/CancelPremiumSheet";
 import { celebratePremium } from "@/lib/celebrate";
+import { PremiumWelcomeDialog } from "@/components/PremiumWelcomeDialog";
 
 type Plan = "monthly" | "yearly";
 
