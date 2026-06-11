@@ -310,23 +310,37 @@ export default function FollowList() {
                       </div>
                     </Link>
                     {!isMe && (
-                      <Button
-                        size="sm"
-                        variant={following ? "outline" : "default"}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleFollow(p.user_id, following);
-                        }}
-                        className={`rounded-full h-8 px-3 text-xs ${
-                          following ? "" : "bg-gradient-primary text-primary-foreground"
-                        }`}
-                      >
-                        {following ? (
-                          <><UserMinus className="h-3.5 w-3.5 mr-1" /> Following</>
-                        ) : (
-                          <><UserPlus className="h-3.5 w-3.5 mr-1" /> Follow</>
-                        )}
-                      </Button>
+                      <motion.div layout transition={{ type: "spring", stiffness: 400, damping: 30 }}>
+                        <Button
+                          size="sm"
+                          variant={following ? "outline" : "default"}
+                          disabled={toggleFollowMutation.isPending}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleFollow(p.user_id, following);
+                          }}
+                          className={`rounded-full h-8 px-3 text-xs transition-all active:scale-95 ${
+                            following ? "" : "bg-gradient-primary text-primary-foreground"
+                          }`}
+                        >
+                          <AnimatePresence mode="wait" initial={false}>
+                            <motion.span
+                              key={following ? "following" : "follow"}
+                              initial={{ opacity: 0, y: 4 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -4 }}
+                              transition={{ duration: 0.15 }}
+                              className="flex items-center"
+                            >
+                              {following ? (
+                                <><UserMinus className="h-3.5 w-3.5 mr-1" /> Following</>
+                              ) : (
+                                <><UserPlus className="h-3.5 w-3.5 mr-1" /> Follow</>
+                              )}
+                            </motion.span>
+                          </AnimatePresence>
+                        </Button>
+                      </motion.div>
                     )}
                   </Card>
                 </motion.div>
