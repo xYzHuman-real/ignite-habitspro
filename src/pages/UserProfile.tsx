@@ -162,14 +162,22 @@ export default function UserProfile() {
           {showStats ? (
             <>
               <div className="grid grid-cols-4 gap-4 text-center">
-                <div>
+                <button
+                  type="button"
+                  onClick={() => navigate(`/user/${userId}/follows?tab=followers`)}
+                  className="rounded-lg py-1 hover:bg-muted/40 active:scale-95 transition"
+                >
                   <p className="text-2xl font-display font-bold">{followerCount}</p>
                   <p className="text-xs text-muted-foreground">Followers</p>
-                </div>
-                <div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate(`/user/${userId}/follows?tab=following`)}
+                  className="rounded-lg py-1 hover:bg-muted/40 active:scale-95 transition"
+                >
                   <p className="text-2xl font-display font-bold">{followingCount}</p>
                   <p className="text-xs text-muted-foreground">Following</p>
-                </div>
+                </button>
                 <div>
                   <p className="text-2xl font-display font-bold flex items-center justify-center gap-1">
                     {profile.total_streak} <Flame className="h-5 w-5 text-primary" />
