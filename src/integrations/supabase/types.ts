@@ -733,6 +733,8 @@ export type Database = {
           lifetime_xp: number
           pomodoro_sessions_count: number
           premium_until: string | null
+          referral_code: string | null
+          referred_by_code: string | null
           show_avatar: boolean
           show_profile: boolean
           show_stats: boolean
@@ -759,6 +761,8 @@ export type Database = {
           lifetime_xp?: number
           pomodoro_sessions_count?: number
           premium_until?: string | null
+          referral_code?: string | null
+          referred_by_code?: string | null
           show_avatar?: boolean
           show_profile?: boolean
           show_stats?: boolean
@@ -785,6 +789,8 @@ export type Database = {
           lifetime_xp?: number
           pomodoro_sessions_count?: number
           premium_until?: string | null
+          referral_code?: string | null
+          referred_by_code?: string | null
           show_avatar?: boolean
           show_profile?: boolean
           show_stats?: boolean
@@ -1057,6 +1063,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      apply_referral: { Args: { code: string }; Returns: string }
+      generate_referral_code: { Args: never; Returns: string }
       get_shared_streak: {
         Args: { user_a: string; user_b: string }
         Returns: number
