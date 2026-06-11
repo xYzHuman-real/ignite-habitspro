@@ -1049,6 +1049,7 @@ export type Database = {
         Args: { user_a: string; user_b: string }
         Returns: number
       }
+      suggest_usernames: { Args: { base: string }; Returns: string[] }
     }
     Enums: {
       [_ in never]: never

@@ -16,6 +16,7 @@ import { format } from "date-fns";
 import { getLevelForPoints, getNextLevel, getProgressToNext } from "@/lib/xp-levels";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { UsernameField } from "@/components/UsernameField";
 
 export default function Profile() {
   const { signOut, user } = useAuth();
@@ -29,6 +30,7 @@ export default function Profile() {
   const [editing, setEditing] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [form, setForm] = useState({ display_name: "", username: "", bio: "" });
+  const [usernameValid, setUsernameValid] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Auto-claim daily login on page visit
@@ -61,10 +63,27 @@ export default function Profile() {
     setEditing(true);
   };
 
-  const saveProfile = () => {
+  const saveProfile = async () => {
     if (!form.display_name.trim()) return;
-    updateProfile(form);
-    setEditing(false);
+    if (!usernameValid) {
+      toast({ title: "Please choose a valid username", variant: "destructive" });
+      return;
+    }
+    try {
+      await new Promise<void>((resolve, reject) => {
+        updateProfile(
+          { ...form, username: form.username || null } as any,
+          { onSuccess: () => resolve(), onError: (e: any) => reject(e) } as any
+        );
+      });
+      setEditing(false);
+    } catch (e: any) {
+      if (e?.code === "23505" || /duplicate|unique/i.test(e?.message || "")) {
+        toast({ title: "Username already taken", description: "Pick a different one.", variant: "destructive" });
+      } else {
+        toast({ title: "Could not save profile", description: e?.message, variant: "destructive" });
+      }
+    }
   };
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -140,7 +159,12 @@ export default function Profile() {
             <div className="space-y-4">
               <h2 className="font-display font-bold text-xl">Edit Profile</h2>
               <Input placeholder="Your Name" value={form.display_name} onChange={(e) => setForm({ ...form, display_name: e.target.value })} />
-              <Input placeholder="@username" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} />
+              <UsernameField
+                value={form.username}
+                onChange={(v) => setForm({ ...form, username: v })}
+                currentUsername={profile.username}
+                onValidityChange={setUsernameValid}
+              />
               <Textarea placeholder="Write a short bio..." value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} rows={2} />
               <div className="flex gap-2">
                 <Button onClick={saveProfile} className="bg-gradient-primary text-primary-foreground">
