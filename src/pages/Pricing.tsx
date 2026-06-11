@@ -12,6 +12,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { FakePlayPurchaseSheet, PurchaseResult } from "@/components/FakePlayPurchaseSheet";
+import { CancelPremiumSheet, CancelResult } from "@/components/CancelPremiumSheet";
+import { celebratePremium } from "@/lib/celebrate";
 
 type Plan = "monthly" | "yearly";
 
@@ -49,6 +51,7 @@ export default function Pricing() {
   const [plan, setPlan] = useState<Plan>("yearly");
   const [upgrading, setUpgrading] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
   const [history, setHistory] = useState<HistoryRow[]>([]);
   const qc = useQueryClient();
 
@@ -107,6 +110,7 @@ export default function Pricing() {
         if (error) throw error;
 
         await qc.invalidateQueries({ queryKey: ["profile", user!.id] });
+        celebratePremium();
         toast({
           title: "Welcome to Premium! 🎉",
           description: `Receipt ${result.receiptId} · active until ${until.toLocaleDateString()}.`,
@@ -127,7 +131,43 @@ export default function Pricing() {
     }
   };
 
+  const completeCancellation = async (result: CancelResult) => {
+    if (!user) return;
+    try {
+      await (supabase as any).from("subscription_history").insert({
+        user_id: user.id,
+        plan: currentPlan ?? "monthly",
+        amount_inr: 0,
+        receipt_id: result.receiptId,
+        status: "cancelled",
+        failure_reason: result.reason ? `Reason: ${result.reason}` : null,
+        provider: "google_play_sandbox",
+      });
+
+      // Immediately revoke Premium access so gating turns off right away.
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          subscription_tier: "free",
+          subscription_plan: null,
+          premium_until: new Date().toISOString(),
+        })
+        .eq("user_id", user.id);
+      if (error) throw error;
+
+      await qc.invalidateQueries({ queryKey: ["profile", user.id] });
+      await loadHistory();
+      toast({
+        title: "Subscription cancelled",
+        description: "Premium has been turned off. You can resubscribe anytime.",
+      });
+    } catch (e: any) {
+      toast({ title: "Cancellation failed", description: e.message, variant: "destructive" });
+    }
+  };
+
   const current = PRICES[plan];
+
 
   return (
     <div className="max-w-2xl mx-auto pb-24">
@@ -164,11 +204,18 @@ export default function Pricing() {
           className="mb-4 p-3 rounded-xl bg-gradient-to-r from-primary/15 to-accent/10 border border-primary/30 flex items-center gap-3"
         >
           <Crown className="h-5 w-5 text-primary shrink-0" />
-          <p className="text-sm">
+          <p className="text-sm flex-1 min-w-0">
             <span className="font-semibold capitalize">{currentPlan}</span> Premium · renews {premiumUntil?.toLocaleDateString()}
           </p>
+          <button
+            onClick={() => setCancelOpen(true)}
+            className="text-xs font-semibold text-destructive hover:underline shrink-0"
+          >
+            Cancel
+          </button>
         </motion.div>
       )}
+
 
       {/* Plan toggle */}
       <div className="mb-4 grid grid-cols-2 gap-2 p-1 rounded-xl bg-muted/50">
@@ -325,6 +372,15 @@ export default function Pricing() {
         priceInr={current.inr}
         onConfirm={completePurchase}
       />
+
+      <CancelPremiumSheet
+        open={cancelOpen}
+        onOpenChange={setCancelOpen}
+        plan={currentPlan}
+        premiumUntil={premiumUntil}
+        onConfirm={completeCancellation}
+      />
+
     </div>
   );
 }
