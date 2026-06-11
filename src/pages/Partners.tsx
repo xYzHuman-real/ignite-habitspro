@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Handshake, Send, UserPlus, Bell, Trash2, Check, X, Flame, Trophy, Target, Clock } from "lucide-react";
+import { Handshake, Send, UserPlus, Bell, Trash2, Check, X, Flame, Trophy, Target, Clock, Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { usePartners } from "@/lib/use-partners";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
