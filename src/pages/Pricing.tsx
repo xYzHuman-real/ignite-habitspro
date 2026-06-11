@@ -1,18 +1,29 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Check, Sparkles, Crown, Zap, Users, BarChart3, Palette, Shield, Headphones, Infinity as InfinityIcon, Gift } from "lucide-react";
+import { ArrowLeft, Check, Sparkles, Crown, Zap, Users, BarChart3, Palette, Shield, Headphones, Infinity as InfinityIcon, Gift, Receipt, XCircle, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { usePremium } from "@/lib/use-premium";
+import { PremiumBadge } from "@/components/PremiumBadge";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
-import { FakePlayPurchaseSheet } from "@/components/FakePlayPurchaseSheet";
+import { FakePlayPurchaseSheet, PurchaseResult } from "@/components/FakePlayPurchaseSheet";
 
 type Plan = "monthly" | "yearly";
+
+type HistoryRow = {
+  id: string;
+  plan: string;
+  amount_inr: number;
+  receipt_id: string;
+  status: string;
+  failure_reason: string | null;
+  created_at: string;
+};
 
 const PRICES: Record<Plan, { inr: number; perMonth: number; label: string; savingsBadge?: string }> = {
   monthly: { inr: 149, perMonth: 149, label: "₹149/month" },
@@ -38,7 +49,24 @@ export default function Pricing() {
   const [plan, setPlan] = useState<Plan>("yearly");
   const [upgrading, setUpgrading] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [history, setHistory] = useState<HistoryRow[]>([]);
   const qc = useQueryClient();
+
+  const loadHistory = async () => {
+    if (!user) return;
+    const { data } = await (supabase as any)
+      .from("subscription_history")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(10);
+    if (data) setHistory(data as HistoryRow[]);
+  };
+
+  useEffect(() => {
+    loadHistory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   const startPurchase = () => {
     if (!user) {
@@ -48,30 +76,50 @@ export default function Pricing() {
     setSheetOpen(true);
   };
 
-  const completePurchase = async () => {
+  const completePurchase = async (result: PurchaseResult) => {
     setUpgrading(true);
     try {
-      // FAKE Google Play purchase — replace this block with real purchase-token
-      // verification (Google Play Billing → verify-google-purchase edge function).
-      const months = plan === "yearly" ? 12 : 1;
-      const until = new Date();
-      until.setMonth(until.getMonth() + months);
-
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          subscription_tier: "premium",
-          subscription_plan: plan,
-          premium_until: until.toISOString(),
-        })
-        .eq("user_id", user!.id);
-      if (error) throw error;
-
-      await qc.invalidateQueries({ queryKey: ["profile", user!.id] });
-      toast({
-        title: "Welcome to Premium! 🎉",
-        description: `Your ${plan} plan is active until ${until.toLocaleDateString()}.`,
+      // 1. Always log the attempt to subscription_history (success OR failed)
+      await (supabase as any).from("subscription_history").insert({
+        user_id: user!.id,
+        plan,
+        amount_inr: PRICES[plan].inr,
+        receipt_id: result.receiptId,
+        status: result.status,
+        failure_reason: result.failureReason ?? null,
+        provider: "google_play_sandbox",
       });
+
+      // 2. Only unlock Premium on a successful purchase
+      if (result.status === "success") {
+        const months = plan === "yearly" ? 12 : 1;
+        const until = new Date();
+        until.setMonth(until.getMonth() + months);
+
+        const { error } = await supabase
+          .from("profiles")
+          .update({
+            subscription_tier: "premium",
+            subscription_plan: plan,
+            premium_until: until.toISOString(),
+          })
+          .eq("user_id", user!.id);
+        if (error) throw error;
+
+        await qc.invalidateQueries({ queryKey: ["profile", user!.id] });
+        toast({
+          title: "Welcome to Premium! 🎉",
+          description: `Receipt ${result.receiptId} · active until ${until.toLocaleDateString()}.`,
+        });
+      } else {
+        toast({
+          title: "Purchase failed",
+          description: `${result.failureCode}: ${result.failureReason} Premium not activated.`,
+          variant: "destructive",
+        });
+      }
+
+      await loadHistory();
     } catch (e: any) {
       toast({ title: "Upgrade failed", description: e.message, variant: "destructive" });
     } finally {
@@ -87,8 +135,11 @@ export default function Pricing() {
         <button onClick={() => navigate(-1)} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-muted transition-colors">
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <div>
-          <h1 className="text-xl font-display font-bold">Ignite Premium</h1>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-xl font-display font-bold">Ignite Premium</h1>
+            {isPremium && <PremiumBadge size="sm" label={isPaid ? "Premium" : "Trial"} />}
+          </div>
           <p className="text-xs text-muted-foreground">Unlock every feature, forever distraction-free</p>
         </div>
       </div>
@@ -227,6 +278,45 @@ export default function Pricing() {
           <p className="text-xs text-muted-foreground">Invite a friend → you both get 1 month free</p>
         </div>
       </button>
+
+      {/* Subscription history */}
+      {user && history.length > 0 && (
+        <Card className="mt-4 p-5">
+          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+            <Receipt className="h-4 w-4 text-primary" /> Subscription history
+          </h3>
+          <div className="divide-y divide-border/60">
+            {history.map((h) => {
+              const ok = h.status === "success";
+              return (
+                <div key={h.id} className="py-2.5 flex items-center gap-3">
+                  {ok ? (
+                    <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                  ) : (
+                    <XCircle className="h-4 w-4 text-destructive shrink-0" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-medium capitalize">{h.plan}</span>
+                      <span className="text-[10px] text-muted-foreground font-mono">{h.receipt_id}</span>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">
+                      {new Date(h.created_at).toLocaleString()} · ₹{h.amount_inr}
+                      {!ok && h.failure_reason ? ` · ${h.failure_reason}` : ""}
+                    </p>
+                  </div>
+                  <span className={cn(
+                    "text-[10px] font-semibold px-2 py-0.5 rounded-full",
+                    ok ? "bg-primary/15 text-primary" : "bg-destructive/15 text-destructive"
+                  )}>
+                    {ok ? "Paid" : "Failed"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
 
       <FakePlayPurchaseSheet
         open={sheetOpen}
