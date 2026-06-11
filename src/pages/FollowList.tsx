@@ -349,7 +349,7 @@ export default function FollowList() {
             {filtered.map((p, idx) => {
               const isMe = p.user_id === user?.id;
               const following = followingSet.has(p.user_id);
-              const premium = isUserPaidPremium(p);
+              const premium = isUserPremium(p);
               const initials = (p.display_name || p.username || "?")
                 .split(" ")
                 .map((w) => w[0])
