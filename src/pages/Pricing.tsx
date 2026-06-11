@@ -54,6 +54,7 @@ export default function Pricing() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
+  const [welcomeDismissed, setWelcomeDismissed] = useState(() => localStorage.getItem("ignite_premium_welcome_dismissed") === "true");
   const [history, setHistory] = useState<HistoryRow[]>([]);
   const qc = useQueryClient();
 
@@ -113,7 +114,9 @@ export default function Pricing() {
 
         await qc.invalidateQueries({ queryKey: ["profile", user!.id] });
         celebratePremium();
-        setWelcomeOpen(true);
+        if (!welcomeDismissed) {
+          setWelcomeOpen(true);
+        }
         toast({
           title: "Welcome to Premium! 🎉",
           description: `Receipt ${result.receiptId} · active until ${until.toLocaleDateString()}.`,
@@ -388,6 +391,10 @@ export default function Pricing() {
         open={welcomeOpen}
         onOpenChange={setWelcomeOpen}
         onExplore={() => navigate("/")}
+        onDontShowAgain={() => {
+          localStorage.setItem("ignite_premium_welcome_dismissed", "true");
+          setWelcomeDismissed(true);
+        }}
       />
 
 
