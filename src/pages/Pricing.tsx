@@ -118,7 +118,6 @@ export default function Pricing() {
           setWelcomeOpen(true);
         }
         toast({
-        toast({
           title: "Welcome to Premium! 🎉",
           description: `Receipt ${result.receiptId} · active until ${until.toLocaleDateString()}.`,
         });
