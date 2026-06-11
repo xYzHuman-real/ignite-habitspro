@@ -54,7 +54,11 @@ export default function Pricing() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
-  const [welcomeDismissed, setWelcomeDismissed] = useState(() => localStorage.getItem("ignite_premium_welcome_dismissed") === "true");
+  // Track the subscription_history id for the most recent purchase whose welcome
+  // the user has already seen / dismissed. This way each new purchase shows the
+  // welcome exactly once, instead of a single global "never again" flag.
+  const WELCOME_SEEN_KEY = "ignite_premium_welcome_seen_purchase_id";
+  const [pendingWelcomePurchaseId, setPendingWelcomePurchaseId] = useState<string | null>(null);
   const [history, setHistory] = useState<HistoryRow[]>([]);
   const qc = useQueryClient();
 
