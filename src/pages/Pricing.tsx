@@ -159,7 +159,7 @@ export default function Pricing() {
           </p>
           <Button
             className="w-full bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-glow-primary"
-            onClick={handleUpgrade}
+            onClick={startPurchase}
             disabled={upgrading || (isPaid && currentPlan === plan)}
           >
             {isPaid && currentPlan === plan
