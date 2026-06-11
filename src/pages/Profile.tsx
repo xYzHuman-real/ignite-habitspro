@@ -29,7 +29,7 @@ export default function Profile() {
   const { followerCount, followingCount } = useFollowers();
   const { claimDaily, todayLogin, isClaiming } = useDailyLogin();
   const { toast } = useToast();
-  const { isPremium, isPaid, isTrial } = usePremium();
+  const { isPremium, isPaid, isTrial, trialDaysLeft } = usePremium();
   const [editing, setEditing] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [form, setForm] = useState({ display_name: "", username: "", bio: "" });
