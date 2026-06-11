@@ -213,6 +213,28 @@ export default function Pricing() {
       <p className="text-[11px] text-center text-muted-foreground mt-6 px-4">
         Pricing shown in INR for India. International pricing auto-converts at checkout. Taxes may apply.
       </p>
+
+      {/* Referral promo */}
+      <button
+        onClick={() => navigate("/refer")}
+        className="mt-4 w-full p-4 rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/10 to-accent/10 flex items-center gap-3 text-left hover:border-primary/60 transition-colors"
+      >
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shrink-0">
+          <Gift className="h-5 w-5 text-primary-foreground" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold">Get Premium for free</p>
+          <p className="text-xs text-muted-foreground">Invite a friend → you both get 1 month free</p>
+        </div>
+      </button>
+
+      <FakePlayPurchaseSheet
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        plan={plan}
+        priceInr={current.inr}
+        onConfirm={completePurchase}
+      />
     </div>
   );
 }
