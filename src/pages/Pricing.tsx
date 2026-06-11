@@ -12,6 +12,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { FakePlayPurchaseSheet, PurchaseResult } from "@/components/FakePlayPurchaseSheet";
+import { CancelPremiumSheet, CancelResult } from "@/components/CancelPremiumSheet";
+import { celebratePremium } from "@/lib/celebrate";
 
 type Plan = "monthly" | "yearly";
 
