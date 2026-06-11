@@ -1,6 +1,7 @@
 import { motion, useMotionValue, useTransform, useAnimation, PanInfo } from "framer-motion";
 import { Check, Flame, Bell, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { hapticLight, hapticSuccess } from "@/lib/haptics";
 
 const PRIORITY_CONFIG: Record<string, { label: string; dot: string; chip: string }> = {
   very_important: { label: "High", dot: "bg-destructive", chip: "bg-destructive/10 text-destructive" },
@@ -40,15 +41,23 @@ export default function HabitCard({ habit, onToggle, onDelete, isDragging }: Hab
   const priority = PRIORITY_CONFIG[habit.priority] || PRIORITY_CONFIG.important;
   const progressPct = habit.target > 0 ? Math.min((habit.current / habit.target) * 100, 100) : 0;
 
+  const crossed = useRef(false);
+  x.on("change", (v) => {
+    if (v > 60 && !crossed.current) { crossed.current = true; hapticLight(); }
+    else if (v < 40 && crossed.current) { crossed.current = false; }
+  });
+
   const handleDragEnd = (_: any, info: PanInfo) => {
-    if (info.offset.x > 100 && !habit.completed_today) {
+    if (info.offset.x > 90 && !habit.completed_today) {
       setSwiped(true);
-      controls.start({ x: 0, transition: { duration: 0.2, ease: "easeOut" } });
+      controls.start({ x: 0, transition: { type: "spring", stiffness: 500, damping: 40 } });
+      hapticSuccess();
       onToggle(habit);
-      setTimeout(() => setSwiped(false), 300);
+      setTimeout(() => setSwiped(false), 200);
     } else {
-      controls.start({ x: 0, transition: { duration: 0.2, ease: "easeOut" } });
+      controls.start({ x: 0, transition: { type: "spring", stiffness: 500, damping: 40 } });
     }
+    crossed.current = false;
   };
 
   return (
@@ -71,7 +80,7 @@ export default function HabitCard({ habit, onToggle, onDelete, isDragging }: Hab
         animate={controls}
         drag={habit.completed_today ? false : "x"}
         dragConstraints={{ left: 0, right: 120 }}
-        dragElastic={0.1}
+        dragElastic={0.05}
         dragDirectionLock
         onDragEnd={handleDragEnd}
         className={`relative bg-card rounded-2xl p-3.5 shadow-[0_2px_10px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.3)] border border-border/40 transition-all ${
