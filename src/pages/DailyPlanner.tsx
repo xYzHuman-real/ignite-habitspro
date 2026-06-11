@@ -389,6 +389,12 @@ export default function DailyPlanner() {
           </motion.div>
         </AnimatePresence>
       )}
+      <UpgradeModal
+        open={showUpgrade}
+        onOpenChange={setShowUpgrade}
+        featureName="AI Daily Planner"
+        reason="Free plan includes 3 AI plans per month. Upgrade for unlimited AI-generated schedules."
+      />
     </div>
   );
 }
