@@ -53,6 +53,7 @@ export default function Pricing() {
   const [upgrading, setUpgrading] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [welcomeOpen, setWelcomeOpen] = useState(false);
   const [history, setHistory] = useState<HistoryRow[]>([]);
   const qc = useQueryClient();
 
