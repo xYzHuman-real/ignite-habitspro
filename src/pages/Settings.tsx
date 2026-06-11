@@ -4,7 +4,7 @@ import {
   Eye, EyeOff, Camera, Flame, Bell,
   Globe, Lock, ShieldCheck, Smartphone, Zap,
   ChevronRight, ArrowLeft, Download, Trash2, Mail, BarChart3,
-  Volume2, Clock, Target, BookOpen, Trophy
+  Volume2, Clock, Target, BookOpen, Trophy, LogOut
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -187,6 +187,22 @@ export default function Settings() {
                 <div className="flex-1">
                   <p className="text-sm font-medium">{exporting ? "Exporting..." : "Export All Data"}</p>
                   <p className="text-xs text-muted-foreground">Download habits, journal, goals as CSV</p>
+                </div>
+              </button>
+            </Card>
+
+            {/* Sign out */}
+            <Card className="p-2 mb-3">
+              <button
+                onClick={async () => { await signOut(); navigate("/auth"); }}
+                className="w-full flex items-center gap-3 p-3.5 rounded-xl hover:bg-muted/60 transition-colors text-left"
+              >
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-primary/10">
+                  <LogOut className="h-5 w-5 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium">Log out</p>
+                  <p className="text-xs text-muted-foreground">Sign out of your account</p>
                 </div>
               </button>
             </Card>
