@@ -204,7 +204,7 @@ export default function Profile() {
                 <div className="text-center sm:text-left flex-1">
                   <div className="flex items-center gap-2 justify-center sm:justify-start flex-wrap">
                     <h1 className="text-2xl font-display font-bold">{profile.display_name || "Set up your profile"}</h1>
-                    {isPaid && (
+                    {isPremium && (
                       <PremiumBadge
                         size="sm"
                         label="Premium"

@@ -114,8 +114,9 @@ export default function UserProfile() {
                 {(() => {
                   const now = Date.now();
                   const until = (profile as any).premium_until ? new Date((profile as any).premium_until).getTime() : 0;
-                  const isPaid = (profile as any).subscription_tier === "premium" && until > now;
-                  return isPaid ? <PremiumBadge size="sm" /> : null;
+                  const trialUntil = (profile as any).trial_ends_at ? new Date((profile as any).trial_ends_at).getTime() : 0;
+                  const isPremium = ((profile as any).subscription_tier === "premium" && until > now) || trialUntil > now;
+                  return isPremium ? <PremiumBadge size="sm" /> : null;
                 })()}
               </div>
               <div className="flex items-center gap-2 mt-0.5 justify-center sm:justify-start flex-wrap">

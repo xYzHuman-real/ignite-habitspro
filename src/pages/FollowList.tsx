@@ -25,10 +25,11 @@ type ProfileRow = {
   trial_ends_at: string | null;
 };
 
-function isUserPaidPremium(p: ProfileRow) {
+function isUserPremium(p: ProfileRow) {
   const now = Date.now();
-  const until = p.premium_until ? new Date(p.premium_until).getTime() : 0;
-  return p.subscription_tier === "premium" && until > now;
+  const paidUntil = p.premium_until ? new Date(p.premium_until).getTime() : 0;
+  const trialUntil = p.trial_ends_at ? new Date(p.trial_ends_at).getTime() : 0;
+  return (p.subscription_tier === "premium" && paidUntil > now) || trialUntil > now;
 }
 
 const PAGE_SIZE = 20;
@@ -348,7 +349,7 @@ export default function FollowList() {
             {filtered.map((p, idx) => {
               const isMe = p.user_id === user?.id;
               const following = followingSet.has(p.user_id);
-              const premium = isUserPaidPremium(p);
+              const premium = isUserPremium(p);
               const initials = (p.display_name || p.username || "?")
                 .split(" ")
                 .map((w) => w[0])
