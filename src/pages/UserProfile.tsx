@@ -109,7 +109,17 @@ export default function UserProfile() {
               </AvatarFallback>
             </Avatar>
             <div className="text-center sm:text-left flex-1">
-              <h1 className="text-2xl font-display font-bold">{profile.display_name || "Anonymous"}</h1>
+              <div className="flex items-center gap-2 justify-center sm:justify-start flex-wrap">
+                <h1 className="text-2xl font-display font-bold">{profile.display_name || "Anonymous"}</h1>
+                {(() => {
+                  const now = Date.now();
+                  const trial = (profile as any).trial_ends_at ? new Date((profile as any).trial_ends_at).getTime() : 0;
+                  const until = (profile as any).premium_until ? new Date((profile as any).premium_until).getTime() : 0;
+                  const isTrial = trial > now && (profile as any).subscription_tier !== "premium";
+                  const isPaid = (profile as any).subscription_tier === "premium" && until > now;
+                  return (isTrial || isPaid) ? <PremiumBadge size="sm" /> : null;
+                })()}
+              </div>
               <div className="flex items-center gap-2 mt-0.5 justify-center sm:justify-start flex-wrap">
                 {profile.username && (
                   <p className="text-muted-foreground text-sm">@{profile.username}</p>
