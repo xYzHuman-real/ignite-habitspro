@@ -137,7 +137,7 @@ export default function HabitCard({ habit, onToggle, onDelete, isDragging }: Hab
           {/* Completion button */}
           <motion.button
             whileTap={{ scale: 0.85 }}
-            onClick={() => onToggle(habit)}
+            onClick={() => { hapticSuccess(); onToggle(habit); }}
             className={`w-11 h-11 rounded-full flex items-center justify-center transition-all shrink-0 ${
               habit.completed_today
                 ? "text-white shadow-md"
