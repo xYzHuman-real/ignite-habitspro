@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
+import { PremiumBadge } from "@/components/PremiumBadge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/auth";
 import { useFollowers } from "@/lib/supabase-hooks";
@@ -108,7 +109,17 @@ export default function UserProfile() {
               </AvatarFallback>
             </Avatar>
             <div className="text-center sm:text-left flex-1">
-              <h1 className="text-2xl font-display font-bold">{profile.display_name || "Anonymous"}</h1>
+              <div className="flex items-center gap-2 justify-center sm:justify-start flex-wrap">
+                <h1 className="text-2xl font-display font-bold">{profile.display_name || "Anonymous"}</h1>
+                {(() => {
+                  const now = Date.now();
+                  const trial = (profile as any).trial_ends_at ? new Date((profile as any).trial_ends_at).getTime() : 0;
+                  const until = (profile as any).premium_until ? new Date((profile as any).premium_until).getTime() : 0;
+                  const isTrial = trial > now && (profile as any).subscription_tier !== "premium";
+                  const isPaid = (profile as any).subscription_tier === "premium" && until > now;
+                  return (isTrial || isPaid) ? <PremiumBadge size="sm" /> : null;
+                })()}
+              </div>
               <div className="flex items-center gap-2 mt-0.5 justify-center sm:justify-start flex-wrap">
                 {profile.username && (
                   <p className="text-muted-foreground text-sm">@{profile.username}</p>
@@ -151,14 +162,22 @@ export default function UserProfile() {
           {showStats ? (
             <>
               <div className="grid grid-cols-4 gap-4 text-center">
-                <div>
+                <button
+                  type="button"
+                  onClick={() => navigate(`/user/${userId}/follows?tab=followers`)}
+                  className="rounded-lg py-1 hover:bg-muted/40 active:scale-95 transition"
+                >
                   <p className="text-2xl font-display font-bold">{followerCount}</p>
                   <p className="text-xs text-muted-foreground">Followers</p>
-                </div>
-                <div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate(`/user/${userId}/follows?tab=following`)}
+                  className="rounded-lg py-1 hover:bg-muted/40 active:scale-95 transition"
+                >
                   <p className="text-2xl font-display font-bold">{followingCount}</p>
                   <p className="text-xs text-muted-foreground">Following</p>
-                </div>
+                </button>
                 <div>
                   <p className="text-2xl font-display font-bold flex items-center justify-center gap-1">
                     {profile.total_streak} <Flame className="h-5 w-5 text-primary" />
