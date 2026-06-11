@@ -46,9 +46,9 @@ export default function PageHero({
       <div className={`relative flex items-start justify-between gap-3 ${stats.length ? "mb-5" : ""}`}>
         <div className="min-w-0 flex-1">
           {eyebrow && (
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">{eyebrow}</p>
+            <p className="text-eyebrow text-primary mb-2">{eyebrow}</p>
           )}
-          <h1 className="text-[26px] font-display font-bold text-foreground mt-1 flex items-center gap-2.5 min-w-0 leading-tight tracking-tight">
+          <h1 className="text-title-1 text-foreground flex items-center gap-2.5 min-w-0">
             {Icon && (
               <span className="shrink-0 h-9 w-9 rounded-2xl bg-primary/10 flex items-center justify-center">
                 <Icon className="h-5 w-5 text-primary" />
@@ -56,7 +56,7 @@ export default function PageHero({
             )}
             <span className="truncate min-w-0">{title}</span>
           </h1>
-          {subtitle && <p className="text-[14px] text-muted-foreground mt-1.5 break-words leading-relaxed">{subtitle}</p>}
+          {subtitle && <p className="text-subhead text-muted-foreground mt-1.5 break-words">{subtitle}</p>}
         </div>
 
         {showRing && (
@@ -72,7 +72,7 @@ export default function PageHero({
                 transition={{ duration: 0.8, ease: "easeOut" }}
               />
             </svg>
-            <div className="text-foreground font-display font-bold text-sm text-center leading-tight">
+            <div className="text-foreground font-display font-bold text-[15px] tabular-nums tracking-tight text-center leading-tight">
               {progressLabel ?? `${pct}%`}
             </div>
           </div>
@@ -87,8 +87,8 @@ export default function PageHero({
               <div key={i} className="flex-1 bg-secondary/70 rounded-2xl px-3 py-2.5 flex items-center gap-2 min-w-0">
                 <SIcon className="h-4 w-4 text-primary shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-[9px] uppercase tracking-[0.12em] text-muted-foreground font-semibold leading-none truncate">{s.label}</p>
-                  <p className="text-sm font-bold text-foreground leading-tight truncate mt-1">{s.value}</p>
+                  <p className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground font-semibold leading-none truncate">{s.label}</p>
+                  <p className="text-[15px] font-bold tabular-nums tracking-tight text-foreground leading-tight truncate mt-1">{s.value}</p>
                 </div>
               </div>
             );
