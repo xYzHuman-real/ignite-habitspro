@@ -1,10 +1,11 @@
 import { useState } from "react";
+import type { ComponentType, SVGProps } from "react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { Sparkles, Target, Focus, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Slide {
-  icon: React.ComponentType<{ className?: string }>;
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
   eyebrow: string;
   title: string;
   body: string;
