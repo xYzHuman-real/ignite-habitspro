@@ -95,6 +95,7 @@ function ProtectedRoutes() {
           <Route path="/daily-planner" element={<DailyPlanner />} />
           <Route path="/install" element={<Install />} />
           <Route path="/pricing" element={<Pricing />} />
+          <Route path="/refer" element={<Refer />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
