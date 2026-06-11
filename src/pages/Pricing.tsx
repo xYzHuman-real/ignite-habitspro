@@ -279,6 +279,45 @@ export default function Pricing() {
         </div>
       </button>
 
+      {/* Subscription history */}
+      {user && history.length > 0 && (
+        <Card className="mt-4 p-5">
+          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+            <Receipt className="h-4 w-4 text-primary" /> Subscription history
+          </h3>
+          <div className="divide-y divide-border/60">
+            {history.map((h) => {
+              const ok = h.status === "success";
+              return (
+                <div key={h.id} className="py-2.5 flex items-center gap-3">
+                  {ok ? (
+                    <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                  ) : (
+                    <XCircle className="h-4 w-4 text-destructive shrink-0" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-medium capitalize">{h.plan}</span>
+                      <span className="text-[10px] text-muted-foreground font-mono">{h.receipt_id}</span>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">
+                      {new Date(h.created_at).toLocaleString()} · ₹{h.amount_inr}
+                      {!ok && h.failure_reason ? ` · ${h.failure_reason}` : ""}
+                    </p>
+                  </div>
+                  <span className={cn(
+                    "text-[10px] font-semibold px-2 py-0.5 rounded-full",
+                    ok ? "bg-primary/15 text-primary" : "bg-destructive/15 text-destructive"
+                  )}>
+                    {ok ? "Paid" : "Failed"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
+
       <FakePlayPurchaseSheet
         open={sheetOpen}
         onOpenChange={setSheetOpen}
