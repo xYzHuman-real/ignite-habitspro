@@ -167,7 +167,9 @@ export default function UserProfile() {
                   onClick={() => navigate(`/user/${userId}/follows?tab=followers`)}
                   className="rounded-lg py-1 hover:bg-muted/40 active:scale-95 transition"
                 >
-                  <p className="text-2xl font-display font-bold">{followerCount}</p>
+                  <motion.p layout className="text-2xl font-display font-bold">
+                    {followerCount}
+                  </motion.p>
                   <p className="text-xs text-muted-foreground">Followers</p>
                 </button>
                 <button
@@ -175,7 +177,9 @@ export default function UserProfile() {
                   onClick={() => navigate(`/user/${userId}/follows?tab=following`)}
                   className="rounded-lg py-1 hover:bg-muted/40 active:scale-95 transition"
                 >
-                  <p className="text-2xl font-display font-bold">{followingCount}</p>
+                  <motion.p layout className="text-2xl font-display font-bold">
+                    {followingCount}
+                  </motion.p>
                   <p className="text-xs text-muted-foreground">Following</p>
                 </button>
                 <div>

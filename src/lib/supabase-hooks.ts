@@ -702,10 +702,30 @@ export function useFollowers(targetUserId?: string) {
       const { error } = await supabase.from("followers").insert({ follower_id: user.id, following_id: followingId });
       if (error) throw error;
     },
-    onSuccess: (_, followingId) => {
-      qc.invalidateQueries({ queryKey: ["follower_count"] });
-      qc.invalidateQueries({ queryKey: ["following_count"] });
+    onMutate: async (followingId) => {
+      await qc.cancelQueries({ queryKey: ["follower_count", followingId] });
+      await qc.cancelQueries({ queryKey: ["following_count", user?.id] });
+      await qc.cancelQueries({ queryKey: ["is_following", user?.id, followingId] });
+      const prevFollowerCount = qc.getQueryData<number>(["follower_count", followingId]);
+      const prevFollowingCount = qc.getQueryData<number>(["following_count", user?.id]);
+      const prevIsFollowing = qc.getQueryData<boolean>(["is_following", user?.id, followingId]);
+      qc.setQueryData(["follower_count", followingId], (old: number | undefined) => (old ?? 0) + 1);
+      qc.setQueryData(["following_count", user?.id], (old: number | undefined) => (old ?? 0) + 1);
+      qc.setQueryData(["is_following", user?.id, followingId], true);
+      return { prevFollowerCount, prevFollowingCount, prevIsFollowing, followingId };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (!ctx) return;
+      qc.setQueryData(["follower_count", ctx.followingId], ctx.prevFollowerCount);
+      qc.setQueryData(["following_count", user?.id], ctx.prevFollowingCount);
+      qc.setQueryData(["is_following", user?.id, ctx.followingId], ctx.prevIsFollowing);
+    },
+    onSettled: (_data, _err, followingId) => {
+      qc.invalidateQueries({ queryKey: ["follower_count", followingId] });
+      qc.invalidateQueries({ queryKey: ["following_count", user?.id] });
       qc.invalidateQueries({ queryKey: ["is_following", user?.id, followingId] });
+      qc.invalidateQueries({ queryKey: ["follow_list"] });
+      qc.invalidateQueries({ queryKey: ["my_following_ids", user?.id] });
     },
   });
 
@@ -715,14 +735,34 @@ export function useFollowers(targetUserId?: string) {
       const { error } = await supabase.from("followers").delete().eq("follower_id", user.id).eq("following_id", followingId);
       if (error) throw error;
     },
-    onSuccess: (_, followingId) => {
-      qc.invalidateQueries({ queryKey: ["follower_count"] });
-      qc.invalidateQueries({ queryKey: ["following_count"] });
+    onMutate: async (followingId) => {
+      await qc.cancelQueries({ queryKey: ["follower_count", followingId] });
+      await qc.cancelQueries({ queryKey: ["following_count", user?.id] });
+      await qc.cancelQueries({ queryKey: ["is_following", user?.id, followingId] });
+      const prevFollowerCount = qc.getQueryData<number>(["follower_count", followingId]);
+      const prevFollowingCount = qc.getQueryData<number>(["following_count", user?.id]);
+      const prevIsFollowing = qc.getQueryData<boolean>(["is_following", user?.id, followingId]);
+      qc.setQueryData(["follower_count", followingId], (old: number | undefined) => Math.max((old ?? 0) - 1, 0));
+      qc.setQueryData(["following_count", user?.id], (old: number | undefined) => Math.max((old ?? 0) - 1, 0));
+      qc.setQueryData(["is_following", user?.id, followingId], false);
+      return { prevFollowerCount, prevFollowingCount, prevIsFollowing, followingId };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (!ctx) return;
+      qc.setQueryData(["follower_count", ctx.followingId], ctx.prevFollowerCount);
+      qc.setQueryData(["following_count", user?.id], ctx.prevFollowingCount);
+      qc.setQueryData(["is_following", user?.id, ctx.followingId], ctx.prevIsFollowing);
+    },
+    onSettled: (_data, _err, followingId) => {
+      qc.invalidateQueries({ queryKey: ["follower_count", followingId] });
+      qc.invalidateQueries({ queryKey: ["following_count", user?.id] });
       qc.invalidateQueries({ queryKey: ["is_following", user?.id, followingId] });
+      qc.invalidateQueries({ queryKey: ["follow_list"] });
+      qc.invalidateQueries({ queryKey: ["my_following_ids", user?.id] });
     },
   });
 
-  return { followerCount, followingCount, isFollowing, followUser: followUser.mutate, unfollowUser: unfollowUser.mutate };
+  return { followerCount, followingCount, isFollowing, followUser: followUser.mutate, unfollowUser: unfollowUser.mutate, isToggling: followUser.isPending || unfollowUser.isPending };
 }
 
 // ---- Shop ----

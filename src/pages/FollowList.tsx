@@ -1,11 +1,10 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Search, UserPlus, UserMinus, Users, X } from "lucide-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { useFollowers } from "@/lib/supabase-hooks";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -106,22 +105,70 @@ export default function FollowList() {
     );
   }, [rows, search]);
 
-  const toggleFollow = async (otherId: string, currentlyFollowing: boolean) => {
-    if (!user?.id || otherId === user.id) return;
-    if (currentlyFollowing) {
-      const { error } = await supabase.from("followers").delete().eq("follower_id", user.id).eq("following_id", otherId);
-      if (error) return toast({ title: "Could not unfollow", variant: "destructive" });
-      toast({ title: "Unfollowed" });
-    } else {
-      const { error } = await supabase.from("followers").insert({ follower_id: user.id, following_id: otherId });
-      if (error) return toast({ title: "Could not follow", variant: "destructive" });
-      toast({ title: "Following! 🎉" });
-    }
-    qc.invalidateQueries({ queryKey: ["my_following_ids", user.id] });
-    qc.invalidateQueries({ queryKey: ["follower_count"] });
-    qc.invalidateQueries({ queryKey: ["following_count"] });
-    qc.invalidateQueries({ queryKey: ["is_following"] });
-  };
+  const toggleFollowMutation = useMutation({
+    mutationFn: async ({ otherId, currentlyFollowing }: { otherId: string; currentlyFollowing: boolean }) => {
+      if (!user?.id || otherId === user.id) throw new Error("Invalid action");
+      if (currentlyFollowing) {
+        const { error } = await supabase.from("followers").delete().eq("follower_id", user.id).eq("following_id", otherId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("followers").insert({ follower_id: user.id, following_id: otherId });
+        if (error) throw error;
+      }
+    },
+    onMutate: async ({ otherId, currentlyFollowing }) => {
+      await qc.cancelQueries({ queryKey: ["my_following_ids", user?.id] });
+      await qc.cancelQueries({ queryKey: ["follow_list"] });
+      await qc.cancelQueries({ queryKey: ["follower_count"] });
+      await qc.cancelQueries({ queryKey: ["following_count"] });
+      await qc.cancelQueries({ queryKey: ["is_following"] });
+
+      const prevMyFollowing = qc.getQueryData<string[]>(["my_following_ids", user?.id]);
+      const prevFollowList = qc.getQueryData<ProfileRow[]>(["follow_list", targetId, mode]);
+
+      // Optimistically update my following IDs
+      qc.setQueryData(["my_following_ids", user?.id], (old: string[] | undefined) => {
+        if (!old) return currentlyFollowing ? [] : [otherId];
+        if (currentlyFollowing) return old.filter((id) => id !== otherId);
+        if (old.includes(otherId)) return old;
+        return [...old, otherId];
+      });
+
+      // If viewing my own Following tab and unfollowing, remove from list immediately
+      if (mode === "following" && targetId === user?.id && currentlyFollowing) {
+        qc.setQueryData(["follow_list", targetId, mode], (old: ProfileRow[] | undefined) => {
+          return (old || []).filter((p) => p.user_id !== otherId);
+        });
+      }
+
+      // If viewing someone else's Followers tab and I follow them, add myself to list (optional - would need my profile data)
+      // We'll skip adding to list optimistically to avoid needing full profile data here.
+
+      return { prevMyFollowing, prevFollowList };
+    },
+    onError: (_err, { currentlyFollowing }, ctx) => {
+      if (ctx?.prevMyFollowing) qc.setQueryData(["my_following_ids", user?.id], ctx.prevMyFollowing);
+      if (ctx?.prevFollowList) qc.setQueryData(["follow_list", targetId, mode], ctx.prevFollowList);
+      toast({ title: currentlyFollowing ? "Could not unfollow" : "Could not follow", variant: "destructive" });
+    },
+    onSuccess: (_data, { currentlyFollowing }) => {
+      toast({ title: currentlyFollowing ? "Unfollowed" : "Following! 🎉" });
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ["my_following_ids", user?.id] });
+      qc.invalidateQueries({ queryKey: ["follow_list"] });
+      qc.invalidateQueries({ queryKey: ["follower_count"] });
+      qc.invalidateQueries({ queryKey: ["following_count"] });
+      qc.invalidateQueries({ queryKey: ["is_following"] });
+    },
+  });
+
+  const toggleFollow = useCallback(
+    (otherId: string, currentlyFollowing: boolean) => {
+      toggleFollowMutation.mutate({ otherId, currentlyFollowing });
+    },
+    [toggleFollowMutation],
+  );
 
   const headerName = ownerProfile?.display_name || ownerProfile?.username || "User";
 
@@ -263,23 +310,37 @@ export default function FollowList() {
                       </div>
                     </Link>
                     {!isMe && (
-                      <Button
-                        size="sm"
-                        variant={following ? "outline" : "default"}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleFollow(p.user_id, following);
-                        }}
-                        className={`rounded-full h-8 px-3 text-xs ${
-                          following ? "" : "bg-gradient-primary text-primary-foreground"
-                        }`}
-                      >
-                        {following ? (
-                          <><UserMinus className="h-3.5 w-3.5 mr-1" /> Following</>
-                        ) : (
-                          <><UserPlus className="h-3.5 w-3.5 mr-1" /> Follow</>
-                        )}
-                      </Button>
+                      <motion.div layout transition={{ type: "spring", stiffness: 400, damping: 30 }}>
+                        <Button
+                          size="sm"
+                          variant={following ? "outline" : "default"}
+                          disabled={toggleFollowMutation.isPending}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleFollow(p.user_id, following);
+                          }}
+                          className={`rounded-full h-8 px-3 text-xs transition-all active:scale-95 ${
+                            following ? "" : "bg-gradient-primary text-primary-foreground"
+                          }`}
+                        >
+                          <AnimatePresence mode="wait" initial={false}>
+                            <motion.span
+                              key={following ? "following" : "follow"}
+                              initial={{ opacity: 0, y: 4 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -4 }}
+                              transition={{ duration: 0.15 }}
+                              className="flex items-center"
+                            >
+                              {following ? (
+                                <><UserMinus className="h-3.5 w-3.5 mr-1" /> Following</>
+                              ) : (
+                                <><UserPlus className="h-3.5 w-3.5 mr-1" /> Follow</>
+                              )}
+                            </motion.span>
+                          </AnimatePresence>
+                        </Button>
+                      </motion.div>
                     )}
                   </Card>
                 </motion.div>
