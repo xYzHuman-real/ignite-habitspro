@@ -1,8 +1,8 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useParams, useNavigate, useSearchParams, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Search, UserPlus, UserMinus, Users, X } from "lucide-react";
-import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { ArrowLeft, Search, UserPlus, UserMinus, Users, X, Loader2 } from "lucide-react";
+import { useQuery, useQueryClient, useMutation, useInfiniteQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -34,6 +34,8 @@ function isUserPremium(p: ProfileRow) {
   return isTrial || isPaid;
 }
 
+const PAGE_SIZE = 20;
+
 export default function FollowList() {
   const { userId } = useParams<{ userId: string }>();
   const [params] = useSearchParams();
@@ -44,8 +46,10 @@ export default function FollowList() {
   const qc = useQueryClient();
   const [mode, setMode] = useState<Mode>(tabParam);
   const [search, setSearch] = useState("");
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   const targetId = userId || user?.id;
+  const hasSearch = !!search.trim();
 
   const { data: ownerProfile } = useQuery({
     queryKey: ["follow_list_owner", targetId],
@@ -61,8 +65,43 @@ export default function FollowList() {
     enabled: !!targetId,
   });
 
-  const { data: rows = [], isLoading } = useQuery({
-    queryKey: ["follow_list", targetId, mode],
+  // ---- Infinite scroll (no search) ----
+  const {
+    data: infiniteData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: isLoadingInfinite,
+  } = useInfiniteQuery({
+    queryKey: ["follow_list_infinite", targetId, mode],
+    queryFn: async ({ pageParam = 0 }) => {
+      if (!targetId) return { rows: [] as ProfileRow[], nextOffset: null as number | null };
+      const col = mode === "followers" ? "follower_id" : "following_id";
+      const matchCol = mode === "followers" ? "following_id" : "follower_id";
+      const { data: rels } = await supabase
+        .from("followers")
+        .select(`${col}, created_at`)
+        .eq(matchCol, targetId)
+        .order("created_at", { ascending: false })
+        .range(pageParam, pageParam + PAGE_SIZE - 1);
+      const ids = (rels || []).map((r: any) => r[col]).filter(Boolean);
+      if (!ids.length) return { rows: [] as ProfileRow[], nextOffset: null };
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, username, avatar_url, subscription_tier, premium_until, trial_ends_at")
+        .in("user_id", ids);
+      const map = new Map((profiles || []).map((p: any) => [p.user_id, p]));
+      const rows = ids.map((id) => map.get(id)).filter(Boolean) as ProfileRow[];
+      const nextOffset = (rels || []).length === PAGE_SIZE ? pageParam + PAGE_SIZE : null;
+      return { rows, nextOffset };
+    },
+    getNextPageParam: (lastPage) => lastPage.nextOffset,
+    enabled: !!targetId && !hasSearch,
+  });
+
+  // ---- Full load (when searching) ----
+  const { data: fullRows = [], isLoading: isLoadingFull } = useQuery({
+    queryKey: ["follow_list_full", targetId, mode],
     queryFn: async () => {
       if (!targetId) return [];
       const col = mode === "followers" ? "follower_id" : "following_id";
@@ -81,8 +120,13 @@ export default function FollowList() {
       const map = new Map((profiles || []).map((p: any) => [p.user_id, p]));
       return ids.map((id) => map.get(id)).filter(Boolean) as ProfileRow[];
     },
-    enabled: !!targetId,
+    enabled: !!targetId && hasSearch,
   });
+
+  const rawRows = hasSearch
+    ? fullRows
+    : (infiniteData?.pages.flatMap((p) => p.rows) ?? []);
+  const isLoading = hasSearch ? isLoadingFull : isLoadingInfinite;
 
   const { data: myFollowing = [] } = useQuery({
     queryKey: ["my_following_ids", user?.id],
@@ -97,13 +141,40 @@ export default function FollowList() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter(
+    if (!q) return rawRows;
+    return rawRows.filter(
       (p) =>
         (p.display_name || "").toLowerCase().includes(q) ||
         (p.username || "").toLowerCase().includes(q),
     );
-  }, [rows, search]);
+  }, [rawRows, search]);
+
+  // Infinite scroll sentinel
+  useEffect(() => {
+    if (hasSearch || !hasNextPage || isFetchingNextPage) return;
+    const node = sentinelRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          fetchNextPage();
+        }
+      },
+      { rootMargin: "200px" },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [hasSearch, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  // Invalidate both list queries on mutations
+  const invalidateLists = useCallback(() => {
+    qc.invalidateQueries({ queryKey: ["follow_list_infinite"] });
+    qc.invalidateQueries({ queryKey: ["follow_list_full"] });
+    qc.invalidateQueries({ queryKey: ["my_following_ids", user?.id] });
+    qc.invalidateQueries({ queryKey: ["follower_count"] });
+    qc.invalidateQueries({ queryKey: ["following_count"] });
+    qc.invalidateQueries({ queryKey: ["is_following"] });
+  }, [qc, user?.id]);
 
   const toggleFollowMutation = useMutation({
     mutationFn: async ({ otherId, currentlyFollowing }: { otherId: string; currentlyFollowing: boolean }) => {
@@ -118,15 +189,16 @@ export default function FollowList() {
     },
     onMutate: async ({ otherId, currentlyFollowing }) => {
       await qc.cancelQueries({ queryKey: ["my_following_ids", user?.id] });
-      await qc.cancelQueries({ queryKey: ["follow_list"] });
+      await qc.cancelQueries({ queryKey: ["follow_list_infinite"] });
+      await qc.cancelQueries({ queryKey: ["follow_list_full"] });
       await qc.cancelQueries({ queryKey: ["follower_count"] });
       await qc.cancelQueries({ queryKey: ["following_count"] });
       await qc.cancelQueries({ queryKey: ["is_following"] });
 
       const prevMyFollowing = qc.getQueryData<string[]>(["my_following_ids", user?.id]);
-      const prevFollowList = qc.getQueryData<ProfileRow[]>(["follow_list", targetId, mode]);
+      const prevInfinite = qc.getQueryData<{ pages: { rows: ProfileRow[]; nextOffset: number | null }[] }>(["follow_list_infinite", targetId, mode]);
+      const prevFull = qc.getQueryData<ProfileRow[]>(["follow_list_full", targetId, mode]);
 
-      // Optimistically update my following IDs
       qc.setQueryData(["my_following_ids", user?.id], (old: string[] | undefined) => {
         if (!old) return currentlyFollowing ? [] : [otherId];
         if (currentlyFollowing) return old.filter((id) => id !== otherId);
@@ -134,32 +206,35 @@ export default function FollowList() {
         return [...old, otherId];
       });
 
-      // If viewing my own Following tab and unfollowing, remove from list immediately
       if (mode === "following" && targetId === user?.id && currentlyFollowing) {
-        qc.setQueryData(["follow_list", targetId, mode], (old: ProfileRow[] | undefined) => {
+        qc.setQueryData(["follow_list_infinite", targetId, mode], (old: any) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pages: old.pages.map((page: any) => ({
+              ...page,
+              rows: page.rows.filter((p: ProfileRow) => p.user_id !== otherId),
+            })),
+          };
+        });
+        qc.setQueryData(["follow_list_full", targetId, mode], (old: ProfileRow[] | undefined) => {
           return (old || []).filter((p) => p.user_id !== otherId);
         });
       }
 
-      // If viewing someone else's Followers tab and I follow them, add myself to list (optional - would need my profile data)
-      // We'll skip adding to list optimistically to avoid needing full profile data here.
-
-      return { prevMyFollowing, prevFollowList };
+      return { prevMyFollowing, prevInfinite, prevFull };
     },
     onError: (_err, { currentlyFollowing }, ctx) => {
       if (ctx?.prevMyFollowing) qc.setQueryData(["my_following_ids", user?.id], ctx.prevMyFollowing);
-      if (ctx?.prevFollowList) qc.setQueryData(["follow_list", targetId, mode], ctx.prevFollowList);
+      if (ctx?.prevInfinite) qc.setQueryData(["follow_list_infinite", targetId, mode], ctx.prevInfinite);
+      if (ctx?.prevFull) qc.setQueryData(["follow_list_full", targetId, mode], ctx.prevFull);
       toast({ title: currentlyFollowing ? "Could not unfollow" : "Could not follow", variant: "destructive" });
     },
     onSuccess: (_data, { currentlyFollowing }) => {
       toast({ title: currentlyFollowing ? "Unfollowed" : "Following! 🎉" });
     },
     onSettled: () => {
-      qc.invalidateQueries({ queryKey: ["my_following_ids", user?.id] });
-      qc.invalidateQueries({ queryKey: ["follow_list"] });
-      qc.invalidateQueries({ queryKey: ["follower_count"] });
-      qc.invalidateQueries({ queryKey: ["following_count"] });
-      qc.invalidateQueries({ queryKey: ["is_following"] });
+      invalidateLists();
     },
   });
 
@@ -347,6 +422,15 @@ export default function FollowList() {
               );
             })}
           </AnimatePresence>
+        )}
+
+        {/* Infinite scroll sentinel */}
+        {!hasSearch && (
+          <div ref={sentinelRef} className="h-10 flex items-center justify-center">
+            {isFetchingNextPage && (
+              <Loader2 className="h-5 w-5 text-muted-foreground animate-spin" />
+            )}
+          </div>
         )}
       </div>
     </div>
