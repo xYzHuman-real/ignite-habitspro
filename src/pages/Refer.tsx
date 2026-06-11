@@ -24,15 +24,19 @@ export default function Refer() {
   const referralCode: string = (profile as any)?.referral_code ?? "";
   const referredBy: string | null = (profile as any)?.referred_by_code ?? null;
 
+  const appLink = "https://ignite-habitspro.lovable.app";
+
   const shareUrl = useMemo(() => {
-    if (!referralCode) return "";
-    return `${window.location.origin}/auth?ref=${referralCode}`;
+    if (!referralCode) return appLink;
+    return `${appLink}/auth?ref=${referralCode}`;
   }, [referralCode]);
 
-  const shareText = `🔥 Build life-changing habits with Ignite HabitPro! Use my code ${referralCode} when you sign up and we both get 1 month of Premium FREE.\n\n${shareUrl}`;
+  const shareText = useMemo(() => {
+    return `🔥 Join me on Ignite Habit Pro and start building better habits, stronger focus, and unstoppable consistency.\n\n🎁 Use my referral code: ${referralCode}\n\nWhen you sign up using my code:\n✅ You get 1 Month Premium FREE\n✅ I get rewards too\n\nBuild habits.\nStay focused.\nGrow your streak.\n\n🚀 Download Ignite Habit Pro:\n${shareUrl}`;
+  }, [referralCode, shareUrl]);
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(shareUrl);
+    await navigator.clipboard.writeText(shareText);
     setCopied(true);
     toast({ title: "Link copied!", description: "Share it with friends to earn free Premium." });
     setTimeout(() => setCopied(false), 2000);
@@ -41,7 +45,7 @@ export default function Refer() {
   const handleShare = async () => {
     if (navigator.share) {
       try {
-        await navigator.share({ title: "Ignite HabitPro", text: shareText, url: shareUrl });
+        await navigator.share({ title: "Ignite Habit Pro", text: shareText });
       } catch {/* user cancelled */}
     } else {
       handleCopy();
