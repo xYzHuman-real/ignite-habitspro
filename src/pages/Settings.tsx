@@ -4,7 +4,7 @@ import {
   Eye, EyeOff, Camera, Flame, Bell,
   Globe, Lock, ShieldCheck, Smartphone, Zap,
   ChevronRight, ArrowLeft, Download, Trash2, Mail, BarChart3,
-  Volume2, Clock, Target, BookOpen, Trophy, LogOut, Crown
+  Volume2, Clock, Target, BookOpen, Trophy, LogOut, Crown, Gift
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
