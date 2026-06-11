@@ -17,6 +17,8 @@ import { getLevelForPoints, getNextLevel, getProgressToNext } from "@/lib/xp-lev
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { UsernameField } from "@/components/UsernameField";
+import { PremiumBadge } from "@/components/PremiumBadge";
+import { usePremium } from "@/lib/use-premium";
 
 export default function Profile() {
   const { signOut, user } = useAuth();
@@ -27,6 +29,7 @@ export default function Profile() {
   const { followerCount, followingCount } = useFollowers();
   const { claimDaily, todayLogin, isClaiming } = useDailyLogin();
   const { toast } = useToast();
+  const { isPremium, isPaid, isTrial } = usePremium();
   const [editing, setEditing] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [form, setForm] = useState({ display_name: "", username: "", bio: "" });
@@ -199,8 +202,17 @@ export default function Profile() {
                   />
                 </div>
                 <div className="text-center sm:text-left flex-1">
-                  <h1 className="text-2xl font-display font-bold">{profile.display_name || "Set up your profile"}</h1>
-                  <div className="flex items-center gap-2 mt-0.5">
+                  <div className="flex items-center gap-2 justify-center sm:justify-start flex-wrap">
+                    <h1 className="text-2xl font-display font-bold">{profile.display_name || "Set up your profile"}</h1>
+                    {isPremium && (
+                      <PremiumBadge
+                        size="sm"
+                        label={isPaid ? "Premium" : "Trial"}
+                        onClick={() => navigate("/pricing")}
+                      />
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 mt-0.5 justify-center sm:justify-start flex-wrap">
                     <p className="text-muted-foreground text-sm">{profile.username ? `@${profile.username}` : "No username set"}</p>
                     <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
                       {currentLevel.icon} Lv.{currentLevel.level} {(profile as any).title || currentLevel.title}
