@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { FakePlayPurchaseSheet, PurchaseResult } from "@/components/FakePlayPurchaseSheet";
 import { CancelPremiumSheet, CancelResult } from "@/components/CancelPremiumSheet";
 import { celebratePremium } from "@/lib/celebrate";
+import { PremiumWelcomeDialog } from "@/components/PremiumWelcomeDialog";
 
 type Plan = "monthly" | "yearly";
 
@@ -52,6 +53,7 @@ export default function Pricing() {
   const [upgrading, setUpgrading] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [welcomeOpen, setWelcomeOpen] = useState(false);
   const [history, setHistory] = useState<HistoryRow[]>([]);
   const qc = useQueryClient();
 
@@ -111,6 +113,7 @@ export default function Pricing() {
 
         await qc.invalidateQueries({ queryKey: ["profile", user!.id] });
         celebratePremium();
+        setWelcomeOpen(true);
         toast({
           title: "Welcome to Premium! 🎉",
           description: `Receipt ${result.receiptId} · active until ${until.toLocaleDateString()}.`,
@@ -380,6 +383,13 @@ export default function Pricing() {
         premiumUntil={premiumUntil}
         onConfirm={completeCancellation}
       />
+
+      <PremiumWelcomeDialog
+        open={welcomeOpen}
+        onOpenChange={setWelcomeOpen}
+        onExplore={() => navigate("/")}
+      />
+
 
     </div>
   );
