@@ -49,7 +49,24 @@ export default function Pricing() {
   const [plan, setPlan] = useState<Plan>("yearly");
   const [upgrading, setUpgrading] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [history, setHistory] = useState<HistoryRow[]>([]);
   const qc = useQueryClient();
+
+  const loadHistory = async () => {
+    if (!user) return;
+    const { data } = await (supabase as any)
+      .from("subscription_history")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(10);
+    if (data) setHistory(data as HistoryRow[]);
+  };
+
+  useEffect(() => {
+    loadHistory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   const startPurchase = () => {
     if (!user) {
@@ -59,30 +76,50 @@ export default function Pricing() {
     setSheetOpen(true);
   };
 
-  const completePurchase = async () => {
+  const completePurchase = async (result: PurchaseResult) => {
     setUpgrading(true);
     try {
-      // FAKE Google Play purchase — replace this block with real purchase-token
-      // verification (Google Play Billing → verify-google-purchase edge function).
-      const months = plan === "yearly" ? 12 : 1;
-      const until = new Date();
-      until.setMonth(until.getMonth() + months);
-
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          subscription_tier: "premium",
-          subscription_plan: plan,
-          premium_until: until.toISOString(),
-        })
-        .eq("user_id", user!.id);
-      if (error) throw error;
-
-      await qc.invalidateQueries({ queryKey: ["profile", user!.id] });
-      toast({
-        title: "Welcome to Premium! 🎉",
-        description: `Your ${plan} plan is active until ${until.toLocaleDateString()}.`,
+      // 1. Always log the attempt to subscription_history (success OR failed)
+      await (supabase as any).from("subscription_history").insert({
+        user_id: user!.id,
+        plan,
+        amount_inr: PRICES[plan].inr,
+        receipt_id: result.receiptId,
+        status: result.status,
+        failure_reason: result.failureReason ?? null,
+        provider: "google_play_sandbox",
       });
+
+      // 2. Only unlock Premium on a successful purchase
+      if (result.status === "success") {
+        const months = plan === "yearly" ? 12 : 1;
+        const until = new Date();
+        until.setMonth(until.getMonth() + months);
+
+        const { error } = await supabase
+          .from("profiles")
+          .update({
+            subscription_tier: "premium",
+            subscription_plan: plan,
+            premium_until: until.toISOString(),
+          })
+          .eq("user_id", user!.id);
+        if (error) throw error;
+
+        await qc.invalidateQueries({ queryKey: ["profile", user!.id] });
+        toast({
+          title: "Welcome to Premium! 🎉",
+          description: `Receipt ${result.receiptId} · active until ${until.toLocaleDateString()}.`,
+        });
+      } else {
+        toast({
+          title: "Purchase failed",
+          description: `${result.failureCode}: ${result.failureReason} Premium not activated.`,
+          variant: "destructive",
+        });
+      }
+
+      await loadHistory();
     } catch (e: any) {
       toast({ title: "Upgrade failed", description: e.message, variant: "destructive" });
     } finally {
