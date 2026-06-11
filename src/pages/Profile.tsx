@@ -315,6 +315,50 @@ export default function Profile() {
         </Card>
       </motion.div>
 
+      {!editing && !isPaid && (
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: "easeOut" }}
+        >
+          <button
+            type="button"
+            onClick={() => navigate("/pricing")}
+            className="w-full text-left rounded-2xl p-5 relative overflow-hidden border border-primary/30 bg-gradient-to-br from-primary/15 via-accent/10 to-transparent hover:border-primary/60 transition-colors active:scale-[0.99]"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-glow-primary shrink-0">
+                <Crown className="h-6 w-6 text-primary-foreground" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="font-display font-bold text-base">
+                    {isTrial ? "Keep Premium after your trial" : "Upgrade to Premium"}
+                  </p>
+                  {isTrial && (
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/15 text-primary">
+                      {trialDaysLeft} {trialDaysLeft === 1 ? "day" : "days"} left
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {isTrial
+                    ? "Subscribe now so you don't lose unlimited habits, AI planner & ad-free focus."
+                    : "Unlock unlimited habits, AI planner, focus rooms & the Premium badge — from ₹83/mo."}
+                </p>
+              </div>
+              <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+                <ArrowRight className="h-4 w-4 text-primary" />
+              </div>
+            </div>
+            <div className="mt-4 flex items-center gap-2 text-[11px] text-muted-foreground">
+              <Sparkles className="h-3.5 w-3.5 text-primary" />
+              <span>Premium unlocks instantly after payment — badge & features appear automatically.</span>
+            </div>
+          </button>
+        </motion.div>
+      )}
+
       {!editing && earnedBadges.length > 0 && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <Card className="p-5">
