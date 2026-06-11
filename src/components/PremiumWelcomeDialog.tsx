@@ -123,7 +123,7 @@ export function PremiumWelcomeDialog({ open, onOpenChange, onExplore, onDontShow
   const ActiveIcon = CARDS[card].icon;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-md p-0 overflow-hidden border-0 bg-transparent shadow-none">
         <div className="relative rounded-2xl overflow-hidden bg-gradient-to-b from-background via-background to-background border border-amber-400/30">
           {/* Glow background */}
@@ -259,6 +259,26 @@ export function PremiumWelcomeDialog({ open, onOpenChange, onExplore, onDontShow
               </div>
             </div>
 
+            {/* Don't show again */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3, delay: 0.35 }}
+              className="flex items-center gap-2 px-1"
+            >
+              <button
+                onClick={() => setDontShow((v) => !v)}
+                className={cn(
+                  "w-4 h-4 rounded border flex items-center justify-center transition",
+                  dontShow ? "bg-amber-500 border-amber-500" : "border-muted-foreground/40"
+                )}
+                aria-label="Don't show this again"
+              >
+                {dontShow && <Check className="w-3 h-3 text-white" />}
+              </button>
+              <span className="text-xs text-muted-foreground">Don't show this again</span>
+            </motion.div>
+
             {/* CTA */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
@@ -269,7 +289,8 @@ export function PremiumWelcomeDialog({ open, onOpenChange, onExplore, onDontShow
                 size="lg"
                 className="w-full h-12 text-base font-semibold bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 hover:opacity-95 text-white border-0 shadow-[0_8px_30px_-5px_rgba(251,146,60,0.6)]"
                 onClick={() => {
-                  onOpenChange(false);
+                  if (dontShow) onDontShowAgain?.();
+                  handleClose(false);
                   onExplore?.();
                 }}
               >
