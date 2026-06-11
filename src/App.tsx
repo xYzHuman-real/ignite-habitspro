@@ -91,6 +91,8 @@ function ProtectedRoutes() {
           <Route path="/partners" element={<Partners />} />
           <Route path="/focus-rooms" element={<FocusRooms />} />
           <Route path="/user/:userId" element={<UserProfile />} />
+          <Route path="/user/:userId/follows" element={<FollowList />} />
+          <Route path="/follows" element={<FollowList />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/daily-planner" element={<DailyPlanner />} />
