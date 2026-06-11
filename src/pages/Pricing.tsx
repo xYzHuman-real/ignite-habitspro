@@ -204,11 +204,18 @@ export default function Pricing() {
           className="mb-4 p-3 rounded-xl bg-gradient-to-r from-primary/15 to-accent/10 border border-primary/30 flex items-center gap-3"
         >
           <Crown className="h-5 w-5 text-primary shrink-0" />
-          <p className="text-sm">
+          <p className="text-sm flex-1 min-w-0">
             <span className="font-semibold capitalize">{currentPlan}</span> Premium · renews {premiumUntil?.toLocaleDateString()}
           </p>
+          <button
+            onClick={() => setCancelOpen(true)}
+            className="text-xs font-semibold text-destructive hover:underline shrink-0"
+          >
+            Cancel
+          </button>
         </motion.div>
       )}
+
 
       {/* Plan toggle */}
       <div className="mb-4 grid grid-cols-2 gap-2 p-1 rounded-xl bg-muted/50">
