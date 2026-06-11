@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Handshake, Send, UserPlus, Bell, Trash2, Check, X, Flame, Trophy, Target, Clock } from "lucide-react";
+import { Handshake, Send, UserPlus, Bell, Trash2, Check, X, Flame, Trophy, Target, Clock, Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { usePartners } from "@/lib/use-partners";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
@@ -247,6 +248,23 @@ export default function Partners() {
         <h2 className="text-lg font-display font-semibold mb-3 flex items-center gap-2">
           <Flame className="h-5 w-5 text-primary" /> Your Partners
           {accepted.length > 0 && <Badge variant="secondary">{accepted.length}</Badge>}
+          <TooltipProvider delayDuration={100}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button className="ml-auto text-muted-foreground hover:text-primary transition-colors">
+                  <Info className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs space-y-2 p-3">
+                <p className="font-semibold text-sm">How Shared Streak Works</p>
+                <ul className="text-xs space-y-1 text-muted-foreground list-disc pl-3">
+                  <li>A shared streak counts consecutive days where <strong>both</strong> you and your partner completed at least one habit or focus session.</li>
+                  <li><strong>Grace day:</strong> Today is a grace period — if either of you hasn't been active yet, the streak won't break. You still have time!</li>
+                  <li>If either partner misses a day (excluding today), the shared streak resets to zero.</li>
+                </ul>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </h2>
 
         {accepted.length === 0 ? (
