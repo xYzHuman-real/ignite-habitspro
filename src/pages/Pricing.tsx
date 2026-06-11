@@ -110,6 +110,7 @@ export default function Pricing() {
         if (error) throw error;
 
         await qc.invalidateQueries({ queryKey: ["profile", user!.id] });
+        celebratePremium();
         toast({
           title: "Welcome to Premium! 🎉",
           description: `Receipt ${result.receiptId} · active until ${until.toLocaleDateString()}.`,
