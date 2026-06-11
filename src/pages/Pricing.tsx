@@ -131,7 +131,43 @@ export default function Pricing() {
     }
   };
 
+  const completeCancellation = async (result: CancelResult) => {
+    if (!user) return;
+    try {
+      await (supabase as any).from("subscription_history").insert({
+        user_id: user.id,
+        plan: currentPlan ?? "monthly",
+        amount_inr: 0,
+        receipt_id: result.receiptId,
+        status: "cancelled",
+        failure_reason: result.reason ? `Reason: ${result.reason}` : null,
+        provider: "google_play_sandbox",
+      });
+
+      // Immediately revoke Premium access so gating turns off right away.
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          subscription_tier: "free",
+          subscription_plan: null,
+          premium_until: new Date().toISOString(),
+        })
+        .eq("user_id", user.id);
+      if (error) throw error;
+
+      await qc.invalidateQueries({ queryKey: ["profile", user.id] });
+      await loadHistory();
+      toast({
+        title: "Subscription cancelled",
+        description: "Premium has been turned off. You can resubscribe anytime.",
+      });
+    } catch (e: any) {
+      toast({ title: "Cancellation failed", description: e.message, variant: "destructive" });
+    }
+  };
+
   const current = PRICES[plan];
+
 
   return (
     <div className="max-w-2xl mx-auto pb-24">
