@@ -384,6 +384,13 @@ export default function Pricing() {
         onConfirm={completeCancellation}
       />
 
+      <PremiumWelcomeDialog
+        open={welcomeOpen}
+        onOpenChange={setWelcomeOpen}
+        onExplore={() => navigate("/")}
+      />
+
+
     </div>
   );
 }
