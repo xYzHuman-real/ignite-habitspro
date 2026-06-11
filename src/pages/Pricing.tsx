@@ -90,15 +90,19 @@ export default function Pricing() {
     setUpgrading(true);
     try {
       // 1. Always log the attempt to subscription_history (success OR failed)
-      await (supabase as any).from("subscription_history").insert({
-        user_id: user!.id,
-        plan,
-        amount_inr: PRICES[plan].inr,
-        receipt_id: result.receiptId,
-        status: result.status,
-        failure_reason: result.failureReason ?? null,
-        provider: "google_play_sandbox",
-      });
+      const { data: historyRow } = await (supabase as any)
+        .from("subscription_history")
+        .insert({
+          user_id: user!.id,
+          plan,
+          amount_inr: PRICES[plan].inr,
+          receipt_id: result.receiptId,
+          status: result.status,
+          failure_reason: result.failureReason ?? null,
+          provider: "google_play_sandbox",
+        })
+        .select("id")
+        .single();
 
       // 2. Only unlock Premium on a successful purchase
       if (result.status === "success") {
@@ -118,7 +122,10 @@ export default function Pricing() {
 
         await qc.invalidateQueries({ queryKey: ["profile", user!.id] });
         celebratePremium();
-        if (!welcomeDismissed) {
+        const purchaseId: string | null = historyRow?.id ?? null;
+        const lastSeen = localStorage.getItem(WELCOME_SEEN_KEY);
+        if (purchaseId && purchaseId !== lastSeen) {
+          setPendingWelcomePurchaseId(purchaseId);
           setWelcomeOpen(true);
         }
         toast({
