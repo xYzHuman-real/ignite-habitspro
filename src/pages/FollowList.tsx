@@ -105,22 +105,70 @@ export default function FollowList() {
     );
   }, [rows, search]);
 
-  const toggleFollow = async (otherId: string, currentlyFollowing: boolean) => {
-    if (!user?.id || otherId === user.id) return;
-    if (currentlyFollowing) {
-      const { error } = await supabase.from("followers").delete().eq("follower_id", user.id).eq("following_id", otherId);
-      if (error) return toast({ title: "Could not unfollow", variant: "destructive" });
-      toast({ title: "Unfollowed" });
-    } else {
-      const { error } = await supabase.from("followers").insert({ follower_id: user.id, following_id: otherId });
-      if (error) return toast({ title: "Could not follow", variant: "destructive" });
-      toast({ title: "Following! 🎉" });
-    }
-    qc.invalidateQueries({ queryKey: ["my_following_ids", user.id] });
-    qc.invalidateQueries({ queryKey: ["follower_count"] });
-    qc.invalidateQueries({ queryKey: ["following_count"] });
-    qc.invalidateQueries({ queryKey: ["is_following"] });
-  };
+  const toggleFollowMutation = useMutation({
+    mutationFn: async ({ otherId, currentlyFollowing }: { otherId: string; currentlyFollowing: boolean }) => {
+      if (!user?.id || otherId === user.id) throw new Error("Invalid action");
+      if (currentlyFollowing) {
+        const { error } = await supabase.from("followers").delete().eq("follower_id", user.id).eq("following_id", otherId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("followers").insert({ follower_id: user.id, following_id: otherId });
+        if (error) throw error;
+      }
+    },
+    onMutate: async ({ otherId, currentlyFollowing }) => {
+      await qc.cancelQueries({ queryKey: ["my_following_ids", user?.id] });
+      await qc.cancelQueries({ queryKey: ["follow_list"] });
+      await qc.cancelQueries({ queryKey: ["follower_count"] });
+      await qc.cancelQueries({ queryKey: ["following_count"] });
+      await qc.cancelQueries({ queryKey: ["is_following"] });
+
+      const prevMyFollowing = qc.getQueryData<string[]>(["my_following_ids", user?.id]);
+      const prevFollowList = qc.getQueryData<ProfileRow[]>(["follow_list", targetId, mode]);
+
+      // Optimistically update my following IDs
+      qc.setQueryData(["my_following_ids", user?.id], (old: string[] | undefined) => {
+        if (!old) return currentlyFollowing ? [] : [otherId];
+        if (currentlyFollowing) return old.filter((id) => id !== otherId);
+        if (old.includes(otherId)) return old;
+        return [...old, otherId];
+      });
+
+      // If viewing my own Following tab and unfollowing, remove from list immediately
+      if (mode === "following" && targetId === user?.id && currentlyFollowing) {
+        qc.setQueryData(["follow_list", targetId, mode], (old: ProfileRow[] | undefined) => {
+          return (old || []).filter((p) => p.user_id !== otherId);
+        });
+      }
+
+      // If viewing someone else's Followers tab and I follow them, add myself to list (optional - would need my profile data)
+      // We'll skip adding to list optimistically to avoid needing full profile data here.
+
+      return { prevMyFollowing, prevFollowList };
+    },
+    onError: (_err, { currentlyFollowing }, ctx) => {
+      if (ctx?.prevMyFollowing) qc.setQueryData(["my_following_ids", user?.id], ctx.prevMyFollowing);
+      if (ctx?.prevFollowList) qc.setQueryData(["follow_list", targetId, mode], ctx.prevFollowList);
+      toast({ title: currentlyFollowing ? "Could not unfollow" : "Could not follow", variant: "destructive" });
+    },
+    onSuccess: (_data, { currentlyFollowing }) => {
+      toast({ title: currentlyFollowing ? "Unfollowed" : "Following! 🎉" });
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ["my_following_ids", user?.id] });
+      qc.invalidateQueries({ queryKey: ["follow_list"] });
+      qc.invalidateQueries({ queryKey: ["follower_count"] });
+      qc.invalidateQueries({ queryKey: ["following_count"] });
+      qc.invalidateQueries({ queryKey: ["is_following"] });
+    },
+  });
+
+  const toggleFollow = useCallback(
+    (otherId: string, currentlyFollowing: boolean) => {
+      toggleFollowMutation.mutate({ otherId, currentlyFollowing });
+    },
+    [toggleFollowMutation],
+  );
 
   const headerName = ownerProfile?.display_name || ownerProfile?.username || "User";
 
