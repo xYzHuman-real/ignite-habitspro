@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
 import { SplashScreen } from "@/components/SplashScreen";
 import { OnboardingCarousel, hasSeenOnboarding } from "@/components/OnboardingCarousel";
+import { PermissionPrimerFlow, hasCompletedPermissionPrimer } from "@/components/PermissionPrimerFlow";
 import { SignupBenefitsDialog, isGuest } from "@/components/SignupBenefitsDialog";
 
 const Habits = lazy(() => import("./pages/Habits"));
@@ -106,8 +107,10 @@ function AuthRoute() {
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(() => !hasSeenOnboarding());
+  const [showPermissions, setShowPermissions] = useState(() => !hasCompletedPermissionPrimer());
   const handleSplashFinish = useCallback(() => setShowSplash(false), []);
   const handleOnboardingFinish = useCallback(() => setShowOnboarding(false), []);
+  const handlePermissionsFinish = useCallback(() => setShowPermissions(false), []);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -116,6 +119,9 @@ const App = () => {
         <Sonner />
         {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
         {!showSplash && showOnboarding && <OnboardingCarousel onFinish={handleOnboardingFinish} />}
+        {!showSplash && !showOnboarding && showPermissions && (
+          <PermissionPrimerFlow onFinish={handlePermissionsFinish} />
+        )}
         <BrowserRouter>
           <AuthProvider>
             <Suspense fallback={<RouteFallback />}>

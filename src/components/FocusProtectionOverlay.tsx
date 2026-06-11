@@ -1,7 +1,8 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Shield, ArrowLeft } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
+import { startBlockedAppMonitor } from "@/lib/blocked-app-monitor";
 
 const TIMER_STORAGE_KEY = "timer_state";
 
@@ -34,6 +35,7 @@ function endFocusSession() {
 export function FocusProtectionOverlay() {
   const [visible, setVisible] = useState(false);
   const [wasHidden, setWasHidden] = useState(false);
+  const monitorStopRef = useRef<null | (() => void)>(null);
   const message = useMemo(
     () => MESSAGES[Math.floor(Math.random() * MESSAGES.length)],
     [visible]
@@ -69,6 +71,31 @@ export function FocusProtectionOverlay() {
       cleanup?.();
     };
   }, [wasHidden]);
+
+  // Native blocked-app monitor: poll foreground app while a focus session is
+  // active and surface the overlay when a blocked package is opened.
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    let cancelled = false;
+    const tick = async () => {
+      if (cancelled) return;
+      const active = isFocusActive();
+      if (active && !monitorStopRef.current) {
+        monitorStopRef.current = await startBlockedAppMonitor(() => setVisible(true));
+      } else if (!active && monitorStopRef.current) {
+        monitorStopRef.current();
+        monitorStopRef.current = null;
+      }
+    };
+    tick();
+    const interval = window.setInterval(tick, 5000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+      monitorStopRef.current?.();
+      monitorStopRef.current = null;
+    };
+  }, []);
 
   if (!visible) return null;
 
