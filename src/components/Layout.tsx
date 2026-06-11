@@ -4,6 +4,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { NotificationBell } from "@/components/NotificationBell";
 import { BottomNav } from "@/components/BottomNav";
 import { SidebarTutorial } from "@/components/SidebarTutorial";
+import { FocusProtectionOverlay } from "@/components/FocusProtectionOverlay";
 import { useTheme } from "@/lib/store";
 import { useStreakAlerts } from "@/lib/use-streak-alerts";
 import { usePushNotifications } from "@/lib/use-push-notifications";
@@ -44,6 +45,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </div>
+      <FocusProtectionOverlay />
     </SidebarProvider>
   );
 }

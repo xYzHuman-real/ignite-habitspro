@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { motion, useMotionValue, useTransform, useAnimation, PanInfo } from "framer-motion";
+import { hapticLight, hapticMedium, hapticSuccess } from "@/lib/haptics";
 import { Check, Trash2, ChevronDown, Plus, Pencil, X, Calendar, Repeat, Zap, Paperclip, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,17 +41,27 @@ export function TodoCard({ todo, subtasks, onToggle, onDelete, onEdit, onAddSubt
   const rightBg = useTransform(x, [0, 100], [0, 1]);
   const leftBg = useTransform(x, [-100, 0], [1, 0]);
 
+  const crossed = useRef<"none" | "right" | "left">("none");
+  x.on("change", (v) => {
+    if (v > 60 && crossed.current !== "right") { crossed.current = "right"; hapticLight(); }
+    else if (v < -60 && crossed.current !== "left") { crossed.current = "left"; hapticLight(); }
+    else if (v > -30 && v < 30) { crossed.current = "none"; }
+  });
+
   const handleDragEnd = (_: any, info: PanInfo) => {
     const future = todo.due_date && !todo.completed && !isToday(new Date(todo.due_date)) && new Date(todo.due_date) > new Date();
-    if (info.offset.x > 100 && !todo.completed && !future) {
-      controls.start({ x: 0, transition: { duration: 0.2 } });
+    if (info.offset.x > 90 && !todo.completed && !future) {
+      controls.start({ x: 0, transition: { type: "spring", stiffness: 500, damping: 40 } });
+      hapticSuccess();
       onToggle(todo);
-    } else if (info.offset.x < -100) {
-      controls.start({ x: -400, opacity: 0, transition: { duration: 0.3 } }).then(() => onDelete(todo.id));
+    } else if (info.offset.x < -90) {
+      hapticMedium();
+      controls.start({ x: -400, opacity: 0, transition: { duration: 0.25, ease: [0.4, 0, 0.2, 1] } }).then(() => onDelete(todo.id));
       return;
     } else {
-      controls.start({ x: 0, transition: { duration: 0.2 } });
+      controls.start({ x: 0, transition: { type: "spring", stiffness: 500, damping: 40 } });
     }
+    crossed.current = "none";
   };
 
   const isOverdue = todo.due_date && !todo.completed && isPast(new Date(todo.due_date)) && !isToday(new Date(todo.due_date));
@@ -62,6 +73,7 @@ export function TodoCard({ todo, subtasks, onToggle, onDelete, onEdit, onAddSubt
 
   const handleToggle = () => {
     if (isFuture) return;
+    hapticSuccess();
     onToggle(todo);
   };
 
@@ -88,7 +100,7 @@ export function TodoCard({ todo, subtasks, onToggle, onDelete, onEdit, onAddSubt
         animate={controls}
         drag="x"
         dragConstraints={{ left: -120, right: 120 }}
-        dragElastic={0.1}
+        dragElastic={0.05}
         dragDirectionLock
         onDragEnd={handleDragEnd}
         className={`relative bg-card rounded-2xl shadow-sm border ${isOverdue ? "border-destructive/40" : "border-border/30"} ${todo.completed ? "opacity-50" : ""}`}
