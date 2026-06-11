@@ -70,13 +70,21 @@ const CARDS = [
   },
 ];
 
-export function PremiumWelcomeDialog({ open, onOpenChange, onExplore }: Props) {
+export function PremiumWelcomeDialog({ open, onOpenChange, onExplore, onDontShowAgain }: Props) {
   const [card, setCard] = useState(0);
   const [dir, setDir] = useState(1);
+  const [dontShow, setDontShow] = useState(false);
 
   useEffect(() => {
     if (open) setCard(0);
   }, [open]);
+
+  const handleClose = (nextOpen: boolean) => {
+    if (!nextOpen && dontShow) {
+      onDontShowAgain?.();
+    }
+    onOpenChange(nextOpen);
+  };
 
   // Optional premium success sound
   useEffect(() => {
