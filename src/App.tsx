@@ -118,6 +118,11 @@ const App = () => {
   const handleOnboardingFinish = useCallback(() => setShowOnboarding(false), []);
   const handlePermissionsFinish = useCallback(() => setShowPermissions(false), []);
 
+  useEffect(() => {
+    captureReferralFromUrl();
+  }, []);
+
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
