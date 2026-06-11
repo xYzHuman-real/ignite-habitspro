@@ -25,6 +25,7 @@ const Profile = lazy(() => import("./pages/Profile"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Shop = lazy(() => import("./pages/Shop"));
 const UserProfile = lazy(() => import("./pages/UserProfile"));
+const FollowList = lazy(() => import("./pages/FollowList"));
 const WeeklyReport = lazy(() => import("./pages/WeeklyReport"));
 const Journal = lazy(() => import("./pages/Journal"));
 const GoalsPage = lazy(() => import("./pages/Goals"));
