@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Check, Sparkles, Crown, Zap, Users, BarChart3, Palette, Shield, Headphones, Infinity as InfinityIcon } from "lucide-react";
+import { ArrowLeft, Check, Sparkles, Crown, Zap, Users, BarChart3, Palette, Shield, Headphones, Infinity as InfinityIcon, Gift } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
+import { FakePlayPurchaseSheet } from "@/components/FakePlayPurchaseSheet";
 
 type Plan = "monthly" | "yearly";
 
@@ -36,16 +37,22 @@ export default function Pricing() {
   const { isPremium, isTrial, trialDaysLeft, isPaid, plan: currentPlan, premiumUntil } = usePremium();
   const [plan, setPlan] = useState<Plan>("yearly");
   const [upgrading, setUpgrading] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const qc = useQueryClient();
 
-  const handleUpgrade = async () => {
+  const startPurchase = () => {
     if (!user) {
       navigate("/auth");
       return;
     }
+    setSheetOpen(true);
+  };
+
+  const completePurchase = async () => {
     setUpgrading(true);
     try {
-      // Mock upgrade — real payment integration would replace this with a Stripe/Paddle checkout.
+      // FAKE Google Play purchase — replace this block with real purchase-token
+      // verification (Google Play Billing → verify-google-purchase edge function).
       const months = plan === "yearly" ? 12 : 1;
       const until = new Date();
       until.setMonth(until.getMonth() + months);
@@ -57,15 +64,14 @@ export default function Pricing() {
           subscription_plan: plan,
           premium_until: until.toISOString(),
         })
-        .eq("user_id", user.id);
+        .eq("user_id", user!.id);
       if (error) throw error;
 
-      await qc.invalidateQueries({ queryKey: ["profile", user.id] });
+      await qc.invalidateQueries({ queryKey: ["profile", user!.id] });
       toast({
         title: "Welcome to Premium! 🎉",
         description: `Your ${plan} plan is active until ${until.toLocaleDateString()}.`,
       });
-      navigate("/");
     } catch (e: any) {
       toast({ title: "Upgrade failed", description: e.message, variant: "destructive" });
     } finally {
