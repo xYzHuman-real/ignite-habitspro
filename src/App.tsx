@@ -10,6 +10,7 @@ import { Layout } from "@/components/Layout";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
 import { SplashScreen } from "@/components/SplashScreen";
+import { OnboardingCarousel, hasSeenOnboarding } from "@/components/OnboardingCarousel";
 import { SignupBenefitsDialog, isGuest } from "@/components/SignupBenefitsDialog";
 
 const Habits = lazy(() => import("./pages/Habits"));
@@ -104,7 +105,9 @@ function AuthRoute() {
 
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(() => !hasSeenOnboarding());
   const handleSplashFinish = useCallback(() => setShowSplash(false), []);
+  const handleOnboardingFinish = useCallback(() => setShowOnboarding(false), []);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -112,6 +115,7 @@ const App = () => {
         <Toaster />
         <Sonner />
         {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
+        {!showSplash && showOnboarding && <OnboardingCarousel onFinish={handleOnboardingFinish} />}
         <BrowserRouter>
           <AuthProvider>
             <Suspense fallback={<RouteFallback />}>
