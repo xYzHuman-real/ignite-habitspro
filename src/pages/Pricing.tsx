@@ -372,6 +372,15 @@ export default function Pricing() {
         priceInr={current.inr}
         onConfirm={completePurchase}
       />
+
+      <CancelPremiumSheet
+        open={cancelOpen}
+        onOpenChange={setCancelOpen}
+        plan={currentPlan}
+        premiumUntil={premiumUntil}
+        onConfirm={completeCancellation}
+      />
+
     </div>
   );
 }
