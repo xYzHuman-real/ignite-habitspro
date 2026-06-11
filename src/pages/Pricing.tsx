@@ -1,18 +1,29 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Check, Sparkles, Crown, Zap, Users, BarChart3, Palette, Shield, Headphones, Infinity as InfinityIcon, Gift } from "lucide-react";
+import { ArrowLeft, Check, Sparkles, Crown, Zap, Users, BarChart3, Palette, Shield, Headphones, Infinity as InfinityIcon, Gift, Receipt, XCircle, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { usePremium } from "@/lib/use-premium";
+import { PremiumBadge } from "@/components/PremiumBadge";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
-import { FakePlayPurchaseSheet } from "@/components/FakePlayPurchaseSheet";
+import { FakePlayPurchaseSheet, PurchaseResult } from "@/components/FakePlayPurchaseSheet";
 
 type Plan = "monthly" | "yearly";
+
+type HistoryRow = {
+  id: string;
+  plan: string;
+  amount_inr: number;
+  receipt_id: string;
+  status: string;
+  failure_reason: string | null;
+  created_at: string;
+};
 
 const PRICES: Record<Plan, { inr: number; perMonth: number; label: string; savingsBadge?: string }> = {
   monthly: { inr: 149, perMonth: 149, label: "₹149/month" },
