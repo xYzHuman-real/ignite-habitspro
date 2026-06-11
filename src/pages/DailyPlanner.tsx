@@ -14,6 +14,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { usePremium } from "@/lib/use-premium";
+import { UpgradeModal } from "@/components/UpgradeModal";
 
 interface ScheduleBlock {
   time: string;
@@ -88,6 +90,8 @@ export default function DailyPlanner() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [prefsOpen, setPrefsOpen] = useState(false);
+  const { isPremium } = usePremium();
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const [prefs, setPrefs] = useState<PlannerPrefs>(() => {
     try {
       const stored = localStorage.getItem(PREFS_KEY);
@@ -107,6 +111,15 @@ export default function DailyPlanner() {
   };
 
   const generatePlan = async () => {
+    // Free plan: 3 AI plans per month
+    const FREE_AI_LIMIT = 3;
+    const monthKey = `ai_plans_${new Date().getFullYear()}_${new Date().getMonth()}`;
+    const usedThisMonth = Number(localStorage.getItem(monthKey) || 0);
+    if (!isPremium && usedThisMonth >= FREE_AI_LIMIT) {
+      setShowUpgrade(true);
+      return;
+    }
+
     const last = Number(localStorage.getItem(COOLDOWN_KEY) || 0);
     const elapsed = Date.now() - last;
     if (last && elapsed < COOLDOWN_MS) {
@@ -144,6 +157,8 @@ export default function DailyPlanner() {
 
       setPlan(res.data);
       localStorage.setItem(COOLDOWN_KEY, String(Date.now()));
+      const monthKey2 = `ai_plans_${new Date().getFullYear()}_${new Date().getMonth()}`;
+      localStorage.setItem(monthKey2, String(Number(localStorage.getItem(monthKey2) || 0) + 1));
       toast({ title: "Schedule generated! ✨", description: "Your personalized plan is ready." });
     } catch (e: any) {
       const msg = e.message || "Failed to generate plan";
