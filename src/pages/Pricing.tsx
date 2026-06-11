@@ -391,6 +391,10 @@ export default function Pricing() {
         open={welcomeOpen}
         onOpenChange={setWelcomeOpen}
         onExplore={() => navigate("/")}
+        onDontShowAgain={() => {
+          localStorage.setItem("ignite_premium_welcome_dismissed", "true");
+          setWelcomeDismissed(true);
+        }}
       />
 
 
