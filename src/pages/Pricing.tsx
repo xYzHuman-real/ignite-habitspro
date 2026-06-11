@@ -400,11 +400,20 @@ export default function Pricing() {
 
       <PremiumWelcomeDialog
         open={welcomeOpen}
-        onOpenChange={setWelcomeOpen}
+        onOpenChange={(open) => {
+          setWelcomeOpen(open);
+          // Mark this specific purchase's welcome as seen when dialog closes,
+          // so it won't show again for the same purchase — but will for the next one.
+          if (!open && pendingWelcomePurchaseId) {
+            localStorage.setItem(WELCOME_SEEN_KEY, pendingWelcomePurchaseId);
+            setPendingWelcomePurchaseId(null);
+          }
+        }}
         onExplore={() => navigate("/")}
         onDontShowAgain={() => {
-          localStorage.setItem("ignite_premium_welcome_dismissed", "true");
-          setWelcomeDismissed(true);
+          if (pendingWelcomePurchaseId) {
+            localStorage.setItem(WELCOME_SEEN_KEY, pendingWelcomePurchaseId);
+          }
         }}
       />
 
