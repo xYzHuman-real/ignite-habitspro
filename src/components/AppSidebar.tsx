@@ -13,6 +13,7 @@ import {
   BookOpen,
   Crosshair,
   Brain,
+  Crown,
 } from "lucide-react";
 import appLogo from "@/assets/app-logo.png";
 import { NavLink } from "@/components/NavLink";
@@ -57,6 +58,7 @@ const sections = [
       { title: "Reports", url: "/reports", icon: BarChart3 },
       { title: "Challenges", url: "/challenges", icon: Swords },
       { title: "Shop", url: "/shop", icon: ShoppingBag },
+      { title: "Premium", url: "/pricing", icon: Crown },
       { title: "Profile", url: "/profile", icon: User },
     ],
   },
