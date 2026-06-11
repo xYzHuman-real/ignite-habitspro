@@ -35,6 +35,7 @@ const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const DailyPlanner = lazy(() => import("./pages/DailyPlanner"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Install = lazy(() => import("./pages/Install"));
+const Pricing = lazy(() => import("./pages/Pricing"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -90,6 +91,7 @@ function ProtectedRoutes() {
           <Route path="/settings" element={<Settings />} />
           <Route path="/daily-planner" element={<DailyPlanner />} />
           <Route path="/install" element={<Install />} />
+          <Route path="/pricing" element={<Pricing />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>

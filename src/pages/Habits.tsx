@@ -9,11 +9,15 @@ import HabitMomentumHeader from "@/components/habits/HabitMomentumHeader";
 import HabitCard from "@/components/habits/HabitCard";
 import AddHabitDrawer from "@/components/habits/AddHabitDrawer";
 import HabitCalendarTab from "@/components/habits/HabitCalendarTab";
+import { usePremium, FREE_HABIT_LIMIT } from "@/lib/use-premium";
+import { UpgradeModal } from "@/components/UpgradeModal";
 
 export default function Habits() {
   const { user } = useAuth();
   const { habits, isLoading, addHabit, toggleHabit, deleteHabit, updateHabit } = useHabits();
   const [activeTab, setActiveTab] = useState<"habits" | "calendar">("habits");
+  const { isPremium } = usePremium();
+  const [showUpgrade, setShowUpgrade] = useState(false);
 
   const { data: completions = [] } = useQuery({
     queryKey: ["habit_completions", user?.id],
@@ -36,6 +40,10 @@ export default function Habits() {
   }, [habits]);
 
   const handleAdd = (habit: any) => {
+    if (!isPremium && habits.length >= FREE_HABIT_LIMIT) {
+      setShowUpgrade(true);
+      return;
+    }
     addHabit({
       name: habit.name,
       icon: habit.icon,
@@ -131,6 +139,12 @@ export default function Habits() {
       </div>
 
       <AddHabitDrawer onAdd={handleAdd} />
+      <UpgradeModal
+        open={showUpgrade}
+        onOpenChange={setShowUpgrade}
+        featureName="Unlimited Habits"
+        reason={`Free plan is limited to ${FREE_HABIT_LIMIT} habits. Upgrade to Premium to track as many as you want.`}
+      />
     </div>
   );
 }

@@ -4,7 +4,7 @@ import {
   Eye, EyeOff, Camera, Flame, Bell,
   Globe, Lock, ShieldCheck, Smartphone, Zap,
   ChevronRight, ArrowLeft, Download, Trash2, Mail, BarChart3,
-  Volume2, Clock, Target, BookOpen, Trophy, LogOut
+  Volume2, Clock, Target, BookOpen, Trophy, LogOut, Crown
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -165,6 +165,7 @@ export default function Settings() {
             {/* Account */}
             <Card className="p-2 mb-3">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 pt-2 pb-1">Account</p>
+              <SettingsItem icon={Crown} label="Ignite Premium" desc="Manage subscription & view plans" onClick={() => navigate("/pricing")} />
               <SettingsItem icon={Eye} label="Privacy" desc="Control profile visibility & data sharing" onClick={() => setSection("privacy")} />
               <SettingsItem icon={Bell} label="Notifications" desc="Alerts, reminders & sounds" onClick={() => setSection("notifications")} />
               <SettingsItem icon={Zap} label="Preferences" desc="Theme, language & display" onClick={() => setSection("preferences")} />
