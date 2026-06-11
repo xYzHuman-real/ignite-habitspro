@@ -74,7 +74,8 @@ export default function FollowList() {
     isLoading: isLoadingInfinite,
   } = useInfiniteQuery({
     queryKey: ["follow_list_infinite", targetId, mode],
-    queryFn: async ({ pageParam = 0 }) => {
+    initialPageParam: 0,
+    queryFn: async ({ pageParam }: { pageParam: number }) => {
       if (!targetId) return { rows: [] as ProfileRow[], nextOffset: null as number | null };
       const col = mode === "followers" ? "follower_id" : "following_id";
       const matchCol = mode === "followers" ? "following_id" : "follower_id";
@@ -95,7 +96,7 @@ export default function FollowList() {
       const nextOffset = (rels || []).length === PAGE_SIZE ? pageParam + PAGE_SIZE : null;
       return { rows, nextOffset };
     },
-    getNextPageParam: (lastPage) => lastPage.nextOffset,
+    getNextPageParam: (lastPage: { rows: ProfileRow[]; nextOffset: number | null }) => lastPage.nextOffset,
     enabled: !!targetId && !hasSearch,
   });
 
