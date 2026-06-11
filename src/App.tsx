@@ -1,4 +1,4 @@
-import { useState, useCallback, lazy, Suspense } from "react";
+import { useState, useCallback, useEffect, lazy, Suspense } from "react";
 import { useBackButton } from "@/hooks/use-back-button";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -13,6 +13,7 @@ import { SplashScreen } from "@/components/SplashScreen";
 import { OnboardingCarousel, hasSeenOnboarding } from "@/components/OnboardingCarousel";
 import { PermissionPrimerFlow, hasCompletedPermissionPrimer } from "@/components/PermissionPrimerFlow";
 import { SignupBenefitsDialog, isGuest } from "@/components/SignupBenefitsDialog";
+import { captureReferralFromUrl, useReferralAutoApply } from "@/lib/use-referral";
 
 const Habits = lazy(() => import("./pages/Habits"));
 const TimerPage = lazy(() => import("./pages/TimerPage"));
@@ -36,6 +37,7 @@ const DailyPlanner = lazy(() => import("./pages/DailyPlanner"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Install = lazy(() => import("./pages/Install"));
 const Pricing = lazy(() => import("./pages/Pricing"));
+const Refer = lazy(() => import("./pages/Refer"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -57,6 +59,7 @@ const RouteFallback = () => (
 function ProtectedRoutes() {
   const { user, loading } = useAuth();
   useBackButton();
+  useReferralAutoApply();
 
   if (loading) {
     return (
