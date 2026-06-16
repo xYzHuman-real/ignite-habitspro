@@ -490,7 +490,7 @@ export default function TimerPage() {
               {activeTab === tab && (
                 <motion.div
                   layoutId="timerTabBg"
-                  className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary to-[hsl(0,85%,50%)] shadow-md"
+                  className="absolute inset-0 rounded-xl bg-primary shadow-md"
                   transition={{ type: "spring", stiffness: 400, damping: 30 }}
                 />
               )}
@@ -720,7 +720,7 @@ export default function TimerPage() {
                       transition={{ type: "spring", stiffness: 400 }}
                       className={`w-4 h-4 rounded-full transition-colors ${
                         i < todaySessions
-                          ? "bg-gradient-to-br from-primary to-[hsl(0,85%,50%)] shadow-sm"
+                          ? "bg-primary"
                           : "bg-muted/60"
                       }`}
                     />
@@ -729,7 +729,7 @@ export default function TimerPage() {
                 {/* Mini progress bar */}
                 <div className="mt-3 h-1 rounded-full bg-muted/50 overflow-hidden">
                   <motion.div
-                    className="h-full rounded-full bg-gradient-to-r from-primary to-[hsl(0,85%,50%)]"
+                    className="h-full rounded-full bg-primary"
                     animate={{ width: `${Math.min(100, (todaySessions / 8) * 100)}%` }}
                     transition={{ duration: 0.6, ease: "easeOut" }}
                   />
@@ -751,7 +751,7 @@ export default function TimerPage() {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel className="rounded-xl">No, Continue</AlertDialogCancel>
-              <AlertDialogAction onClick={() => confirmSwitch && doSwitchMode(confirmSwitch)} className="bg-gradient-to-r from-primary to-[hsl(0,85%,50%)] text-primary-foreground rounded-xl">Yes, Switch</AlertDialogAction>
+              <AlertDialogAction onClick={() => confirmSwitch && doSwitchMode(confirmSwitch)} className="bg-primary text-primary-foreground rounded-xl">Yes, Switch</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
