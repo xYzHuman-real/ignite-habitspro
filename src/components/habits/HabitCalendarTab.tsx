@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Check } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, Flame, Star, TrendingUp } from "lucide-react";
 
 interface Habit {
   id: string;
@@ -10,6 +10,8 @@ interface Habit {
   current: number;
   target: number;
   priority: string;
+  streak?: number;
+  longest_streak?: number;
 }
 
 interface HabitCalendarTabProps {
@@ -19,6 +21,7 @@ interface HabitCalendarTabProps {
 }
 
 const TOP_N = 5;
+const ACCENT = "#F97316";
 
 export default function HabitCalendarTab({ habits, completions, onToggle }: HabitCalendarTabProps) {
   const [viewDate, setViewDate] = useState(new Date());
@@ -31,7 +34,6 @@ export default function HabitCalendarTab({ habits, completions, onToggle }: Habi
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
   const monthName = viewDate.toLocaleString("default", { month: "long", year: "numeric" });
-
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDay = new Date(year, month, 1).getDay();
 
@@ -52,6 +54,23 @@ export default function HabitCalendarTab({ habits, completions, onToggle }: Habi
   const isToday = selectedDate === todayStr;
   const totalHabits = habits.length;
 
+  // Stats
+  const currentStreak = habits.length > 0 ? Math.max(...habits.map((h) => h.streak || 0)) : 0;
+  const bestStreak = habits.length > 0 ? Math.max(...habits.map((h) => h.longest_streak || 0)) : 0;
+  const monthlyConsistency = useMemo(() => {
+    if (totalHabits === 0) return 0;
+    const now = new Date();
+    const isCurrentMonth = now.getFullYear() === year && now.getMonth() === month;
+    const lastDay = isCurrentMonth ? now.getDate() : daysInMonth;
+    let total = 0;
+    for (let d = 1; d <= lastDay; d++) {
+      const ds = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+      total += completionMap.get(ds)?.size || 0;
+    }
+    const possible = totalHabits * lastDay;
+    return possible > 0 ? Math.round((total / possible) * 100) : 0;
+  }, [completionMap, year, month, daysInMonth, totalHabits]);
+
   const selectedHabits = useMemo(() => {
     if (isToday) return habits;
     const completedIds = completionMap.get(selectedDate) || new Set();
@@ -63,9 +82,7 @@ export default function HabitCalendarTab({ habits, completions, onToggle }: Habi
   }, [selectedDate, habits, completionMap, isToday]);
 
   const completedCount = selectedHabits.filter((h) => h.completed_today).length;
-  const dayPct = totalHabits > 0 ? Math.round((completedCount / totalHabits) * 100) : 0;
 
-  // Split into completed + remaining; top N preferences remaining first
   const remaining = selectedHabits.filter((h) => !h.completed_today);
   const completedList = selectedHabits.filter((h) => h.completed_today);
   const ordered = [...remaining, ...completedList];
@@ -79,59 +96,67 @@ export default function HabitCalendarTab({ habits, completions, onToggle }: Habi
   const prevMonth = () => setViewDate(new Date(year, month - 1, 1));
   const nextMonth = () => setViewDate(new Date(year, month + 1, 1));
 
-  const selectedLabel = isToday
-    ? "Today"
-    : new Date(selectedDate + "T12:00:00").toLocaleDateString("default", {
-        weekday: "long",
-        month: "long",
-        day: "numeric",
-      });
+  const selectedLabel = new Date(selectedDate + "T12:00:00").toLocaleDateString("default", {
+    month: "long",
+    day: "numeric",
+  });
+
+  // Heatmap intensity → subtle warm tones
+  const dayBg = (pct: number, count: number) => {
+    if (count === 0) return "transparent";
+    if (pct >= 1) return ACCENT;
+    if (pct >= 0.66) return "rgba(249,115,22,0.55)";
+    if (pct >= 0.33) return "rgba(249,115,22,0.30)";
+    return "rgba(249,115,22,0.14)";
+  };
 
   return (
-    <div className="space-y-8">
-      {/* Calendar hero */}
-      <section className="rounded-3xl bg-card border border-border/60 px-4 pt-4 pb-5">
-        <div className="flex items-center justify-between mb-3">
+    <div className="space-y-10">
+      {/* ─── HERO CALENDAR ─── */}
+      <section>
+        <div className="flex items-center justify-between mb-6">
           <button
             onClick={prevMonth}
-            className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted/60 transition-colors"
+            className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted/50 transition-colors -ml-2"
             aria-label="Previous month"
           >
             <ChevronLeft className="h-4 w-4 text-muted-foreground" />
           </button>
-          <h2 className="text-[15px] font-display font-semibold text-foreground tracking-tight">
+          <h2 className="text-[17px] font-display font-semibold text-foreground tracking-tight">
             {monthName}
           </h2>
           <button
             onClick={nextMonth}
-            className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted/60 transition-colors"
+            className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted/50 transition-colors -mr-2"
             aria-label="Next month"
           >
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
         </div>
 
-        <div className="grid grid-cols-7 gap-1 mb-1">
+        <div className="grid grid-cols-7 gap-1.5 mb-3">
           {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
             <div
               key={i}
-              className="text-[10px] font-medium text-muted-foreground/70 text-center py-1.5 uppercase tracking-wider"
+              className="text-[10px] font-medium text-muted-foreground/60 text-center uppercase tracking-[0.12em]"
             >
               {d}
             </div>
           ))}
         </div>
 
-        <div className="grid grid-cols-7 gap-1">
+        <div className="grid grid-cols-7 gap-1.5">
           {cells.map((day, i) => {
             if (day === null) return <div key={i} aria-hidden />;
             const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-            const completedCount = completionMap.get(dateStr)?.size || 0;
+            const count = completionMap.get(dateStr)?.size || 0;
             const total = totalHabits || 1;
-            const pct = completedCount / total;
+            const pct = count / total;
             const isSelected = dateStr === selectedDate;
             const isTodayCell = dateStr === todayStr;
-            const isFull = pct >= 1 && completedCount > 0;
+            const bg = dayBg(pct, count);
+            const filled = count > 0;
+            const isFull = pct >= 1 && count > 0;
 
             return (
               <button
@@ -140,38 +165,36 @@ export default function HabitCalendarTab({ habits, completions, onToggle }: Habi
                   setSelectedDate(dateStr);
                   setShowAll(false);
                 }}
-                className="relative aspect-square flex flex-col items-center justify-center group"
+                className="relative aspect-square flex items-center justify-center group"
               >
-                {/* Selected ring */}
+                <span
+                  className="absolute inset-0 rounded-2xl transition-colors"
+                  style={{ backgroundColor: bg }}
+                />
                 {isSelected && (
                   <motion.span
                     layoutId="calSelected"
-                    className="absolute inset-1 rounded-full bg-[#F97316]"
-                    transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                    className="absolute inset-0 rounded-2xl ring-[1.5px] ring-foreground/90"
+                    transition={{ duration: 0.22, ease: "easeOut" }}
                   />
                 )}
-                {/* Full-day fill (when not selected) */}
-                {isFull && !isSelected && (
-                  <span className="absolute inset-1.5 rounded-full bg-[#F97316]/12" />
-                )}
                 <span
-                  className={`relative text-[13px] tabular-nums transition-colors ${
-                    isSelected
+                  className={`relative text-[14px] tabular-nums transition-colors ${
+                    isFull
                       ? "text-white font-semibold"
                       : isTodayCell
-                      ? "text-[#F97316] font-semibold"
-                      : isFull
+                      ? "text-foreground font-semibold"
+                      : filled
                       ? "text-foreground font-medium"
-                      : "text-foreground/80 font-normal"
+                      : "text-foreground/70 font-normal"
                   }`}
                 >
                   {day}
                 </span>
-                {/* Progress dot indicator under the date */}
-                {completedCount > 0 && !isFull && !isSelected && (
+                {isTodayCell && !isFull && !isSelected && (
                   <span
-                    className="absolute bottom-1.5 w-1 h-1 rounded-full bg-[#F97316]"
-                    style={{ opacity: 0.4 + pct * 0.6 }}
+                    className="absolute bottom-1 w-1 h-1 rounded-full"
+                    style={{ backgroundColor: ACCENT }}
                   />
                 )}
               </button>
@@ -180,7 +203,16 @@ export default function HabitCalendarTab({ habits, completions, onToggle }: Habi
         </div>
       </section>
 
-      {/* Selected day */}
+      {/* ─── STATS (no cards) ─── */}
+      <section className="flex items-center justify-between px-1">
+        <Stat icon={<Flame className="h-4 w-4" style={{ color: ACCENT }} />} value={currentStreak} label="Current" suffix={currentStreak === 1 ? "day" : "days"} />
+        <div className="w-px h-10 bg-border/50" />
+        <Stat icon={<Star className="h-4 w-4 text-muted-foreground" />} value={bestStreak} label="Best" suffix={bestStreak === 1 ? "day" : "days"} />
+        <div className="w-px h-10 bg-border/50" />
+        <Stat icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />} value={monthlyConsistency} label="This month" suffix="%" />
+      </section>
+
+      {/* ─── SELECTED DAY ─── */}
       <section>
         <AnimatePresence mode="wait">
           <motion.div
@@ -190,28 +222,27 @@ export default function HabitCalendarTab({ habits, completions, onToggle }: Habi
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
           >
-            <div className="flex items-baseline justify-between mb-4 px-1">
-              <div>
-                <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
-                  {selectedLabel}
-                </p>
-                <p className="text-[18px] font-display font-semibold text-foreground mt-0.5 tracking-tight">
-                  {completedCount} of {totalHabits} complete
-                </p>
-              </div>
-              <span className="text-[15px] font-display font-semibold text-[#F97316] tabular-nums">
-                {dayPct}%
-              </span>
+            <div className="mb-5 px-1">
+              <p className="text-[20px] font-display font-semibold text-foreground tracking-tight">
+                {isToday ? "Today" : selectedLabel}
+              </p>
+              <p className="text-[13px] text-muted-foreground mt-1">
+                {totalHabits === 0
+                  ? "No habits yet."
+                  : `${completedCount} of ${totalHabits} habits completed`}
+              </p>
             </div>
 
             {selectedHabits.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-10">No habits tracked.</p>
+              <p className="text-sm text-muted-foreground text-center py-10">
+                Tap + to add your first habit.
+              </p>
             ) : (
-              <ul className="space-y-1">
+              <ul>
                 {visible.map((h) => (
                   <li
                     key={h.id}
-                    className="flex items-center gap-4 px-1 py-3.5 border-b border-border/40 last:border-b-0"
+                    className="flex items-center gap-4 px-1 py-4 border-b border-border/40 last:border-b-0"
                   >
                     <span className="text-[20px] leading-none w-6 text-center shrink-0">
                       {h.icon}
@@ -227,13 +258,14 @@ export default function HabitCalendarTab({ habits, completions, onToggle }: Habi
                     </span>
                     {isToday ? (
                       <motion.button
-                        whileTap={{ scale: 0.9 }}
+                        whileTap={{ scale: 0.88 }}
                         onClick={() => onToggle(h)}
                         className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-colors ${
                           h.completed_today
-                            ? "bg-[#F97316] text-white"
-                            : "border border-border hover:border-[#F97316]/60"
+                            ? "text-white"
+                            : "border border-border hover:border-foreground/40"
                         }`}
+                        style={h.completed_today ? { backgroundColor: ACCENT } : undefined}
                         aria-label={h.completed_today ? "Completed" : "Mark complete"}
                       >
                         {h.completed_today && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
@@ -241,8 +273,9 @@ export default function HabitCalendarTab({ habits, completions, onToggle }: Habi
                     ) : (
                       <div
                         className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${
-                          h.completed_today ? "bg-[#F97316]/15 text-[#F97316]" : "bg-muted/60"
+                          h.completed_today ? "" : "bg-muted/50"
                         }`}
+                        style={h.completed_today ? { backgroundColor: `${ACCENT}26`, color: ACCENT } : undefined}
                       >
                         {h.completed_today && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
                       </div>
@@ -255,14 +288,42 @@ export default function HabitCalendarTab({ habits, completions, onToggle }: Habi
             {hasMore && (
               <button
                 onClick={() => setShowAll((v) => !v)}
-                className="mt-4 w-full text-center text-[13px] font-medium text-[#F97316] py-2 hover:opacity-80 transition-opacity"
+                className="mt-5 w-full text-center text-[13px] font-medium py-2 transition-opacity hover:opacity-70"
+                style={{ color: ACCENT }}
               >
-                {showAll ? "Show less" : `View all ${ordered.length} habits`}
+                {showAll ? "Show less" : "View all habits"}
               </button>
             )}
           </motion.div>
         </AnimatePresence>
       </section>
+    </div>
+  );
+}
+
+function Stat({
+  icon,
+  value,
+  label,
+  suffix,
+}: {
+  icon: React.ReactNode;
+  value: number;
+  label: string;
+  suffix: string;
+}) {
+  return (
+    <div className="flex-1 flex flex-col items-center">
+      <div className="flex items-center gap-1.5">
+        {icon}
+        <span className="text-[20px] font-display font-semibold text-foreground tabular-nums leading-none">
+          {value}
+          <span className="text-[13px] font-medium text-muted-foreground ml-1">{suffix}</span>
+        </span>
+      </div>
+      <span className="text-[11px] text-muted-foreground mt-2 uppercase tracking-[0.1em]">
+        {label}
+      </span>
     </div>
   );
 }
