@@ -507,8 +507,8 @@ export default function TimerPage() {
           ) : (
             <motion.div key="focus" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.2 }} className="space-y-4">
 
-              {/* Mode selector */}
-              <div className="flex p-1 rounded-2xl bg-muted/40 gap-1">
+              {/* Mode selector — Apple segmented control */}
+              <div className="flex p-1 rounded-xl bg-muted gap-1">
                 {([
                   { key: "focus" as Mode, label: "Focus", icon: <Zap className="h-3.5 w-3.5" /> },
                   { key: "shortBreak" as Mode, label: "Break", icon: <Coffee className="h-3.5 w-3.5" /> },
@@ -517,15 +517,16 @@ export default function TimerPage() {
                   <button
                     key={m.key}
                     onClick={() => attemptSwitchMode(m.key)}
-                    className={`relative flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-xl transition-all duration-300 ${
-                      mode === m.key ? "text-primary-foreground" : "text-muted-foreground"
+                    className={`relative flex-1 flex items-center justify-center gap-1.5 py-2 text-[13px] font-semibold rounded-lg transition-colors ${
+                      mode === m.key ? "text-foreground" : "text-muted-foreground"
                     }`}
                   >
                     {mode === m.key && (
                       <motion.div
                         layoutId="modeBg"
-                        className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary to-[hsl(0,85%,50%)] shadow-sm"
-                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                        className="absolute inset-0 rounded-lg bg-card border border-border/60"
+                        style={{ boxShadow: "0 1px 3px hsl(220 30% 10% / 0.06)" }}
+                        transition={{ type: "tween", duration: 0.2, ease: "easeOut" }}
                       />
                     )}
                     <span className="relative z-10 flex items-center gap-1">{m.icon} {m.label}</span>
