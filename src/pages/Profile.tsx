@@ -291,63 +291,50 @@ export default function Profile() {
       </motion.div>
 
       {!editing && !isPaid && (
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
+        <motion.button
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, ease: "easeOut" }}
+          transition={{ duration: 0.25, ease: "easeOut" }}
+          type="button"
+          onClick={() => navigate("/pricing")}
+          className="w-full text-left rounded-2xl p-4 bg-card border border-border/60 hover:border-primary/40 transition-colors flex items-center gap-3"
         >
-          <button
-            type="button"
-            onClick={() => navigate("/pricing")}
-            className="w-full text-left rounded-2xl p-5 relative overflow-hidden border border-primary/30 bg-gradient-to-br from-primary/15 via-accent/10 to-transparent hover:border-primary/60 transition-colors active:scale-[0.99]"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-glow-primary shrink-0">
-                <Crown className="h-6 w-6 text-primary-foreground" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <p className="font-display font-bold text-base">
-                    {isTrial ? "Keep Premium after your trial" : "Upgrade to Premium"}
-                  </p>
-                  {isTrial && (
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/15 text-primary">
-                      {trialDaysLeft} {trialDaysLeft === 1 ? "day" : "days"} left
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {isTrial
-                    ? "Subscribe now so you don't lose unlimited habits, AI planner & ad-free focus."
-                    : "Unlock unlimited habits, AI planner, focus rooms & the Premium badge — from ₹83/mo."}
-                </p>
-              </div>
-              <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
-                <ArrowRight className="h-4 w-4 text-primary" />
-              </div>
+          <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+            <Crown className="h-4 w-4 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="text-[14px] font-semibold text-foreground">
+                {isTrial ? "Keep Premium after your trial" : "Upgrade to Premium"}
+              </p>
+              {isTrial && (
+                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground tabular-nums">
+                  {trialDaysLeft}d left
+                </span>
+              )}
             </div>
-            <div className="mt-4 flex items-center gap-2 text-[11px] text-muted-foreground">
-              <Sparkles className="h-3.5 w-3.5 text-primary" />
-              <span>Premium unlocks instantly after payment — badge & features appear automatically.</span>
-            </div>
-          </button>
-        </motion.div>
+            <p className="text-[12px] text-muted-foreground mt-0.5 truncate">
+              {isTrial ? "Subscribe to keep unlimited access" : "Unlimited habits, AI planner, no ads"}
+            </p>
+          </div>
+          <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
+        </motion.button>
       )}
 
       {!editing && earnedBadges.length > 0 && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <Card className="p-5">
-            <h2 className="font-display font-semibold text-lg mb-3">Badges</h2>
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05, duration: 0.25, ease: "easeOut" }}>
+          <Card className="p-5 bg-card border border-border/60 shadow-none">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-[11px] font-semibold tracking-[0.14em] uppercase text-muted-foreground">Badges</h2>
+              <span className="text-[12px] text-muted-foreground tabular-nums">{earnedBadges.length}</span>
+            </div>
+            <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
               {earnedBadges.map((badge) => (
-                <div key={badge.id} className="flex flex-col items-center gap-1 p-3 rounded-xl bg-muted/50 hover:bg-muted transition-colors">
-                  <span className="text-2xl">{badge.icon}</span>
-                  <span className="text-xs text-center text-muted-foreground">{badge.name}</span>
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                    badge.tier === "gold" ? "bg-accent/30 text-accent-foreground" :
-                    badge.tier === "silver" ? "bg-muted text-muted-foreground" :
-                    "bg-primary/10 text-primary"
-                  }`}>{badge.tier}</span>
+                <div key={badge.id} className="flex flex-col items-center gap-1.5">
+                  <div className="w-12 h-12 rounded-full bg-muted/60 flex items-center justify-center text-xl">
+                    {badge.icon}
+                  </div>
+                  <span className="text-[11px] text-center text-muted-foreground leading-tight line-clamp-2">{badge.name}</span>
                 </div>
               ))}
             </div>
@@ -356,10 +343,15 @@ export default function Profile() {
       )}
 
       {!editing && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          <Card className="p-5">
-            <h2 className="font-display font-semibold text-lg mb-3">Activity</h2>
-            <div className="grid grid-cols-7 gap-1">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.25, ease: "easeOut" }}>
+          <Card className="p-5 bg-card border border-border/60 shadow-none">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-[11px] font-semibold tracking-[0.14em] uppercase text-muted-foreground">Activity</h2>
+              <span className="flex items-center gap-1 text-[12px] text-muted-foreground">
+                <CalendarDays className="h-3 w-3" /> Joined {joinDate}
+              </span>
+            </div>
+            <div className="grid grid-cols-7 gap-1.5">
               {Array.from({ length: 49 }).map((_, i) => {
                 const date = new Date();
                 date.setDate(date.getDate() - (48 - i));
@@ -369,21 +361,23 @@ export default function Profile() {
                   <div
                     key={i}
                     title={`${dateStr}: ${count} activities`}
-                    className={`aspect-square rounded-sm ${
-                      count >= 4 ? "bg-gradient-primary" :
+                    className={`aspect-square rounded-[4px] ${
+                      count >= 4 ? "bg-primary" :
                       count >= 3 ? "bg-primary/60" :
-                      count >= 1 ? "bg-primary/30" :
-                      "bg-muted"
+                      count >= 1 ? "bg-primary/25" :
+                      "bg-muted/60"
                     }`}
                   />
                 );
               })}
             </div>
-            <div className="flex items-center justify-between mt-3 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1"><CalendarDays className="h-3 w-3" /> Joined {joinDate}</span>
-              <div className="flex items-center gap-1">
-                Less <div className="w-3 h-3 rounded-sm bg-muted" /> <div className="w-3 h-3 rounded-sm bg-primary/30" /> <div className="w-3 h-3 rounded-sm bg-primary/60" /> <div className="w-3 h-3 rounded-sm bg-gradient-primary" /> More
-              </div>
+            <div className="flex items-center justify-end gap-1.5 mt-3 text-[11px] text-muted-foreground">
+              Less
+              <div className="w-2.5 h-2.5 rounded-[3px] bg-muted/60" />
+              <div className="w-2.5 h-2.5 rounded-[3px] bg-primary/25" />
+              <div className="w-2.5 h-2.5 rounded-[3px] bg-primary/60" />
+              <div className="w-2.5 h-2.5 rounded-[3px] bg-primary" />
+              More
             </div>
           </Card>
         </motion.div>
