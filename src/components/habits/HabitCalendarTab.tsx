@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Check, Flame, Star, TrendingUp, ArrowRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, Flame, Star, TrendingUp } from "lucide-react";
 
 interface Habit {
   id: string;
@@ -26,7 +25,7 @@ const ACCENT = "#F97316";
 
 export default function HabitCalendarTab({ habits, completions, onToggle }: HabitCalendarTabProps) {
   const [viewDate, setViewDate] = useState(new Date());
-  const navigate = useNavigate();
+  const [showAll, setShowAll] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
@@ -87,7 +86,7 @@ export default function HabitCalendarTab({ habits, completions, onToggle }: Habi
   const remaining = selectedHabits.filter((h) => !h.completed_today);
   const completedList = selectedHabits.filter((h) => h.completed_today);
   const ordered = [...remaining, ...completedList];
-  const visible = ordered.slice(0, TOP_N);
+  const visible = showAll ? ordered : ordered.slice(0, TOP_N);
   const hasMore = ordered.length > TOP_N;
 
   const cells: (number | null)[] = [];
@@ -164,6 +163,7 @@ export default function HabitCalendarTab({ habits, completions, onToggle }: Habi
                 key={i}
                 onClick={() => {
                   setSelectedDate(dateStr);
+                  setShowAll(false);
                 }}
                 className="relative aspect-square flex items-center justify-center group"
               >
@@ -287,12 +287,11 @@ export default function HabitCalendarTab({ habits, completions, onToggle }: Habi
 
             {hasMore && (
               <button
-                onClick={() => navigate("/habits/all")}
-                className="mt-5 w-full flex items-center justify-center gap-1.5 text-[13px] font-medium py-2 transition-opacity hover:opacity-70"
+                onClick={() => setShowAll((v) => !v)}
+                className="mt-5 w-full text-center text-[13px] font-medium py-2 transition-opacity hover:opacity-70"
                 style={{ color: ACCENT }}
               >
-                View all habits
-                <ArrowRight className="h-3.5 w-3.5" />
+                {showAll ? "Show less" : "View all habits"}
               </button>
             )}
           </motion.div>
