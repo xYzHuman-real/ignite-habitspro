@@ -95,10 +95,13 @@ export default function AddHabitDrawer({ onAdd }: AddHabitDrawerProps) {
         type="button"
         aria-label="Add habit"
         onClick={() => setOpen(true)}
-        className="fixed bottom-24 left-0 right-0 mx-auto z-40 w-14 h-14 rounded-full bg-gradient-primary text-primary-foreground shadow-glow-primary flex items-center justify-center active:scale-95 transition-transform"
-        style={{ marginBottom: "env(safe-area-inset-bottom, 0px)" }}
+        className="fixed bottom-24 left-0 right-0 mx-auto z-40 w-12 h-12 rounded-full bg-[#F97316] text-white flex items-center justify-center active:scale-95 transition-transform"
+        style={{
+          marginBottom: "env(safe-area-inset-bottom, 0px)",
+          boxShadow: "0 8px 24px -6px rgba(249, 115, 22, 0.45), 0 2px 6px rgba(15, 23, 42, 0.08)",
+        }}
       >
-        <Plus className="h-6 w-6" />
+        <Plus className="h-5 w-5" strokeWidth={2.5} />
       </button>
       <DrawerContent className="max-h-[85vh] flex flex-col">
         <DrawerHeader className="pb-2">
