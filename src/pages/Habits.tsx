@@ -63,8 +63,8 @@ export default function Habits() {
   }
 
   return (
-    <div className="max-w-lg mx-auto px-4 pb-32 space-y-7">
-      <HabitMomentumHeader habits={habits} completions={completions} />
+    <div className="max-w-lg mx-auto px-5 pb-32 space-y-8">
+      <HabitMomentumHeader />
 
       <HabitCalendarTab
         habits={habits as any}
