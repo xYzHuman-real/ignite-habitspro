@@ -15,7 +15,7 @@ import { UpgradeModal } from "@/components/UpgradeModal";
 export default function Habits() {
   const { user } = useAuth();
   const { habits, isLoading, addHabit, toggleHabit, deleteHabit, updateHabit } = useHabits();
-  const [activeTab, setActiveTab] = useState<"habits" | "calendar">("habits");
+  const [activeTab, setActiveTab] = useState<"habits" | "calendar">("calendar");
   const { isPremium } = usePremium();
   const [showUpgrade, setShowUpgrade] = useState(false);
 
@@ -69,42 +69,43 @@ export default function Habits() {
     <div className="max-w-lg mx-auto px-4 pb-32 space-y-5">
       <HabitMomentumHeader habits={habits} completions={completions} />
 
-      {/* Animated pill tab switcher */}
-      <div className="relative flex bg-muted/60 backdrop-blur-sm rounded-2xl p-1">
-        {(["habits", "calendar"] as const).map(tab => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`relative flex-1 text-sm font-semibold py-2.5 rounded-xl transition-colors capitalize z-10 ${
-              activeTab === tab ? "text-white" : "text-muted-foreground"
-            }`}
-          >
-            {activeTab === tab && (
-              <motion.div
-                layoutId="habitTabBg"
-                className="absolute inset-0 rounded-xl shadow-md"
-                style={{ background: "linear-gradient(135deg, #F97316 0%, #EA580C 100%)" }}
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              />
-            )}
-            <span className="relative">{tab}</span>
-          </button>
-        ))}
+      {/* Apple-style segmented control */}
+      <div className="relative flex bg-muted rounded-xl p-1">
+        {(["calendar", "habits"] as const).map(tab => {
+          const label = tab === "calendar" ? "Overview" : "List";
+          return (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`relative flex-1 text-[13px] font-semibold py-2 rounded-lg transition-colors z-10 ${
+                activeTab === tab ? "text-foreground" : "text-muted-foreground"
+              }`}
+            >
+              {activeTab === tab && (
+                <motion.div
+                  layoutId="habitTabBg"
+                  className="absolute inset-0 rounded-lg bg-card border border-border/60"
+                  style={{ boxShadow: "0 1px 3px hsl(220 30% 10% / 0.06)" }}
+                  transition={{ type: "tween", duration: 0.2, ease: "easeOut" }}
+                />
+              )}
+              <span className="relative">{label}</span>
+            </button>
+          );
+        })}
       </div>
 
-      {/* All completed banner */}
+      {/* Subtle all-completed line, no banner */}
       <AnimatePresence>
         {allCompleted && activeTab === "habits" && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="relative overflow-hidden p-4 rounded-2xl text-center font-display font-semibold text-white shadow-lg"
-            style={{ background: "linear-gradient(135deg, #F97316 0%, #EA580C 100%)" }}
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="text-center text-[13px] text-primary font-medium"
           >
-            <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/20 blur-2xl" />
-            <span className="relative">🎉 All habits completed! Streak +1!</span>
-          </motion.div>
+            All habits complete · streak +1
+          </motion.p>
         )}
       </AnimatePresence>
 
