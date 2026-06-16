@@ -1,26 +1,28 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Flame, Check } from "lucide-react";
+import { Flame, Target, CheckCircle2, TrendingUp } from "lucide-react";
 import { ShareProgress } from "@/components/ShareProgress";
+import { Card } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { useHabits, useTodos, useProfile } from "@/lib/supabase-hooks";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Onboarding } from "@/components/Onboarding";
+import { GpaCalculator } from "@/components/GpaCalculator";
+import { ExamCountdown } from "@/components/ExamCountdown";
 import { PremiumStatusBanner } from "@/components/PremiumStatusBanner";
 import { AdSlot } from "@/components/AdSlot";
-import { useNavigate } from "react-router-dom";
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 8 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.25, ease: "easeOut" as const } },
-};
 const container = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.04 } },
+  show: { transition: { staggerChildren: 0.08 } },
+};
+const item = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.4 } },
 };
 
 export default function Dashboard() {
-  const navigate = useNavigate();
-  const { habits, isLoading: habitsLoading, toggleHabit } = useHabits();
+  const { habits, isLoading: habitsLoading } = useHabits();
   const { todos, isLoading: todosLoading } = useTodos();
   const { profile, isLoading: profileLoading } = useProfile();
 
@@ -29,13 +31,15 @@ export default function Dashboard() {
   useEffect(() => {
     if (!profileLoading && profile) {
       const seen = localStorage.getItem("onboarding_completed");
-      if (!seen && profile.habits_completed === 0) setShowOnboarding(true);
+      if (!seen && profile.habits_completed === 0) {
+        setShowOnboarding(true);
+      }
     }
   }, [profileLoading, profile]);
 
   const completedHabits = habits.filter((h) => h.completed_today).length;
-  const totalHabits = habits.length;
 
+  // Filter todos to only today's (using local date, not UTC)
   const now = new Date();
   const todayLocal = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
   const todayTodos = todos.filter((t) => {
@@ -43,156 +47,138 @@ export default function Dashboard() {
     const local = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     return local === todayLocal;
   });
+
   const completedTodos = todayTodos.filter((t) => t.completed).length;
   const maxStreak = habits.reduce((max, h) => Math.max(max, h.streak), 0);
-  const pctToday = totalHabits > 0 ? Math.round((completedHabits / totalHabits) * 100) : 0;
+  const weeklyScore = habits.length > 0 ? Math.round((completedHabits / habits.length) * 100) : 0;
 
   const displayName = profile?.display_name || "there";
 
-  const hour = now.getHours();
-  const greeting = hour < 5 ? "Good night" : hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
-
-  const nextHabits = habits.filter((h) => !h.completed_today).slice(0, 3);
-  const nextTasks = todayTodos.filter((t) => !t.completed).slice(0, 3);
-
-  // Ring math
-  const radius = 36;
-  const circumference = 2 * Math.PI * radius;
-  const dash = circumference * (1 - pctToday / 100);
-
   if (habitsLoading || todosLoading || profileLoading) {
     return (
-      <div className="space-y-6 max-w-2xl mx-auto px-1">
-        <Skeleton className="h-10 w-56" />
-        <Skeleton className="h-36 rounded-3xl" />
-        <Skeleton className="h-40 rounded-3xl" />
+      <div className="space-y-6 max-w-5xl mx-auto">
+        <Skeleton className="h-12 w-64" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-24" />)}
+        </div>
       </div>
     );
   }
 
+  const stats = [
+    { label: "Best Streak", value: String(maxStreak), icon: Flame, gradient: "bg-gradient-accent", glow: "shadow-glow-accent" },
+    { label: "Habits Today", value: `${completedHabits}/${habits.length}`, icon: Target, gradient: "bg-gradient-primary", glow: "shadow-glow-primary" },
+    { label: "Tasks Done", value: `${completedTodos}/${todayTodos.length}`, icon: CheckCircle2, gradient: "bg-gradient-success", glow: "" },
+    { label: "Daily Score", value: `${weeklyScore}%`, icon: TrendingUp, gradient: "bg-gradient-primary", glow: "shadow-glow-primary" },
+  ];
+
+  const handleOnboardingComplete = () => {
+    localStorage.setItem("onboarding_completed", "true");
+    setShowOnboarding(false);
+  };
+
   return (
     <>
       {showOnboarding && (
-        <Onboarding displayName={displayName} onComplete={() => { localStorage.setItem("onboarding_completed", "true"); setShowOnboarding(false); }} />
+        <Onboarding displayName={displayName} onComplete={handleOnboardingComplete} />
       )}
+    <motion.div variants={container} initial="hidden" animate="show" className="space-y-6 max-w-5xl mx-auto">
+      <motion.div variants={item} className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-display font-bold">
+            Hey, {displayName}! <span className="inline-block animate-streak-fire">🔥</span>
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            {maxStreak > 0 ? `Keep your momentum going. Best streak: ${maxStreak} days!` : "Start building your streaks today!"}
+          </p>
+        </div>
+        <ShareProgress
+          displayName={displayName}
+          streak={maxStreak}
+          habitsCompleted={completedHabits}
+          totalHabits={habits.length}
+          dailyScore={weeklyScore}
+          level={profile?.xp_level || 1}
+          points={profile?.leaderboard_points || 0}
+        />
+      </motion.div>
 
-      <motion.div variants={container} initial="hidden" animate="show" className="max-w-2xl mx-auto space-y-7">
-        {/* Greeting — no card */}
-        <motion.div variants={fadeUp} className="flex items-start justify-between gap-3">
-          <div>
-            <h1 className="text-[28px] leading-tight font-display font-semibold tracking-tight text-foreground">
-              {greeting}, {displayName}.
-            </h1>
-            <p className="text-[14px] text-muted-foreground mt-1">
-              {totalHabits === 0
-                ? "Add a habit to start your day."
-                : completedHabits === totalHabits
-                ? "All habits done. Beautiful."
-                : `${completedHabits} of ${totalHabits} habits done today.`}
-            </p>
-          </div>
-          <ShareProgress
-            displayName={displayName}
-            streak={maxStreak}
-            habitsCompleted={completedHabits}
-            totalHabits={totalHabits}
-            dailyScore={pctToday}
-            level={profile?.xp_level || 1}
-            points={profile?.leaderboard_points || 0}
-          />
-        </motion.div>
+      <motion.div variants={item}>
+        <PremiumStatusBanner />
+      </motion.div>
 
-        <motion.div variants={fadeUp}>
-          <PremiumStatusBanner />
-        </motion.div>
-
-        {/* Today's progress — single calm card */}
-        <motion.section variants={fadeUp} className="rounded-3xl bg-card border border-border/60 p-5">
-          <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Today</p>
-          <div className="mt-2 flex items-center justify-between gap-5">
-            <div>
-              <p className="text-[40px] font-display font-semibold leading-none tabular-nums text-foreground">
-                {pctToday}%
-              </p>
-              <p className="text-[13px] text-muted-foreground mt-1.5">
-                {completedHabits}/{totalHabits} habits · {completedTodos}/{todayTodos.length} tasks
-              </p>
+      <motion.div variants={item} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {stats.map((s) => (
+          <Card key={s.label} className={`p-4 ${s.gradient} ${s.glow} border-0`}>
+            <div className="flex items-center gap-2 text-primary-foreground/80 mb-2">
+              <s.icon className="h-4 w-4" />
+              <span className="text-xs font-medium">{s.label}</span>
             </div>
+            <p className="text-2xl font-display font-bold text-primary-foreground">{s.value}</p>
+          </Card>
+        ))}
+      </motion.div>
 
-            <div className="relative w-[96px] h-[96px] shrink-0">
-              <svg className="absolute inset-0 -rotate-90" viewBox="0 0 96 96">
-                <circle cx="48" cy="48" r={radius} stroke="hsl(var(--muted))" strokeWidth="6" fill="none" />
-                <motion.circle
-                  cx="48" cy="48" r={radius}
-                  stroke="hsl(var(--primary))" strokeWidth="6" fill="none" strokeLinecap="round"
-                  strokeDasharray={circumference}
-                  initial={{ strokeDashoffset: circumference }}
-                  animate={{ strokeDashoffset: dash }}
-                  transition={{ duration: 0.6, ease: "easeOut" }}
-                />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <Flame className="h-4 w-4 text-primary" />
-                <span className="text-[15px] font-display font-semibold tabular-nums mt-0.5">
-                  {maxStreak}
-                </span>
-                <span className="text-[9px] uppercase tracking-wider text-muted-foreground">streak</span>
+      <motion.div variants={item} className="grid md:grid-cols-2 gap-6">
+        <Card className="p-5 space-y-4">
+          <h2 className="font-display font-semibold text-lg">Today's Habits</h2>
+          {habits.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4 text-center">No habits yet. Create one to get started!</p>
+          ) : habits.map((habit) => (
+            <div key={habit.id} className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-xl">{habit.icon}</span>
+                <div>
+                  <p className={`text-sm font-medium ${habit.completed_today ? "line-through text-muted-foreground" : ""}`}>
+                    {habit.name}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{habit.streak} day streak</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Progress value={(habit.current / habit.target) * 100} className="w-16 h-2" />
+                {habit.completed_today && <CheckCircle2 className="h-4 w-4 text-success" />}
               </div>
             </div>
-          </div>
-        </motion.section>
+          ))}
+        </Card>
 
-        {/* Up next */}
-        {(nextHabits.length > 0 || nextTasks.length > 0) && (
-          <motion.section variants={fadeUp}>
-            <div className="flex items-baseline justify-between mb-2 px-1">
-              <h2 className="text-[13px] uppercase tracking-wider font-medium text-muted-foreground">Up next</h2>
-              <button
-                onClick={() => navigate(nextHabits.length > 0 ? "/habits" : "/todos")}
-                className="text-[12px] text-primary font-medium"
-              >
-                View all
-              </button>
+        <Card className="p-5 space-y-4">
+          <h2 className="font-display font-semibold text-lg">To-Do List</h2>
+          {todayTodos.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4 text-center">No tasks for today. Add one to stay productive!</p>
+          ) : todayTodos.slice(0, 5).map((todo) => (
+            <div key={todo.id} className="flex items-center gap-3">
+              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                todo.completed ? "bg-success border-success" : "border-muted-foreground"
+              }`}>
+                {todo.completed && <CheckCircle2 className="h-3 w-3 text-success-foreground" />}
+              </div>
+              <span className={`text-sm ${todo.completed ? "line-through text-muted-foreground" : ""}`}>
+                {todo.text}
+              </span>
+              <span className={`ml-auto text-xs px-2 py-0.5 rounded-full ${
+                todo.priority === "high" ? "bg-destructive/10 text-destructive" :
+                todo.priority === "medium" ? "bg-accent/30 text-accent-foreground" :
+                "bg-muted text-muted-foreground"
+              }`}>
+                {todo.priority}
+              </span>
             </div>
-            <div className="rounded-3xl bg-card border border-border/60 divide-y divide-border/60 overflow-hidden">
-              {nextHabits.map((h) => (
-                <button
-                  key={`h-${h.id}`}
-                  onClick={() => toggleHabit(h as any)}
-                  className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-muted/40 transition-colors"
-                >
-                  <span className="text-[20px] w-6 text-center">{h.icon}</span>
-                  <span className="flex-1 text-[15px] text-foreground truncate">{h.name}</span>
-                  {h.streak > 0 && (
-                    <span className="text-[12px] text-muted-foreground tabular-nums inline-flex items-center gap-1">
-                      <Flame className="h-3 w-3 text-primary" />
-                      {h.streak}
-                    </span>
-                  )}
-                  <span className="w-7 h-7 rounded-full border border-border flex items-center justify-center" />
-                </button>
-              ))}
-              {nextTasks.map((t) => (
-                <div
-                  key={`t-${t.id}`}
-                  className="w-full flex items-center gap-3 px-4 py-3.5"
-                >
-                  <span className="w-6 text-center text-muted-foreground">
-                    <Check className="h-4 w-4 opacity-0" />
-                  </span>
-                  <span className="flex-1 text-[15px] text-foreground truncate">{t.text}</span>
-                  <span className="text-[11px] text-muted-foreground capitalize">{t.priority}</span>
-                </div>
-              ))}
-            </div>
-          </motion.section>
-        )}
-
-        {/* Quiet ad slot */}
-        <motion.div variants={fadeUp}>
-          <AdSlot slotId="dashboard-bottom" size="banner" />
-        </motion.div>
+          ))}
+        </Card>
       </motion.div>
+
+      {/* Academic Tools */}
+      <motion.div variants={item} className="grid md:grid-cols-2 gap-4">
+        <GpaCalculator />
+        <ExamCountdown />
+      </motion.div>
+
+      <motion.div variants={item}>
+        <AdSlot slotId="dashboard-bottom" size="banner" />
+      </motion.div>
+    </motion.div>
     </>
   );
 }
