@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Check, Flame, Star, TrendingUp, ArrowRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, Flame, Star, TrendingUp } from "lucide-react";
 
 interface Habit {
   id: string;
@@ -21,12 +20,10 @@ interface HabitCalendarTabProps {
   onToggle: (habit: Habit) => void;
 }
 
-const TOP_N = 5;
 const ACCENT = "#F97316";
 
 export default function HabitCalendarTab({ habits, completions, onToggle }: HabitCalendarTabProps) {
   const [viewDate, setViewDate] = useState(new Date());
-  const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
@@ -87,8 +84,6 @@ export default function HabitCalendarTab({ habits, completions, onToggle }: Habi
   const remaining = selectedHabits.filter((h) => !h.completed_today);
   const completedList = selectedHabits.filter((h) => h.completed_today);
   const ordered = [...remaining, ...completedList];
-  const visible = ordered.slice(0, TOP_N);
-  const hasMore = ordered.length > TOP_N;
 
   const cells: (number | null)[] = [];
   for (let i = 0; i < firstDay; i++) cells.push(null);
@@ -239,7 +234,7 @@ export default function HabitCalendarTab({ habits, completions, onToggle }: Habi
               </p>
             ) : (
               <ul>
-                {visible.map((h) => (
+                {ordered.map((h) => (
                   <li
                     key={h.id}
                     className="flex items-center gap-4 px-1 py-4 border-b border-border/40 last:border-b-0"
@@ -283,17 +278,6 @@ export default function HabitCalendarTab({ habits, completions, onToggle }: Habi
                   </li>
                 ))}
               </ul>
-            )}
-
-            {hasMore && (
-              <button
-                onClick={() => navigate("/habits/all")}
-                className="mt-5 w-full flex items-center justify-center gap-1.5 text-[13px] font-medium py-2 transition-opacity hover:opacity-70"
-                style={{ color: ACCENT }}
-              >
-                View all habits
-                <ArrowRight className="h-3.5 w-3.5" />
-              </button>
             )}
           </motion.div>
         </AnimatePresence>
