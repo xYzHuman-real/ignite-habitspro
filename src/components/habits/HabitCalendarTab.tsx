@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Check, Flame, Star, TrendingUp, ArrowRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, Flame, Star, TrendingUp } from "lucide-react";
 
 interface Habit {
   id: string;
@@ -237,7 +236,7 @@ export default function HabitCalendarTab({ habits, completions, onToggle }: Habi
               </p>
             ) : (
               <ul>
-                {visible.map((h) => (
+                {ordered.map((h) => (
                   <li
                     key={h.id}
                     className="flex items-center gap-4 px-1 py-4 border-b border-border/40 last:border-b-0"
@@ -281,17 +280,6 @@ export default function HabitCalendarTab({ habits, completions, onToggle }: Habi
                   </li>
                 ))}
               </ul>
-            )}
-
-            {hasMore && (
-              <button
-                onClick={() => navigate("/habits/all")}
-                className="mt-5 w-full flex items-center justify-center gap-1.5 text-[13px] font-medium py-2 transition-opacity hover:opacity-70"
-                style={{ color: ACCENT }}
-              >
-                View all habits
-                <ArrowRight className="h-3.5 w-3.5" />
-              </button>
             )}
           </motion.div>
         </AnimatePresence>
