@@ -16,7 +16,6 @@ import { SignupBenefitsDialog, isGuest } from "@/components/SignupBenefitsDialog
 import { captureReferralFromUrl, useReferralAutoApply } from "@/lib/use-referral";
 
 const Habits = lazy(() => import("./pages/Habits"));
-const HabitsAll = lazy(() => import("./pages/HabitsAll"));
 const TimerPage = lazy(() => import("./pages/TimerPage"));
 const Todos = lazy(() => import("./pages/Todos"));
 const Challenges = lazy(() => import("./pages/Challenges"));
