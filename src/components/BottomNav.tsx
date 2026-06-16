@@ -17,11 +17,18 @@ export function BottomNav() {
 
   return (
     <div
-      className="fixed left-0 right-0 z-[100] pointer-events-none flex justify-center px-4"
-      style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 12px)" }}
+      className="fixed left-0 right-0 z-[100] pointer-events-none flex justify-center px-5"
+      style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 14px)" }}
     >
       <nav
-        className="pointer-events-auto glass-nav rounded-full shadow-premium-nav px-2 py-1.5 flex items-center justify-between gap-1 w-full max-w-sm"
+        className="pointer-events-auto rounded-full px-3 py-2 flex items-center justify-between gap-1 w-full max-w-sm"
+        style={{
+          background: "hsl(var(--card) / 0.82)",
+          backdropFilter: "saturate(180%) blur(28px)",
+          WebkitBackdropFilter: "saturate(180%) blur(28px)",
+          border: "1px solid hsl(var(--border) / 0.5)",
+          boxShadow: "0 10px 32px -8px hsl(220 30% 10% / 0.10), 0 2px 6px hsl(220 30% 10% / 0.04)",
+        }}
         aria-label="Primary"
       >
         {tabs.map((tab) => {
@@ -32,35 +39,29 @@ export function BottomNav() {
               key={tab.path}
               onClick={() => navigate(tab.path)}
               className={cn(
-                "relative flex-1 flex flex-col items-center justify-center gap-0.5 rounded-full py-2 px-1",
-                "transition-colors duration-300 outline-none",
-                active ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                "relative flex-1 flex flex-col items-center justify-center gap-1 rounded-full py-1.5 px-1",
+                "outline-none transition-colors duration-200",
+                active ? "text-foreground" : "text-muted-foreground/70 hover:text-foreground"
               )}
               aria-current={active ? "page" : undefined}
               aria-label={tab.label}
             >
-              {active && (
-                <motion.span
-                  layoutId="bottomNavPill"
-                  className="absolute inset-0 rounded-full bg-primary/10"
-                  transition={{ type: "spring", stiffness: 400, damping: 32 }}
-                />
-              )}
-              <motion.span
-                className="relative z-10 flex items-center justify-center"
-                animate={{ scale: active ? 1.08 : 1, y: active ? -1 : 0 }}
-                transition={{ type: "spring", stiffness: 320, damping: 22 }}
-              >
-                <Icon className="h-[20px] w-[20px]" strokeWidth={active ? 2.4 : 2} />
-              </motion.span>
+              <Icon className="h-[20px] w-[20px]" strokeWidth={active ? 2.2 : 1.8} />
               <span
                 className={cn(
-                  "relative z-10 text-[10px] leading-none tracking-tight transition-all",
+                  "text-[10px] leading-none tracking-tight transition-opacity",
                   active ? "font-semibold opacity-100" : "font-medium opacity-80"
                 )}
               >
                 {tab.label}
               </span>
+              {active && (
+                <motion.span
+                  layoutId="bottomNavDot"
+                  className="absolute -bottom-0.5 w-1 h-1 rounded-full bg-primary"
+                  transition={{ type: "tween", duration: 0.2, ease: "easeOut" }}
+                />
+              )}
             </button>
           );
         })}
