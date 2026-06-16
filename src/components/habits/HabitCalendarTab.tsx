@@ -164,7 +164,6 @@ export default function HabitCalendarTab({ habits, completions, onToggle }: Habi
                 key={i}
                 onClick={() => {
                   setSelectedDate(dateStr);
-                  setShowAll(false);
                 }}
                 className="relative aspect-square flex items-center justify-center group"
               >
