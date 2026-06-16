@@ -5,7 +5,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import HabitMomentumHeader from "@/components/habits/HabitMomentumHeader";
-import HabitSummaryCard from "@/components/habits/HabitSummaryCard";
 import AddHabitDrawer from "@/components/habits/AddHabitDrawer";
 import HabitCalendarTab from "@/components/habits/HabitCalendarTab";
 import { usePremium, FREE_HABIT_LIMIT } from "@/lib/use-premium";
@@ -61,9 +60,8 @@ export default function Habits() {
   }
 
   return (
-    <div className="max-w-lg mx-auto px-5 pb-32 space-y-6">
+    <div className="max-w-lg mx-auto px-5 pb-32 space-y-8">
       <HabitMomentumHeader />
-      <HabitSummaryCard habits={habits as any} completions={completions} />
       <HabitCalendarTab
         habits={habits as any}
         completions={completions}
