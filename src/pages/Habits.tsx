@@ -61,8 +61,9 @@ export default function Habits() {
   }
 
   return (
-    <div className="max-w-lg mx-auto px-5 pb-32 space-y-8">
+    <div className="max-w-lg mx-auto px-5 pb-32 space-y-6">
       <HabitMomentumHeader />
+      <HabitSummaryCard habits={habits as any} completions={completions} />
       <HabitCalendarTab
         habits={habits as any}
         completions={completions}
