@@ -146,21 +146,21 @@ export default function Profile() {
   });
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-        <Card className="p-6 relative">
-          {/* Settings icon top-right */}
+    <div className="max-w-2xl mx-auto space-y-5">
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, ease: "easeOut" }}>
+        <Card className="p-6 relative bg-card border border-border/60 shadow-none">
           {!editing && (
             <button
               onClick={() => navigate("/settings")}
-              className="absolute top-4 right-4 w-9 h-9 rounded-xl flex items-center justify-center hover:bg-muted transition-colors"
+              className="absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted/60 transition-colors"
+              aria-label="Settings"
             >
-              <Settings className="h-5 w-5 text-muted-foreground" />
+              <Settings className="h-[18px] w-[18px] text-muted-foreground" />
             </button>
           )}
           {editing ? (
             <div className="space-y-4">
-              <h2 className="font-display font-bold text-xl">Edit Profile</h2>
+              <h2 className="font-display font-semibold text-[20px] tracking-tight">Edit Profile</h2>
               <Input placeholder="Your Name" value={form.display_name} onChange={(e) => setForm({ ...form, display_name: e.target.value })} />
               <UsernameField
                 value={form.username}
@@ -170,7 +170,7 @@ export default function Profile() {
               />
               <Textarea placeholder="Write a short bio..." value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} rows={2} />
               <div className="flex gap-2">
-                <Button onClick={saveProfile} className="bg-gradient-primary text-primary-foreground">
+                <Button onClick={saveProfile}>
                   <Check className="h-4 w-4 mr-1" /> Save
                 </Button>
                 <Button variant="outline" onClick={() => setEditing(false)}>Cancel</Button>
@@ -178,138 +178,113 @@ export default function Profile() {
             </div>
           ) : (
             <>
-              <div className="flex flex-col sm:flex-row items-center gap-5">
+              <div className="flex flex-col items-center text-center gap-3">
                 <div className="relative group">
-                  <Avatar className="w-24 h-24 border-4 border-primary shadow-glow-primary">
+                  <Avatar className="w-[88px] h-[88px] ring-1 ring-border/70">
                     {profile.avatar_url && <AvatarImage src={profile.avatar_url} alt={profile.display_name} />}
-                    <AvatarFallback className="bg-gradient-primary text-primary-foreground font-display text-2xl font-bold">
+                    <AvatarFallback className="bg-muted text-foreground font-display text-xl font-semibold">
                       {avatarText}
                     </AvatarFallback>
                   </Avatar>
                   <button
                     onClick={() => fileInputRef.current?.click()}
                     disabled={uploadingAvatar}
-                    className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                    className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    aria-label="Change photo"
                   >
-                    <Camera className="h-6 w-6 text-white" />
+                    <Camera className="h-5 w-5 text-white" />
                   </button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleAvatarUpload}
-                  />
+                  <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
                 </div>
-                <div className="text-center sm:text-left flex-1">
-                  <div className="flex items-center gap-2 justify-center sm:justify-start flex-wrap">
-                    <h1 className="text-2xl font-display font-bold">{profile.display_name || "Set up your profile"}</h1>
+
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 justify-center flex-wrap">
+                    <h1 className="text-[22px] font-display font-semibold tracking-tight leading-tight">
+                      {profile.display_name || "Set up your profile"}
+                    </h1>
                     {isPremium && (
-                      <PremiumBadge
-                        size="sm"
-                        label="Premium"
-                        onClick={() => navigate("/pricing")}
-                      />
+                      <PremiumBadge size="sm" label="Premium" onClick={() => navigate("/pricing")} />
                     )}
                   </div>
-                  <div className="flex items-center gap-2 mt-0.5 justify-center sm:justify-start flex-wrap">
-                    <p className="text-muted-foreground text-sm">{profile.username ? `@${profile.username}` : "No username set"}</p>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
-                      {currentLevel.icon} Lv.{currentLevel.level} {(profile as any).title || currentLevel.title}
-                    </span>
-                  </div>
-                  <p className="text-sm mt-1">{profile.bio || "No bio yet"}</p>
-                  <div className="flex gap-2 mt-3 justify-center sm:justify-start flex-wrap">
-                    <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploadingAvatar}>
-                      <Camera className="h-4 w-4 mr-1" /> {uploadingAvatar ? "Uploading..." : "Change Photo"}
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={startEdit}>
-                      <Edit3 className="h-4 w-4 mr-1" /> Edit Profile
-                    </Button>
-                    <Button size="sm" variant="outline" className="text-destructive hover:text-destructive" onClick={signOut}>
-                      <LogOut className="h-4 w-4 mr-1" /> Sign Out
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              <Separator className="my-5" />
-
-              <div className="grid grid-cols-4 gap-4 text-center">
-                <button
-                  type="button"
-                  onClick={() => navigate("/follows?tab=followers")}
-                  className="rounded-lg py-1 hover:bg-muted/40 active:scale-95 transition"
-                >
-                  <motion.p layout className="text-2xl font-display font-bold">
-                    {followerCount}
-                  </motion.p>
-                  <p className="text-xs text-muted-foreground">Followers</p>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => navigate("/follows?tab=following")}
-                  className="rounded-lg py-1 hover:bg-muted/40 active:scale-95 transition"
-                >
-                  <motion.p layout className="text-2xl font-display font-bold">
-                    {followingCount}
-                  </motion.p>
-                  <p className="text-xs text-muted-foreground">Following</p>
-                </button>
-                <div>
-                  <p className="text-2xl font-display font-bold flex items-center justify-center gap-1">
-                    {profile.total_streak} <Flame className="h-5 w-5 text-primary" />
+                  <p className="text-[13px] text-muted-foreground">
+                    {profile.username ? `@${profile.username}` : "No username set"}
+                    <span className="mx-1.5 text-border">·</span>
+                    Lv.{currentLevel.level} {(profile as any).title || currentLevel.title}
                   </p>
-                  <p className="text-xs text-muted-foreground">Day Streak</p>
+                  {profile.bio && (
+                    <p className="text-[14px] text-foreground/80 max-w-sm mx-auto pt-1">{profile.bio}</p>
+                  )}
                 </div>
-                <div>
-                  <p className="text-2xl font-display font-bold">{profile.habits_completed}</p>
-                  <p className="text-xs text-muted-foreground">Completed</p>
+
+                <div className="flex gap-2 pt-1 flex-wrap justify-center">
+                  <Button size="sm" variant="outline" className="rounded-full h-8 px-3.5 text-[12px] font-medium" onClick={startEdit}>
+                    <Edit3 className="h-3.5 w-3.5 mr-1" /> Edit
+                  </Button>
+                  <Button size="sm" variant="outline" className="rounded-full h-8 px-3.5 text-[12px] font-medium" onClick={() => fileInputRef.current?.click()} disabled={uploadingAvatar}>
+                    <Camera className="h-3.5 w-3.5 mr-1" /> {uploadingAvatar ? "Uploading..." : "Photo"}
+                  </Button>
+                  <Button size="sm" variant="ghost" className="rounded-full h-8 px-3.5 text-[12px] font-medium text-muted-foreground hover:text-destructive" onClick={signOut}>
+                    <LogOut className="h-3.5 w-3.5 mr-1" /> Sign out
+                  </Button>
                 </div>
               </div>
 
-              {/* XP & Coins */}
-              <div className="mt-4 space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <div className="flex items-center gap-1.5" title="Lifetime XP (never resets)">
-                      <Flame className="h-4 w-4 text-primary" />
-                      <span className="font-semibold">{lifetimeXp}</span>
-                      <span className="text-xs text-muted-foreground">Lifetime XP</span>
-                    </div>
-                    <div className="flex items-center gap-1.5" title="Weekly leaderboard points">
-                      <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">WK</span>
-                      <span className="font-semibold">{profile.leaderboard_points}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5" title="Spendable coins">
-                      <Coins className="h-4 w-4 text-accent" />
-                      <span className="font-semibold">{profile.coins || 0}</span>
-                      <span className="text-xs text-muted-foreground">coins</span>
-                    </div>
-                  </div>
+              <div className="mt-6 grid grid-cols-4 divide-x divide-border/60">
+                <button type="button" onClick={() => navigate("/follows?tab=followers")} className="flex flex-col items-center py-1 active:opacity-60 transition">
+                  <motion.span layout className="text-[20px] font-display font-semibold tabular-nums leading-none">{followerCount}</motion.span>
+                  <span className="text-[11px] text-muted-foreground mt-1.5">Followers</span>
+                </button>
+                <button type="button" onClick={() => navigate("/follows?tab=following")} className="flex flex-col items-center py-1 active:opacity-60 transition">
+                  <motion.span layout className="text-[20px] font-display font-semibold tabular-nums leading-none">{followingCount}</motion.span>
+                  <span className="text-[11px] text-muted-foreground mt-1.5">Following</span>
+                </button>
+                <div className="flex flex-col items-center py-1">
+                  <span className="text-[20px] font-display font-semibold tabular-nums leading-none">{profile.total_streak}</span>
+                  <span className="text-[11px] text-muted-foreground mt-1.5">Day streak</span>
+                </div>
+                <div className="flex flex-col items-center py-1">
+                  <span className="text-[20px] font-display font-semibold tabular-nums leading-none">{profile.habits_completed}</span>
+                  <span className="text-[11px] text-muted-foreground mt-1.5">Completed</span>
+                </div>
+              </div>
+
+              {/* Level progress */}
+              <div className="mt-6 space-y-2">
+                <div className="flex items-center justify-between text-[12px]">
+                  <span className="text-muted-foreground">Level {currentLevel.level}</span>
                   {nextLevel && (
-                    <span className="text-xs text-muted-foreground">
-                      {nextLevel.minPoints - lifetimeXp} to Lv.{nextLevel.level}
+                    <span className="text-muted-foreground tabular-nums">
+                      {nextLevel.minPoints - lifetimeXp} XP to Lv.{nextLevel.level}
                     </span>
                   )}
                 </div>
-                <Progress value={progressToNext} className="h-2" />
+                <Progress value={progressToNext} className="h-1" />
+                <div className="flex items-center gap-4 pt-1 text-[12px] text-muted-foreground">
+                  <span className="tabular-nums"><span className="text-foreground font-medium">{lifetimeXp}</span> XP</span>
+                  <span className="tabular-nums"><span className="text-foreground font-medium">{profile.leaderboard_points}</span> this week</span>
+                  <span className="flex items-center gap-1 tabular-nums">
+                    <Coins className="h-3.5 w-3.5" />
+                    <span className="text-foreground font-medium">{profile.coins || 0}</span>
+                  </span>
+                </div>
               </div>
 
-              <div className="mt-3 flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
-                {profile.streak_freezes > 0 && (
-                  <div className="flex items-center gap-1">
-                    <Shield className="h-4 w-4 text-primary" />
-                    <span>{profile.streak_freezes} streak freezes</span>
-                  </div>
-                )}
-                {todayLogin && (
-                  <div className="flex items-center gap-1">
-                    <Gift className="h-4 w-4 text-success" />
-                    <span>Daily reward claimed ✓</span>
-                  </div>
-                )}
-              </div>
+              {(profile.streak_freezes > 0 || todayLogin) && (
+                <div className="mt-4 flex items-center gap-4 text-[12px] text-muted-foreground flex-wrap">
+                  {profile.streak_freezes > 0 && (
+                    <div className="flex items-center gap-1.5">
+                      <Shield className="h-3.5 w-3.5" />
+                      <span>{profile.streak_freezes} streak freezes</span>
+                    </div>
+                  )}
+                  {todayLogin && (
+                    <div className="flex items-center gap-1.5">
+                      <Gift className="h-3.5 w-3.5" />
+                      <span>Daily reward claimed</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </>
           )}
         </Card>
