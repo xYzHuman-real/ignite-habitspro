@@ -180,19 +180,19 @@ export default function Profile() {
             <>
               <div className="flex flex-col items-center text-center gap-3">
                 <div className="relative group">
-                  <Avatar className="w-[88px] h-[88px] ring-1 ring-border/70">
+                  <Avatar className="w-[72px] h-[72px] ring-1 ring-border/70">
                     {profile.avatar_url && <AvatarImage src={profile.avatar_url} alt={profile.display_name} />}
-                    <AvatarFallback className="bg-muted text-foreground font-display text-xl font-semibold">
+                    <AvatarFallback className="bg-muted text-foreground font-display text-lg font-semibold">
                       {avatarText}
                     </AvatarFallback>
                   </Avatar>
                   <button
                     onClick={() => fileInputRef.current?.click()}
                     disabled={uploadingAvatar}
-                    className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 active:opacity-100 transition-opacity"
                     aria-label="Change photo"
                   >
-                    <Camera className="h-5 w-5 text-white" />
+                    <Camera className="h-4 w-4 text-white" />
                   </button>
                   <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
                 </div>
@@ -216,75 +216,56 @@ export default function Profile() {
                   )}
                 </div>
 
-                <div className="flex gap-2 pt-1 flex-wrap justify-center">
-                  <Button size="sm" variant="outline" className="rounded-full h-8 px-3.5 text-[12px] font-medium" onClick={startEdit}>
-                    <Edit3 className="h-3.5 w-3.5 mr-1" /> Edit
-                  </Button>
-                  <Button size="sm" variant="outline" className="rounded-full h-8 px-3.5 text-[12px] font-medium" onClick={() => fileInputRef.current?.click()} disabled={uploadingAvatar}>
-                    <Camera className="h-3.5 w-3.5 mr-1" /> {uploadingAvatar ? "Uploading..." : "Photo"}
-                  </Button>
-                  <Button size="sm" variant="ghost" className="rounded-full h-8 px-3.5 text-[12px] font-medium text-muted-foreground hover:text-destructive" onClick={signOut}>
-                    <LogOut className="h-3.5 w-3.5 mr-1" /> Sign out
-                  </Button>
-                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="rounded-full h-8 px-4 text-[12px] font-medium mt-1"
+                  onClick={startEdit}
+                >
+                  <Edit3 className="h-3.5 w-3.5 mr-1" /> Edit Profile
+                </Button>
               </div>
 
-              <div className="mt-6 grid grid-cols-4 divide-x divide-border/60">
-                <button type="button" onClick={() => navigate("/follows?tab=followers")} className="flex flex-col items-center py-1 active:opacity-60 transition">
-                  <motion.span layout className="text-[20px] font-display font-semibold tabular-nums leading-none">{followerCount}</motion.span>
-                  <span className="text-[11px] text-muted-foreground mt-1.5">Followers</span>
-                </button>
-                <button type="button" onClick={() => navigate("/follows?tab=following")} className="flex flex-col items-center py-1 active:opacity-60 transition">
-                  <motion.span layout className="text-[20px] font-display font-semibold tabular-nums leading-none">{followingCount}</motion.span>
-                  <span className="text-[11px] text-muted-foreground mt-1.5">Following</span>
-                </button>
-                <div className="flex flex-col items-center py-1">
-                  <span className="text-[20px] font-display font-semibold tabular-nums leading-none">{profile.total_streak}</span>
-                  <span className="text-[11px] text-muted-foreground mt-1.5">Day streak</span>
+              {/* Stats + level — one combined block */}
+              <div className="mt-6 pt-5 border-t border-border/60">
+                <div className="grid grid-cols-4 divide-x divide-border/60">
+                  <button type="button" onClick={() => navigate("/follows?tab=followers")} className="flex flex-col items-center py-1 active:opacity-60 transition">
+                    <motion.span layout className="text-[20px] font-display font-semibold tabular-nums leading-none">{followerCount}</motion.span>
+                    <span className="text-[11px] text-muted-foreground mt-1.5">Followers</span>
+                  </button>
+                  <button type="button" onClick={() => navigate("/follows?tab=following")} className="flex flex-col items-center py-1 active:opacity-60 transition">
+                    <motion.span layout className="text-[20px] font-display font-semibold tabular-nums leading-none">{followingCount}</motion.span>
+                    <span className="text-[11px] text-muted-foreground mt-1.5">Following</span>
+                  </button>
+                  <div className="flex flex-col items-center py-1">
+                    <span className="text-[20px] font-display font-semibold tabular-nums leading-none">{profile.total_streak}</span>
+                    <span className="text-[11px] text-muted-foreground mt-1.5">Day streak</span>
+                  </div>
+                  <div className="flex flex-col items-center py-1">
+                    <span className="text-[20px] font-display font-semibold tabular-nums leading-none">{profile.habits_completed}</span>
+                    <span className="text-[11px] text-muted-foreground mt-1.5">Completed</span>
+                  </div>
                 </div>
-                <div className="flex flex-col items-center py-1">
-                  <span className="text-[20px] font-display font-semibold tabular-nums leading-none">{profile.habits_completed}</span>
-                  <span className="text-[11px] text-muted-foreground mt-1.5">Completed</span>
+
+                <div className="mt-5 space-y-2">
+                  <div className="flex items-center justify-between text-[12px]">
+                    <span className="text-muted-foreground">Level {currentLevel.level}</span>
+                    {nextLevel && (
+                      <span className="text-muted-foreground tabular-nums">
+                        {nextLevel.minPoints - lifetimeXp} XP to Lv.{nextLevel.level}
+                      </span>
+                    )}
+                  </div>
+                  <Progress value={progressToNext} className="h-1" />
+                  <p className="text-[12px] text-muted-foreground tabular-nums pt-0.5">
+                    <span className="text-foreground font-medium">{lifetimeXp}</span> XP
+                    <span className="mx-1.5 text-border">·</span>
+                    <span className="text-foreground font-medium">{profile.leaderboard_points}</span> this week
+                    <span className="mx-1.5 text-border">·</span>
+                    <span className="text-foreground font-medium">{profile.coins || 0}</span> coins
+                  </p>
                 </div>
               </div>
-
-              {/* Level progress */}
-              <div className="mt-6 space-y-2">
-                <div className="flex items-center justify-between text-[12px]">
-                  <span className="text-muted-foreground">Level {currentLevel.level}</span>
-                  {nextLevel && (
-                    <span className="text-muted-foreground tabular-nums">
-                      {nextLevel.minPoints - lifetimeXp} XP to Lv.{nextLevel.level}
-                    </span>
-                  )}
-                </div>
-                <Progress value={progressToNext} className="h-1" />
-                <div className="flex items-center gap-4 pt-1 text-[12px] text-muted-foreground">
-                  <span className="tabular-nums"><span className="text-foreground font-medium">{lifetimeXp}</span> XP</span>
-                  <span className="tabular-nums"><span className="text-foreground font-medium">{profile.leaderboard_points}</span> this week</span>
-                  <span className="flex items-center gap-1 tabular-nums">
-                    <Coins className="h-3.5 w-3.5" />
-                    <span className="text-foreground font-medium">{profile.coins || 0}</span>
-                  </span>
-                </div>
-              </div>
-
-              {(profile.streak_freezes > 0 || todayLogin) && (
-                <div className="mt-4 flex items-center gap-4 text-[12px] text-muted-foreground flex-wrap">
-                  {profile.streak_freezes > 0 && (
-                    <div className="flex items-center gap-1.5">
-                      <Shield className="h-3.5 w-3.5" />
-                      <span>{profile.streak_freezes} streak freezes</span>
-                    </div>
-                  )}
-                  {todayLogin && (
-                    <div className="flex items-center gap-1.5">
-                      <Gift className="h-3.5 w-3.5" />
-                      <span>Daily reward claimed</span>
-                    </div>
-                  )}
-                </div>
-              )}
             </>
           )}
         </Card>
