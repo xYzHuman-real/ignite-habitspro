@@ -87,8 +87,6 @@ export default function HabitCalendarTab({ habits, completions, onToggle }: Habi
   const remaining = selectedHabits.filter((h) => !h.completed_today);
   const completedList = selectedHabits.filter((h) => h.completed_today);
   const ordered = [...remaining, ...completedList];
-  const visible = ordered.slice(0, TOP_N);
-  const hasMore = ordered.length > TOP_N;
 
   const cells: (number | null)[] = [];
   for (let i = 0; i < firstDay; i++) cells.push(null);
