@@ -7,7 +7,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Onboarding } from "@/components/Onboarding";
 import { PremiumStatusBanner } from "@/components/PremiumStatusBanner";
 import { AdSlot } from "@/components/AdSlot";
-import { WeekConsistencyStrip } from "@/components/WeekConsistencyStrip";
 import { useNavigate } from "react-router-dom";
 
 const fadeUp = {
@@ -188,11 +187,6 @@ export default function Dashboard() {
             </div>
           </motion.section>
         )}
-
-        {/* 7-day consistency rings — Apple Fitness style */}
-        <motion.div variants={fadeUp}>
-          <WeekConsistencyStrip />
-        </motion.div>
 
         {/* Quiet ad slot */}
         <motion.div variants={fadeUp}>
