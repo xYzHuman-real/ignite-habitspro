@@ -134,17 +134,15 @@ export default function Todos() {
   };
 
   return (
-    <div className="max-w-lg mx-auto px-4 pb-32 space-y-4">
+    <div className="max-w-lg mx-auto px-4 pb-32 space-y-5">
       {/* Header */}
-      <div className="pt-1">
-        <div className="flex items-center justify-between mb-1">
-          <h1 className="text-xl font-display font-bold text-foreground">To-Do List</h1>
-          <span className="text-xs text-muted-foreground">{totalCompleted}/{todos.length} done</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Progress value={progressPct} className="flex-1 h-1.5" />
-          <span className="text-[10px] font-bold text-primary">{Math.round(progressPct)}%</span>
-        </div>
+      <div className="pt-2">
+        <h1 className="text-[28px] font-display font-semibold tracking-tight text-foreground">Tasks</h1>
+        <p className="text-[13px] text-muted-foreground mt-0.5">
+          {todos.length === 0
+            ? "Add your first task."
+            : `${totalCompleted} of ${todos.length} done · ${Math.round(progressPct)}%`}
+        </p>
       </div>
 
       {/* Productivity Summary */}
@@ -163,37 +161,32 @@ export default function Todos() {
       />
 
       {todos.length === 0 && (
-        <div className="text-center py-12">
-          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
-            <Sparkles className="h-7 w-7 text-primary" />
-          </div>
-          <p className="text-sm text-muted-foreground">No tasks yet. Add one to get started!</p>
+        <div className="text-center py-16">
+          <p className="text-sm text-muted-foreground">No tasks yet.</p>
         </div>
       )}
 
       {viewMode === "calendar" ? (
         <TodoCalendarView todos={filtered} onToggle={handleToggle} />
       ) : (
-        <div className="space-y-3">
-          {renderSection("🔴 Overdue", overdueTasks)}
-          {renderSection("🔥 High Priority", highPriority)}
-          {renderSection("📋 Today", todayTasks)}
-          {renderSection("📅 Upcoming", upcomingTasks)}
-          {renderSection("✅ Completed", completedTasks, false)}
+        <div className="space-y-2">
+          {renderSection("Overdue", overdueTasks)}
+          {renderSection("High Priority", highPriority)}
+          {renderSection("Today", todayTasks)}
+          {renderSection("Upcoming", upcomingTasks)}
+          {renderSection("Completed", completedTasks, false)}
         </div>
       )}
 
-      {/* Motivation card */}
+      {/* Subtle all-caught-up line, not a card */}
       {todos.length > 0 && completedTasks.length >= todayTasks.length && todayTasks.length === 0 && !isLoading && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="bg-gradient-to-br from-primary/10 to-accent/10 rounded-2xl p-4 text-center border border-primary/10"
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center text-[13px] text-muted-foreground pt-2"
         >
-          <p className="text-2xl mb-1">🎉</p>
-          <p className="text-sm font-semibold text-foreground">All caught up!</p>
-          <p className="text-xs text-muted-foreground mt-0.5">Great job staying productive today.</p>
-        </motion.div>
+          All caught up.
+        </motion.p>
       )}
 
       {/* Edit Sheet */}
@@ -206,15 +199,15 @@ export default function Todos() {
 
       {/* Floating Add Button */}
       <motion.button
-        whileTap={{ y: 1 }}
-
+        whileTap={{ scale: 0.94 }}
         onClick={() => {
           const input = document.querySelector<HTMLInputElement>('input[placeholder="Add a task..."]');
           input?.focus();
         }}
-        className="fixed bottom-24 right-5 z-40 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center"
+        className="fixed bottom-24 right-5 z-40 w-13 h-13 w-12 h-12 rounded-full bg-foreground text-background flex items-center justify-center"
+        style={{ boxShadow: "0 8px 20px -6px hsl(220 30% 10% / 0.25)" }}
       >
-        <Plus className="h-6 w-6" />
+        <Plus className="h-5 w-5" />
       </motion.button>
     </div>
   );
