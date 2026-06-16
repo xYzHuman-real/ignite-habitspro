@@ -84,7 +84,8 @@ export default function HabitCard({ habit, onToggle, onDelete, isDragging }: Hab
           habit.completed_today ? "opacity-55" : ""
         } ${isDragging ? "z-50 shadow-md scale-[1.01]" : ""}`}
       >
-        {/* Priority bar removed for cleaner Apple-style appearance */}
+        {/* Priority hairline on the left edge */}
+        <span className={`absolute left-0 top-3 bottom-3 w-[3px] rounded-r-full ${barColor} opacity-80`} />
 
         <div className="flex items-center gap-3 pl-4 pr-3 py-3">
           {/* Plain emoji, no tinted bubble */}
