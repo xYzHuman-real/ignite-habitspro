@@ -65,32 +65,32 @@ export function TodoFilters({ search, onSearchChange, filterTag, onFilterTag, fi
         </div>
       </div>
 
-      {/* Horizontal filter chips — ghost by default, hairline when active */}
+      {/* Horizontal filter chips */}
       <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
         {FILTER_CHIPS.map(chip => (
           <button
             key={chip.value}
             onClick={() => onFilterStatus(chip.value)}
             className={cn(
-              "text-[12px] px-3 py-1.5 rounded-full whitespace-nowrap transition-colors font-medium border",
+              "text-xs px-3.5 py-1.5 rounded-full whitespace-nowrap transition-all font-medium",
               filterStatus === chip.value
-                ? "bg-foreground text-background border-foreground"
-                : "bg-transparent text-muted-foreground border-border hover:text-foreground"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "bg-muted/40 text-muted-foreground hover:bg-muted"
             )}
           >
             {chip.label}
           </button>
         ))}
-        <div className="w-px bg-border mx-1 shrink-0" />
+        <div className="w-px bg-border/30 mx-1 shrink-0" />
         {TAG_CHIPS.map(chip => (
           <button
             key={chip.value}
             onClick={() => onFilterTag(filterTag === chip.value ? "all" : chip.value)}
             className={cn(
-              "text-[12px] px-3 py-1.5 rounded-full whitespace-nowrap transition-colors font-medium border",
+              "text-xs px-3 py-1.5 rounded-full whitespace-nowrap transition-all font-medium",
               filterTag === chip.value
-                ? "bg-foreground text-background border-foreground"
-                : "bg-transparent text-muted-foreground border-border hover:text-foreground"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "bg-muted/40 text-muted-foreground hover:bg-muted"
             )}
           >
             {chip.label}

@@ -281,26 +281,24 @@
     background-image: linear-gradient(135deg, hsl(var(--primary)), hsl(21 95% 60%));
   }
 
-  /* Flattened: solid primary, no gradient noise. Keeps utility class working everywhere. */
   .bg-gradient-primary {
-    background: hsl(var(--primary));
+    background-image: linear-gradient(135deg, hsl(21 90% 53%), hsl(18 90% 48%));
   }
 
   .bg-gradient-accent {
-    background: hsl(var(--accent));
+    background-image: linear-gradient(135deg, hsl(21 95% 60%), hsl(21 90% 50%));
   }
 
   .bg-gradient-success {
-    background: hsl(var(--success));
+    background-image: linear-gradient(135deg, hsl(var(--success)), hsl(142 71% 38%));
   }
 
-  /* Glows softened to near-flat shadow — keeps premium feel calm */
   .shadow-glow-primary {
-    box-shadow: 0 2px 8px hsl(var(--primary) / 0.12);
+    box-shadow: 0 8px 28px -8px hsl(var(--primary) / 0.35);
   }
 
   .shadow-glow-accent {
-    box-shadow: 0 2px 8px hsl(var(--accent) / 0.12);
+    box-shadow: 0 8px 28px -8px hsl(var(--accent) / 0.35);
   }
 
   .shadow-premium-sm { box-shadow: var(--shadow-sm); }

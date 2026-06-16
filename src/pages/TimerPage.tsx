@@ -490,7 +490,7 @@ export default function TimerPage() {
               {activeTab === tab && (
                 <motion.div
                   layoutId="timerTabBg"
-                  className="absolute inset-0 rounded-xl bg-primary shadow-md"
+                  className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary to-[hsl(0,85%,50%)] shadow-md"
                   transition={{ type: "spring", stiffness: 400, damping: 30 }}
                 />
               )}
@@ -507,8 +507,8 @@ export default function TimerPage() {
           ) : (
             <motion.div key="focus" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.2 }} className="space-y-4">
 
-              {/* Mode selector — Apple segmented control */}
-              <div className="flex p-1 rounded-xl bg-muted gap-1">
+              {/* Mode selector */}
+              <div className="flex p-1 rounded-2xl bg-muted/40 gap-1">
                 {([
                   { key: "focus" as Mode, label: "Focus", icon: <Zap className="h-3.5 w-3.5" /> },
                   { key: "shortBreak" as Mode, label: "Break", icon: <Coffee className="h-3.5 w-3.5" /> },
@@ -517,16 +517,15 @@ export default function TimerPage() {
                   <button
                     key={m.key}
                     onClick={() => attemptSwitchMode(m.key)}
-                    className={`relative flex-1 flex items-center justify-center gap-1.5 py-2 text-[13px] font-semibold rounded-lg transition-colors ${
-                      mode === m.key ? "text-foreground" : "text-muted-foreground"
+                    className={`relative flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-xl transition-all duration-300 ${
+                      mode === m.key ? "text-primary-foreground" : "text-muted-foreground"
                     }`}
                   >
                     {mode === m.key && (
                       <motion.div
                         layoutId="modeBg"
-                        className="absolute inset-0 rounded-lg bg-card border border-border/60"
-                        style={{ boxShadow: "0 1px 3px hsl(220 30% 10% / 0.06)" }}
-                        transition={{ type: "tween", duration: 0.2, ease: "easeOut" }}
+                        className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary to-[hsl(0,85%,50%)] shadow-sm"
+                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
                       />
                     )}
                     <span className="relative z-10 flex items-center gap-1">{m.icon} {m.label}</span>
@@ -574,62 +573,84 @@ export default function TimerPage() {
                 </motion.div>
               )}
 
-              {/* Main Timer Card — calm white, no glow */}
-              <div className="relative rounded-3xl bg-card border border-border/60 overflow-hidden">
-                <div className="p-8 flex flex-col items-center gap-6">
-                  <div className="relative w-64 h-64">
+              {/* Main Timer Card */}
+              <div className="relative rounded-3xl bg-card border border-border/40 shadow-lg overflow-hidden">
+                {/* Subtle top glow */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-24 opacity-[0.08] pointer-events-none"
+                  style={{ background: "radial-gradient(ellipse, hsl(16 85% 58%), transparent 70%)" }} />
+
+                <div className="p-6 flex flex-col items-center gap-4">
+                  {/* Timer circle */}
+                  <div className="relative w-60 h-60">
+                    {/* Outer glow ring */}
+                    <div className="absolute inset-[-6px] rounded-full opacity-20 pointer-events-none"
+                      style={{ background: `radial-gradient(circle, hsl(16 85% 58%) 0%, transparent 70%)` }} />
+
                     <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-                      <circle cx="50" cy="50" r={radius} fill="none" stroke="hsl(var(--muted))" strokeWidth="3" />
+                      {/* Track */}
+                      <circle cx="50" cy="50" r={radius} fill="none" className="stroke-muted/50" strokeWidth="4" />
+                      {/* Progress */}
                       <motion.circle
                         cx="50" cy="50" r={radius} fill="none"
-                        stroke="hsl(var(--primary))"
-                        strokeWidth="3.5" strokeLinecap="round"
+                        stroke="url(#timerGradient)"
+                        strokeWidth="4.5" strokeLinecap="round"
                         strokeDasharray={circumference}
                         animate={{ strokeDashoffset }}
-                        transition={{ duration: 0.4, ease: "linear" }}
+                        transition={{ duration: 0.5, ease: "linear" }}
                       />
+                      <defs>
+                        <linearGradient id="timerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="hsl(16, 85%, 58%)" />
+                          <stop offset="100%" stopColor="hsl(0, 85%, 50%)" />
+                        </linearGradient>
+                      </defs>
                     </svg>
 
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="text-[64px] font-display font-light tabular-nums tracking-tight text-foreground leading-none">
+                      <span className="text-5xl font-display font-bold tabular-nums tracking-tight">
                         {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
                       </span>
-                      <span className="text-[11px] uppercase tracking-wider text-muted-foreground mt-3 font-medium">
-                        {mode === "custom" ? `Custom · ${customMinutes}m` : PRESET_MODES[mode as Exclude<Mode, "custom">]?.label || "Focus"}
+                      <span className="text-xs text-muted-foreground mt-1.5 font-medium">
+                        {mode === "custom" ? `Custom (${customMinutes}m)` : PRESET_MODES[mode as Exclude<Mode, "custom">]?.label || "Focus"}
                       </span>
                       {linkedTask && (
-                        <span className="text-[11px] text-primary mt-1 font-medium truncate max-w-[160px]">🎯 {linkedTask.label}</span>
+                        <span className="text-[10px] text-primary mt-1 font-semibold truncate max-w-[160px]">🎯 {linkedTask.label}</span>
                       )}
                     </div>
                   </div>
 
+                  {/* Completion animation */}
                   <AnimatePresence>
                     {timerCompleteAnimation && (
-                      <motion.div initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }} transition={{ duration: 0.25, ease: "easeOut" }} className="text-3xl">
-                        ✓
+                      <motion.div initial={{ scale: 0, opacity: 0 }} animate={{ scale: [0, 1.3, 1], opacity: 1 }} exit={{ scale: 0, opacity: 0 }} className="text-4xl">
+                        🎉
                       </motion.div>
                     )}
                   </AnimatePresence>
 
+                  {/* Start + Reset + Stop (during break) */}
                   <div className="flex items-center gap-3">
-                    <motion.button whileTap={{ scale: 0.94 }} onClick={reset}
-                      className="w-12 h-12 rounded-full border border-border bg-card flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
-                      <RotateCcw className="h-4 w-4" />
-                    </motion.button>
-
                     {isRunning && mode === "shortBreak" ? (
-                      <motion.button whileTap={{ scale: 0.96 }} onClick={reset}
-                        className="px-8 h-12 rounded-full bg-foreground text-background font-semibold text-[14px] inline-flex items-center gap-2">
-                        <Square className="h-4 w-4" /> Stop Break
-                      </motion.button>
+                      <motion.div whileTap={{ scale: 0.95 }}>
+                        <Button size="lg" onClick={reset}
+                          className="px-10 h-12 rounded-2xl bg-destructive text-destructive-foreground shadow-lg font-semibold text-sm">
+                          <Square className="h-4 w-4 mr-2" /> Stop Break
+                        </Button>
+                      </motion.div>
                     ) : (
-                      <motion.button whileTap={{ scale: 0.96 }} onClick={requestStart} disabled={isRunning}
-                        className="px-8 h-12 rounded-full bg-primary text-primary-foreground font-semibold text-[14px] inline-flex items-center gap-2 disabled:opacity-50">
-                        <Play className="h-4 w-4" /> {mode === "shortBreak" ? "Start Break" : "Start"}
-                      </motion.button>
+                      <motion.div whileTap={{ scale: 0.95 }}>
+                        <Button size="lg" onClick={requestStart} disabled={isRunning}
+                          className="px-10 h-12 rounded-2xl bg-gradient-to-r from-primary to-[hsl(0,85%,50%)] text-primary-foreground shadow-lg font-semibold text-sm">
+                          <Play className="h-4 w-4 mr-2" /> {mode === "shortBreak" ? "Start Break" : "Start Focus"}
+                        </Button>
+                      </motion.div>
                     )}
-
-                    <div className="w-12 h-12" />
+                    <motion.div whileTap={{ scale: 0.9 }}>
+                      <button onClick={reset}
+                        className="w-12 h-12 rounded-2xl bg-muted/60 flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors">
+                        <RotateCcw className="h-4 w-4" />
+                      </button>
+                    </motion.div>
                   </div>
                 </div>
               </div>
@@ -720,7 +741,7 @@ export default function TimerPage() {
                       transition={{ type: "spring", stiffness: 400 }}
                       className={`w-4 h-4 rounded-full transition-colors ${
                         i < todaySessions
-                          ? "bg-primary"
+                          ? "bg-gradient-to-br from-primary to-[hsl(0,85%,50%)] shadow-sm"
                           : "bg-muted/60"
                       }`}
                     />
@@ -729,7 +750,7 @@ export default function TimerPage() {
                 {/* Mini progress bar */}
                 <div className="mt-3 h-1 rounded-full bg-muted/50 overflow-hidden">
                   <motion.div
-                    className="h-full rounded-full bg-primary"
+                    className="h-full rounded-full bg-gradient-to-r from-primary to-[hsl(0,85%,50%)]"
                     animate={{ width: `${Math.min(100, (todaySessions / 8) * 100)}%` }}
                     transition={{ duration: 0.6, ease: "easeOut" }}
                   />
@@ -751,7 +772,7 @@ export default function TimerPage() {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel className="rounded-xl">No, Continue</AlertDialogCancel>
-              <AlertDialogAction onClick={() => confirmSwitch && doSwitchMode(confirmSwitch)} className="bg-primary text-primary-foreground rounded-xl">Yes, Switch</AlertDialogAction>
+              <AlertDialogAction onClick={() => confirmSwitch && doSwitchMode(confirmSwitch)} className="bg-gradient-to-r from-primary to-[hsl(0,85%,50%)] text-primary-foreground rounded-xl">Yes, Switch</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
