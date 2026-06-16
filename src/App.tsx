@@ -79,7 +79,6 @@ function ProtectedRoutes() {
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/habits" element={<Habits />} />
-          <Route path="/habits/all" element={<HabitsAll />} />
           <Route path="/timer" element={<TimerPage />} />
           <Route path="/todos" element={<Todos />} />
           <Route path="/challenges" element={<Challenges />} />
