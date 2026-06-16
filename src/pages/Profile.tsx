@@ -303,55 +303,90 @@ export default function Profile() {
       )}
 
       {!editing && earnedBadges.length > 0 && (
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05, duration: 0.25, ease: "easeOut" }}>
-          <Card className="p-5 bg-card border border-border/60 shadow-none">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-[11px] font-semibold tracking-[0.14em] uppercase text-muted-foreground">Badges</h2>
+        <motion.section
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05, duration: 0.25, ease: "easeOut" }}
+          className="space-y-2"
+        >
+          <div className="flex items-center justify-between px-1">
+            <h2 className="text-[11px] font-semibold tracking-[0.14em] uppercase text-muted-foreground">Badges</h2>
+            {earnedBadges.length > 6 && (
               <span className="text-[12px] text-muted-foreground tabular-nums">{earnedBadges.length}</span>
-            </div>
-            <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
-              {earnedBadges.map((badge) => (
+            )}
+          </div>
+          <Card className="p-5">
+            <div className="grid grid-cols-6 gap-3">
+              {earnedBadges.slice(0, 6).map((badge) => (
                 <div key={badge.id} className="flex flex-col items-center gap-1.5">
-                  <div className="w-12 h-12 rounded-full bg-muted/60 flex items-center justify-center text-xl">
+                  <div className="w-11 h-11 rounded-full bg-muted/60 flex items-center justify-center text-lg">
                     {badge.icon}
                   </div>
-                  <span className="text-[11px] text-center text-muted-foreground leading-tight line-clamp-2">{badge.name}</span>
+                  <span className="text-[10px] text-center text-muted-foreground leading-tight line-clamp-2">{badge.name}</span>
                 </div>
               ))}
             </div>
           </Card>
-        </motion.div>
+        </motion.section>
       )}
 
       {!editing && (
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.25, ease: "easeOut" }}>
-          <Card className="p-5 bg-card border border-border/60 shadow-none">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-[11px] font-semibold tracking-[0.14em] uppercase text-muted-foreground">Activity</h2>
-              <span className="flex items-center gap-1 text-[12px] text-muted-foreground">
-                <CalendarDays className="h-3 w-3" /> Joined {joinDate}
-              </span>
-            </div>
-            <div className="grid grid-cols-7 gap-1.5">
-              {Array.from({ length: 49 }).map((_, i) => {
-                const date = new Date();
-                date.setDate(date.getDate() - (48 - i));
-                const dateStr = date.toISOString().split("T")[0];
-                const count = activityMap.get(dateStr) || 0;
-                return (
-                  <div
-                    key={i}
-                    title={`${dateStr}: ${count} activities`}
-                    className={`aspect-square rounded-[4px] ${
-                      count >= 4 ? "bg-primary" :
-                      count >= 3 ? "bg-primary/60" :
-                      count >= 1 ? "bg-primary/25" :
-                      "bg-muted/60"
-                    }`}
-                  />
-                );
-              })}
-            </div>
+        <motion.section
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1, duration: 0.25, ease: "easeOut" }}
+          className="space-y-2"
+        >
+          <div className="flex items-center justify-between px-1">
+            <h2 className="text-[11px] font-semibold tracking-[0.14em] uppercase text-muted-foreground">Activity</h2>
+            <span className="flex items-center gap-1 text-[12px] text-muted-foreground">
+              <CalendarDays className="h-3 w-3" /> Joined {joinDate}
+            </span>
+          </div>
+          <Card className="p-5">
+            {(() => {
+              const WEEKS = 12;
+              const today = new Date();
+              const dayOfWeek = today.getDay();
+              const totalCells = WEEKS * 7;
+              const endOffset = 6 - dayOfWeek;
+              const startDaysBack = totalCells - 1 - endOffset;
+              const cells = Array.from({ length: totalCells }).map((_, idx) => {
+                const col = Math.floor(idx / 7);
+                const row = idx % 7;
+                const linearDay = col * 7 + row;
+                const daysBack = startDaysBack - linearDay;
+                const d = new Date(today);
+                d.setDate(today.getDate() - daysBack);
+                const dateStr = d.toISOString().split("T")[0];
+                const count = daysBack < 0 ? -1 : (activityMap.get(dateStr) || 0);
+                return { dateStr, count, isFuture: daysBack < 0 };
+              });
+              return (
+                <div
+                  className="grid gap-[3px]"
+                  style={{
+                    gridTemplateColumns: `repeat(${WEEKS}, minmax(0, 1fr))`,
+                    gridAutoFlow: "column",
+                    gridTemplateRows: "repeat(7, minmax(0, 1fr))",
+                  }}
+                >
+                  {cells.map((c, i) => (
+                    <div
+                      key={i}
+                      title={c.isFuture ? "" : `${c.dateStr}: ${c.count} activities`}
+                      className={`aspect-square rounded-[3px] ${
+                        c.isFuture ? "bg-transparent" :
+                        c.count >= 4 ? "bg-primary" :
+                        c.count >= 3 ? "bg-primary/60" :
+                        c.count >= 1 ? "bg-primary/25" :
+                        "bg-muted/60"
+                      }`}
+                    />
+                  ))}
+                </div>
+              );
+            })()}
             <div className="flex items-center justify-end gap-1.5 mt-3 text-[11px] text-muted-foreground">
               Less
               <div className="w-2.5 h-2.5 rounded-[3px] bg-muted/60" />
@@ -361,7 +396,7 @@ export default function Profile() {
               More
             </div>
           </Card>
-        </motion.div>
+        </motion.section>
       )}
     </div>
   );
