@@ -20,12 +20,10 @@ interface HabitCalendarTabProps {
   onToggle: (habit: Habit) => void;
 }
 
-const TOP_N = 5;
 const ACCENT = "#F97316";
 
 export default function HabitCalendarTab({ habits, completions, onToggle }: HabitCalendarTabProps) {
   const [viewDate, setViewDate] = useState(new Date());
-  const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
