@@ -1,11 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { CalendarDays, Flame, UserPlus, Edit3, Check, LogOut, Shield, Coins, Gift, Camera, Settings, Crown, Sparkles, ArrowRight } from "lucide-react";
+import { CalendarDays, UserPlus, Edit3, Check, Coins, Camera, Settings, Crown, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
