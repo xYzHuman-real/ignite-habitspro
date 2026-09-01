@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'ignite-habitspro',
   webDir: 'dist',
   server: {
-    url: 'https://71ca33e8-8065-45b2-b282-54bac8cd27f9.lovableproject.com?forceHideBadge=true',
+    url: 'https://ignite-habitspro.lovable.app',
     cleartext: true,
   },
   plugins: {
