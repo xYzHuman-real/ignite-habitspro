@@ -1,0 +1,18 @@
+{
+  "expo": {
+    "name": "Ignite HabitPro",
+    "slug": "ignite-habitpro",
+    "version": "1.0.0",
+    "scheme": "ignitehabitspro",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "android": {
+      "package": "app.lovable.ignitehabitspro",
+      "adaptiveIcon": {
+        "backgroundColor": "#0b0b10"
+      }
+    },
+    "plugins": ["expo-router", "expo-notifications"],
+    "experiments": { "typedRoutes": true }
+  }
+}
