@@ -29,15 +29,6 @@ jobs:
       - name: Build web app
         run: npm run build
 
-      - name: Remove dev server config
-        run: |
-          node -e "
-          const fs = require('fs');
-          const cfg = fs.readFileSync('capacitor.config.ts','utf8');
-          const cleaned = cfg.replace(/server:\s*\{[^}]*\},?/s, '');
-          fs.writeFileSync('capacitor.config.ts', cleaned);
-          "
-
       - name: Add Android platform
         run: npx cap add android
 
