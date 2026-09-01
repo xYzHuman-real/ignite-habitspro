@@ -2,12 +2,11 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'app.lovable.ignitehabitspro',
-  appName: 'ignite-habitspro',
+  appName: 'Ignite HabitPro',
+  // Production builds package the compiled web app from dist. Do not set
+  // server.url here: a remote URL would make the released Android app depend
+  // on a mutable hosted website instead of the reviewed app bundle.
   webDir: 'dist',
-  server: {
-    url: 'https://ignite-habitspro.lovable.app',
-    cleartext: true,
-  },
   plugins: {
     SplashScreen: {
       launchShowDuration: 2000,
