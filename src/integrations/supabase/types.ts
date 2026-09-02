@@ -1105,6 +1105,11 @@ export type Database = {
         Args: { user_a: string; user_b: string }
         Returns: number
       }
+      is_room_member: {
+        Args: { _room_id: string; _user_id: string }
+        Returns: boolean
+      }
+      join_room_by_code: { Args: { code: string }; Returns: string }
       suggest_usernames: { Args: { base: string }; Returns: string[] }
     }
     Enums: {
