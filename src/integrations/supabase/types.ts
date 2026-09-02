@@ -68,6 +68,30 @@ export type Database = {
         }
         Relationships: []
       }
+      ad_reward_claims: {
+        Row: {
+          created_at: string
+          id: string
+          impression_id: string
+          points: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          impression_id: string
+          points?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          impression_id?: string
+          points?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       badges: {
         Row: {
           category: string
@@ -1100,6 +1124,7 @@ export type Database = {
     }
     Functions: {
       apply_referral: { Args: { code: string }; Returns: string }
+      claim_ad_reward: { Args: { _impression_id: string }; Returns: Json }
       generate_referral_code: { Args: never; Returns: string }
       get_shared_streak: {
         Args: { user_a: string; user_b: string }
