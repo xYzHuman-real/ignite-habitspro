@@ -3,8 +3,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
-import { celebrate } from "@/lib/celebrate";
-import { haptics } from "@/lib/haptics";
+import { celebratePremium } from "@/lib/celebrate";
+import { hapticSuccess } from "@/lib/haptics";
 import { ADMOB_CONFIG, getRewardedAdUnitId, initAdMob, isNativeAdMob, useTestAds } from "@/lib/admob";
 
 type Status = "idle" | "loading" | "showing" | "claiming";
@@ -38,8 +38,8 @@ export function useRewardedAd() {
         return;
       }
       await qc.invalidateQueries({ queryKey: ["profile", user?.id] });
-      haptics.success();
-      celebrate();
+      hapticSuccess();
+      celebratePremium();
       toast({
         title: `🎉 +${result.points ?? ADMOB_CONFIG.rewardPoints} Points earned!`,
         description: "Your points balance has been updated.",
