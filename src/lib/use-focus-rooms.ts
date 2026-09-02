@@ -96,18 +96,11 @@ export function useFocusRooms() {
   const joinByCode = useMutation({
     mutationFn: async (code: string) => {
       if (!user) throw new Error("Not authenticated");
-      const { data: room } = await supabase
-        .from("focus_rooms" as any)
-        .select("id")
-        .eq("invite_code", code.toUpperCase())
-        .single();
-      if (!room) throw new Error("Invalid invite code");
-      const { error } = await supabase.from("focus_room_participants" as any).insert({
-        room_id: (room as any).id,
-        user_id: user.id,
+      const { data, error } = await supabase.rpc("join_room_by_code" as any, {
+        code: code.toUpperCase(),
       } as any);
       if (error) throw error;
-      return room;
+      return { id: data as unknown as string };
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["focus_rooms"] });
