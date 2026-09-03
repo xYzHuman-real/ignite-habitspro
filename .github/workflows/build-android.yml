@@ -49,10 +49,6 @@ jobs:
         working-directory: mobile
         run: npm install
 
-      - name: Align Expo SDK dependencies
-        working-directory: mobile
-        run: npx expo install --fix
-
       - name: Validate Expo project
         working-directory: mobile
         run: npx expo-doctor
