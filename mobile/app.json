@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "name": "Ignite HabitsPro",
+    "slug": "ignite-habitspro",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "scheme": "ignitehabitspro",
+    "android": {
+      "package": "app.lovable.ignitehabitspro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-notifications"
+    ]
+  }
+}
