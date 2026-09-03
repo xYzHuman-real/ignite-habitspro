@@ -69,9 +69,25 @@ jobs:
           grep -n "expo-autolinking-settings" settings.gradle
           grep -n "expoAutolinking.useExpoModules" settings.gradle
           grep -n "expoAutolinking.useExpoVersionCatalog" settings.gradle
+      - name: Print native startup configuration
+        working-directory: mobile/android
+        shell: bash
+        run: |
+          set -e
+          echo '===== settings.gradle ====='
+          cat settings.gradle
+          echo '===== app/build.gradle ====='
+          cat app/build.gradle
+          echo '===== AndroidManifest.xml ====='
+          cat app/src/main/AndroidManifest.xml
+          echo '===== MainActivity ====='
+          find app/src/main -type f \( -name 'MainActivity.*' -o -name 'MainApplication.*' \) -print -exec cat {} \;
+      - name: Build native Android project locally
+        working-directory: mobile/android
+        run: ./gradlew :app:assembleRelease --stacktrace --no-daemon
       - name: Build Android APK on EAS
         working-directory: mobile
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           EXPO_PROJECT_ROOT: ${{ github.workspace }}/mobile
-        run: npx eas-cli@latest build --platform android --profile preview --non-interactive --wait
+        run: npx eas-cli@latest build --platform android --profile preview --non-interactive --clear-cache --wait
