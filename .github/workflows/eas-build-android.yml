@@ -43,6 +43,7 @@ jobs:
           test -n "$SUPABASE_KEY_VALUE"
           echo "EXPO_PUBLIC_SUPABASE_URL=$SUPABASE_URL_VALUE" >> "$GITHUB_ENV"
           echo "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$SUPABASE_KEY_VALUE" >> "$GITHUB_ENV"
+          printf 'EXPO_PUBLIC_SUPABASE_URL="%s"\nEXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY="%s"\n' "$SUPABASE_URL_VALUE" "$SUPABASE_KEY_VALUE" > mobile/.env
       - name: Install React Native dependencies
         working-directory: mobile
         run: npm install
