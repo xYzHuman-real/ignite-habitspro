@@ -1,4 +1,4 @@
-name: Build React Native Debug APK
+name: Build React Native Release APK
 
 on:
   workflow_dispatch:
@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   build:
-    name: React Native Debug APK
+    name: React Native Release APK
     runs-on: ubuntu-latest
 
     steps:
@@ -59,10 +59,6 @@ jobs:
         working-directory: mobile
         run: npx expo-doctor
 
-      - name: Validate production JavaScript bundle
-        working-directory: mobile
-        run: npx expo export --platform android --clear
-
       - name: Generate Android project with Expo
         working-directory: mobile
         env:
@@ -79,46 +75,40 @@ jobs:
           grep -n "expoAutolinking.useExpoModules" settings.gradle
           grep -n "expoAutolinking.useExpoVersionCatalog" settings.gradle
 
-      - name: Package Expo Router JS bundle into debug APK
+      - name: Verify production JavaScript export
         working-directory: mobile
+        run: npx expo export --platform android --clear
+
+      - name: Build release APK
+        working-directory: mobile/android
         env:
-          CI: 1
           EXPO_PROJECT_ROOT: ${{ github.workspace }}/mobile
+        run: ./gradlew :app:assembleRelease --stacktrace --no-daemon
+
+      - name: Verify release APK
         shell: bash
         run: |
           set -e
-          mkdir -p android/app/src/main/assets
-          rm -f android/app/src/main/assets/index.android.bundle
-          npx expo export:embed \
-            --platform android \
-            --entry-file node_modules/expo-router/entry.js \
-            --bundle-output android/app/src/main/assets/index.android.bundle \
-            --assets-dest android/app/src/main/res \
-            --dev false
-          test -s android/app/src/main/assets/index.android.bundle
-          echo "Bundled JS size: $(wc -c < android/app/src/main/assets/index.android.bundle) bytes"
+          test -s mobile/android/app/build/outputs/apk/release/app-release.apk
+          ls -lh mobile/android/app/build/outputs/apk/release/app-release.apk
 
-      - name: Build debug APK
-        working-directory: mobile/android
-        run: ./gradlew :app:assembleDebug --stacktrace --no-daemon
-
-      - name: Upload debug APK artifact
+      - name: Upload release APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ignite-habitspro-debug-apk
-          path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          name: ignite-habitspro-release-apk
+          path: mobile/android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 14
 
-      - name: Publish debug APK to GitHub Release
+      - name: Publish release APK to GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -e
-          gh release delete rn-debug-apk-latest --yes --cleanup-tag || true
-          gh release create rn-debug-apk-latest mobile/android/app/build/outputs/apk/debug/app-debug.apk \
-            --title "Ignite HabitsPro — React Native Debug APK" \
-            --notes "Debug APK built from branch ${{ inputs.branch }} at commit ${{ github.sha }}."
-          echo "## Debug APK" >> "$GITHUB_STEP_SUMMARY"
+          gh release delete rn-release-apk-latest --yes --cleanup-tag || true
+          gh release create rn-release-apk-latest mobile/android/app/build/outputs/apk/release/app-release.apk \
+            --title "Ignite HabitsPro — React Native Release APK" \
+            --notes "Release APK built from branch ${{ inputs.branch }} at commit ${{ github.sha }}."
+          echo "## Release APK" >> "$GITHUB_STEP_SUMMARY"
           echo "Built from branch **${{ inputs.branch }}**." >> "$GITHUB_STEP_SUMMARY"
-          echo "Release: https://github.com/${{ github.repository }}/releases/tag/rn-debug-apk-latest" >> "$GITHUB_STEP_SUMMARY"
+          echo "Release: https://github.com/${{ github.repository }}/releases/tag/rn-release-apk-latest" >> "$GITHUB_STEP_SUMMARY"
