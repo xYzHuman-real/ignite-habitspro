@@ -9,173 +9,61 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout selected branch
+        uses: actions/checkout@v4
 
-
-
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - uses: actions/setup-java@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
         with:
-          distribution: zulu
-          java-version: 21
+          distribution: temurin
+          java-version: 17
 
-      - name: Install dependencies
+      - name: Prepare Expo environment
+        shell: bash
+        run: |
+          test -f .env
+          SUPABASE_URL_VALUE=$(sed -n 's/^SUPABASE_URL="\(.*\)"$/\1/p' .env | head -n 1)
+          SUPABASE_KEY_VALUE=$(sed -n 's/^SUPABASE_PUBLISHABLE_KEY="\(.*\)"$/\1/p' .env | head -n 1)
+          test -n "$SUPABASE_URL_VALUE"
+          test -n "$SUPABASE_KEY_VALUE"
+          echo "EXPO_PUBLIC_SUPABASE_URL=$SUPABASE_URL_VALUE" >> "$GITHUB_ENV"
+          echo "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$SUPABASE_KEY_VALUE" >> "$GITHUB_ENV"
+
+      - name: Install React Native dependencies
+        working-directory: mobile
         run: npm install
 
-      - name: Build web app
-        run: npm run build
-
-      - name: Add Android platform
-        run: npx cap add android
-
-      - name: Write AndroidManifest.xml with app queries
-        run: |
-          cat << 'EOF' > android/app/src/main/AndroidManifest.xml
-          <?xml version="1.0" encoding="utf-8"?>
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-              package="app.lovable.ignitehabitspro">
-
-              <uses-permission android:name="android.permission.INTERNET" />
-              <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-              <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
-              <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-              <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-              <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
-
-              <queries>
-                  <package android:name="com.instagram.android" />
-                  <package android:name="com.facebook.katana" />
-                  <package android:name="com.twitter.android" />
-                  <package android:name="com.snapchat.android" />
-                  <package android:name="com.reddit.frontpage" />
-                  <package android:name="com.pinterest" />
-                  <package android:name="com.linkedin.android" />
-                  <package android:name="com.google.android.youtube" />
-                  <package android:name="com.google.android.apps.youtube.creator" />
-                  <package android:name="com.zhiliaoapp.musically" />
-                  <package android:name="com.facebook.orca" />
-                  <package android:name="com.whatsapp" />
-                  <package android:name="org.telegram.messenger" />
-                  <package android:name="com.discord" />
-                  <package android:name="com.netflix.mediaclient" />
-                  <package android:name="com.amazon.avod.thirdpartyclient" />
-                  <package android:name="tv.twitch.android.app" />
-                  <package android:name="com.spotify.music" />
-                  <package android:name="com.pubg.imobile" />
-                  <package android:name="com.dts.freefireth" />
-                  <package android:name="com.supercell.clashofclans" />
-                  <package android:name="com.supercell.clashroyale" />
-                  <package android:name="com.activision.callofduty.shooter" />
-                  <package android:name="in.amazon.mShop.android.shopping" />
-                  <package android:name="com.flipkart.android" />
-                  <package android:name="com.myntra.android" />
-              </queries>
-
-              <application
-                  android:allowBackup="true"
-                  android:icon="@mipmap/ic_launcher"
-                  android:label="@string/app_name"
-                  android:roundIcon="@mipmap/ic_launcher_round"
-                  android:supportsRtl="true"
-                  android:theme="@style/AppTheme"
-                  android:usesCleartextTraffic="true">
-
-                  <activity
-                      android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode"
-                      android:exported="true"
-                      android:label="@string/title_activity_main"
-                      android:launchMode="singleTask"
-                      android:name="app.lovable.ignitehabitspro.MainActivity"
-                      android:screenOrientation="portrait"
-                      android:theme="@style/AppTheme.NoActionBarLaunch"
-                      android:windowSoftInputMode="adjustPan">
-                      <intent-filter>
-                          <action android:name="android.intent.action.MAIN" />
-                          <category android:name="android.intent.category.LAUNCHER" />
-                      </intent-filter>
-                      <intent-filter>
-                          <action android:name="android.intent.action.VIEW" />
-                          <category android:name="android.intent.category.DEFAULT" />
-                          <category android:name="android.intent.category.BROWSABLE" />
-                          <data android:scheme="ignitehabitspro" />
-                      </intent-filter>
-                  </activity>
-
-                  <provider
-                      android:authorities="${applicationId}.fileprovider"
-                      android:exported="false"
-                      android:grantUriPermissions="true"
-                      android:name="androidx.core.content.FileProvider">
-                      <meta-data
-                          android:name="android.support.FILE_PROVIDER_PATHS"
-                          android:resource="@xml/file_paths" />
-                  </provider>
-
-              </application>
-
-          </manifest>
-          EOF
-
-      - name: Add google-services.json
-        run: |
-          cat << 'EOF' > android/app/google-services.json
-          {
-            "project_info": {
-              "project_number": "334318731697",
-              "project_id": "ignite-habitspro",
-              "storage_bucket": "ignite-habitspro.firebasestorage.app"
-            },
-            "client": [
-              {
-                "client_info": {
-                  "mobilesdk_app_id": "1:334318731697:android:de283b73fa3a6e3a7afd90",
-                  "android_client_info": {
-                    "package_name": "app.lovable.ignitehabitspro"
-                  }
-                },
-                "oauth_client": [],
-                "api_key": [
-                  {
-                    "current_key": "AIzaSyBWICsus9Yn6X9D7Giqy7OdR89mnjarKjE"
-                  }
-                ],
-                "services": {
-                  "appinvite_service": {
-                    "other_platform_oauth_client": []
-                  }
-                }
-              }
-            ],
-            "configuration_version": "1"
-          }
-          EOF
-
-      - name: Add Firebase dependencies to Android
-        run: |
-          # Add Google Services plugin to project-level build.gradle
-          sed -i '/dependencies {/a\        classpath "com.google.gms:google-services:4.4.2"' android/build.gradle
-          # Apply plugin in app-level build.gradle
-          sed -i '/^apply plugin: .com.android.application./a\apply plugin: "com.google.gms.google-services"' android/app/build.gradle
-          # Add Firebase messaging dependency
-          sed -i '/dependencies {/a\    implementation "com.google.firebase:firebase-messaging:24.0.0"' android/app/build.gradle
-
-      - name: Sync Capacitor
-        run: npx cap sync android
+      - name: Generate Android project with Expo
+        working-directory: mobile
+        run: npx expo prebuild --platform android --non-interactive --clean
 
       - name: Build debug APK
-        working-directory: android
+        working-directory: mobile/android
         run: ./gradlew assembleDebug
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ignite-habitspro-react-native-apk
+          path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
 
       - name: Publish APK to GitHub Release
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          gh release delete apk-latest --yes --cleanup-tag || true
-          gh release create apk-latest android/app/build/outputs/apk/debug/app-debug.apk \
-            --title "Latest Android APK" \
-            --notes "Latest debug APK built from commit ${{ github.sha }}."
-          echo "APK download: ${{ github.server_url }}/${{ github.repository }}/releases/tag/apk-latest" >> "$GITHUB_STEP_SUMMARY"
+          gh release delete rn-apk-latest --yes --cleanup-tag || true
+          gh release create rn-apk-latest mobile/android/app/build/outputs/apk/debug/app-debug.apk \
+            --title "Ignite HabitsPro — React Native APK" \
+            --notes "React Native Android debug APK built from ${{ github.ref_name }} at commit ${{ github.sha }}."
+          echo "## APK" >> "$GITHUB_STEP_SUMMARY"
+          echo "React Native APK was built from branch **${{ github.ref_name }}**." >> "$GITHUB_STEP_SUMMARY"
+          echo "Release: https://github.com/${{ github.repository }}/releases/tag/rn-apk-latest" >> "$GITHUB_STEP_SUMMARY"
