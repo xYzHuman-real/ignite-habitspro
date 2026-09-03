@@ -18,6 +18,10 @@ const config: CapacitorConfig = {
       splashFullScreen: true,
       splashImmersive: true,
     },
+    AdMob: {
+      // Writes com.google.android.gms.ads.APPLICATION_ID to AndroidManifest.xml on sync
+      appId: 'ca-app-pub-4277470186530282~4160816796',
+    },
   },
 };
 

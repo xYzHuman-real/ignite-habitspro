@@ -14,6 +14,7 @@ import { OnboardingCarousel, hasSeenOnboarding } from "@/components/OnboardingCa
 import { PermissionPrimerFlow, hasCompletedPermissionPrimer } from "@/components/PermissionPrimerFlow";
 import { SignupBenefitsDialog, isGuest } from "@/components/SignupBenefitsDialog";
 import { captureReferralFromUrl, useReferralAutoApply } from "@/lib/use-referral";
+import { initAdMob } from "@/lib/admob";
 
 const Habits = lazy(() => import("./pages/Habits"));
 const TimerPage = lazy(() => import("./pages/TimerPage"));
@@ -123,6 +124,7 @@ const App = () => {
 
   useEffect(() => {
     captureReferralFromUrl();
+    initAdMob();
   }, []);
 
 

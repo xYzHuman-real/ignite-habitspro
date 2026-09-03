@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { getLevelForPoints, getNextLevel, getProgressToNext, XP_LEVELS } from "@/lib/xp-levels";
 import PageHero from "@/components/PageHero";
+import { RewardedAdCard } from "@/components/RewardedAdCard";
 
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } };
 const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.35 } } };
