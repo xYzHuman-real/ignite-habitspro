@@ -1,23 +1,34 @@
-name: Build Android APK
+name: Build React Native Debug APK
 
 on:
   workflow_dispatch:
+    inputs:
+      branch:
+        description: "Git branch to build"
+        required: true
+        default: "react-native-migration"
+        type: string
 
 permissions:
   contents: write
 
 jobs:
   build:
+    name: React Native Debug APK
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout selected branch
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
+          cache: npm
+          cache-dependency-path: mobile/package.json
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -28,42 +39,67 @@ jobs:
       - name: Prepare Expo environment
         shell: bash
         run: |
+          set -e
           test -f .env
           SUPABASE_URL_VALUE=$(sed -n 's/^SUPABASE_URL="\(.*\)"$/\1/p' .env | head -n 1)
           SUPABASE_KEY_VALUE=$(sed -n 's/^SUPABASE_PUBLISHABLE_KEY="\(.*\)"$/\1/p' .env | head -n 1)
           test -n "$SUPABASE_URL_VALUE"
           test -n "$SUPABASE_KEY_VALUE"
-          echo "EXPO_PUBLIC_SUPABASE_URL=$SUPABASE_URL_VALUE" >> "$GITHUB_ENV"
-          echo "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$SUPABASE_KEY_VALUE" >> "$GITHUB_ENV"
+          printf 'EXPO_PUBLIC_SUPABASE_URL="%s"\nEXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY="%s"\n' "$SUPABASE_URL_VALUE" "$SUPABASE_KEY_VALUE" > mobile/.env
 
       - name: Install React Native dependencies
         working-directory: mobile
         run: npm install
 
+      - name: Align Expo SDK dependencies
+        working-directory: mobile
+        run: npx expo install --fix
+
+      - name: Validate Expo project
+        working-directory: mobile
+        run: npx expo-doctor
+
+      - name: Validate production JavaScript bundle
+        working-directory: mobile
+        run: npx expo export --platform android --clear
+
       - name: Generate Android project with Expo
         working-directory: mobile
+        env:
+          CI: 1
+          EXPO_PROJECT_ROOT: ${{ github.workspace }}/mobile
         run: npx expo prebuild --platform android --non-interactive --clean
+
+      - name: Verify Expo Android autolinking
+        working-directory: mobile/android
+        shell: bash
+        run: |
+          set -e
+          grep -n "expo-autolinking-settings" settings.gradle
+          grep -n "expoAutolinking.useExpoModules" settings.gradle
+          grep -n "expoAutolinking.useExpoVersionCatalog" settings.gradle
 
       - name: Build debug APK
         working-directory: mobile/android
-        run: ./gradlew assembleDebug
+        run: ./gradlew :app:assembleDebug --stacktrace --no-daemon
 
-      - name: Upload APK artifact
+      - name: Upload debug APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ignite-habitspro-react-native-apk
+          name: ignite-habitspro-debug-apk
           path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
 
-      - name: Publish APK to GitHub Release
+      - name: Publish debug APK to GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release delete rn-apk-latest --yes --cleanup-tag || true
-          gh release create rn-apk-latest mobile/android/app/build/outputs/apk/debug/app-debug.apk \
-            --title "Ignite HabitsPro — React Native APK" \
-            --notes "React Native Android debug APK built from ${{ github.ref_name }} at commit ${{ github.sha }}."
-          echo "## APK" >> "$GITHUB_STEP_SUMMARY"
-          echo "React Native APK was built from branch **${{ github.ref_name }}**." >> "$GITHUB_STEP_SUMMARY"
-          echo "Release: https://github.com/${{ github.repository }}/releases/tag/rn-apk-latest" >> "$GITHUB_STEP_SUMMARY"
+          set -e
+          gh release delete rn-debug-apk-latest --yes --cleanup-tag || true
+          gh release create rn-debug-apk-latest mobile/android/app/build/outputs/apk/debug/app-debug.apk \
+            --title "Ignite HabitsPro — React Native Debug APK" \
+            --notes "Debug APK built from branch ${{ inputs.branch }} at commit ${{ github.sha }}."
+          echo "## Debug APK" >> "$GITHUB_STEP_SUMMARY"
+          echo "Built from branch **${{ inputs.branch }}**." >> "$GITHUB_STEP_SUMMARY"
+          echo "Release: https://github.com/${{ github.repository }}/releases/tag/rn-debug-apk-latest" >> "$GITHUB_STEP_SUMMARY"
