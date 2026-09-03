@@ -3,7 +3,13 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 import { router } from 'expo-router';
 import { useAuth } from '../src/auth/AuthContext';
 import { supabase } from '../src/lib/supabase';
-import { getLocalDateKey } from '../src/lib/date';
+
+const getLocalDateKey = (date: Date = new Date()) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
 type Habit = { id: string; name: string; icon: string | null; current: number; target: number; streak: number; completed_today: boolean };
 type Todo = { id: string; text: string; priority: string; completed: boolean; created_at: string };
