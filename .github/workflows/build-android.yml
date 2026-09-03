@@ -79,6 +79,25 @@ jobs:
           grep -n "expoAutolinking.useExpoModules" settings.gradle
           grep -n "expoAutolinking.useExpoVersionCatalog" settings.gradle
 
+      - name: Package Expo Router JS bundle into debug APK
+        working-directory: mobile
+        env:
+          CI: 1
+          EXPO_PROJECT_ROOT: ${{ github.workspace }}/mobile
+        shell: bash
+        run: |
+          set -e
+          mkdir -p android/app/src/main/assets
+          rm -f android/app/src/main/assets/index.android.bundle
+          npx expo export:embed \
+            --platform android \
+            --entry-file node_modules/expo-router/entry.js \
+            --bundle-output android/app/src/main/assets/index.android.bundle \
+            --assets-dest android/app/src/main/res \
+            --dev false
+          test -s android/app/src/main/assets/index.android.bundle
+          echo "Bundled JS size: $(wc -c < android/app/src/main/assets/index.android.bundle) bytes"
+
       - name: Build debug APK
         working-directory: mobile/android
         run: ./gradlew :app:assembleDebug --stacktrace --no-daemon
