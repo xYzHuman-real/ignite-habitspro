@@ -50,6 +50,12 @@ jobs:
       - name: Align Expo SDK dependencies
         working-directory: mobile
         run: npx expo install --fix
+      - name: Validate Expo project
+        working-directory: mobile
+        run: npx expo-doctor
+      - name: Validate production JavaScript bundle
+        working-directory: mobile
+        run: npx expo export --platform android --clear
       - name: Initialize/link EAS project
         working-directory: mobile
         env:
