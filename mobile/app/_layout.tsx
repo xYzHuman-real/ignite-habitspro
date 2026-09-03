@@ -13,6 +13,8 @@ export default function RootLayout() {
         <Stack.Screen name="habits" />
         <Stack.Screen name="todos" />
         <Stack.Screen name="timer" />
+        <Stack.Screen name="challenges" />
+        <Stack.Screen name="community" />
       </Stack>
     </AuthProvider>
   );
