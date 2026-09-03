@@ -54,8 +54,23 @@ jobs:
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: npx eas-cli@latest init --force --non-interactive
+      - name: Generate native Android project
+        working-directory: mobile
+        env:
+          CI: 1
+          EXPO_PROJECT_ROOT: ${{ github.workspace }}/mobile
+        run: npx expo prebuild --platform android --clean --non-interactive
+      - name: Verify Expo Android autolinking
+        working-directory: mobile/android
+        shell: bash
+        run: |
+          set -e
+          grep -n "expo-autolinking-settings" settings.gradle
+          grep -n "expoAutolinking.useExpoModules" settings.gradle
+          grep -n "expoAutolinking.useExpoVersionCatalog" settings.gradle
       - name: Build Android APK on EAS
         working-directory: mobile
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EXPO_PROJECT_ROOT: ${{ github.workspace }}/mobile
         run: npx eas-cli@latest build --platform android --profile preview --non-interactive --wait
