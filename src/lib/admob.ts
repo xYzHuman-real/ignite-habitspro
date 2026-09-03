@@ -42,3 +42,40 @@ export async function initAdMob(): Promise<boolean> {
   }
   return initialized;
 }
+
+/** Interstitial ad unit IDs (shown after a focus session ends). */
+export const INTERSTITIAL_AD_UNIT = {
+  android: "ca-app-pub-4277470186530282/9115549012",
+  // Google's official test interstitial unit
+  test: "ca-app-pub-3940256099942544/1033173712",
+} as const;
+
+export const getInterstitialAdUnitId = () =>
+  useTestAds ? INTERSTITIAL_AD_UNIT.test : INTERSTITIAL_AD_UNIT.android;
+
+let interstitialInFlight = false;
+
+/**
+ * Prepare + show an interstitial ad. Fails silently on web or on any error
+ * so the user flow is never blocked.
+ */
+export async function showInterstitialAd(): Promise<boolean> {
+  if (!isNativeAdMob() || interstitialInFlight) return false;
+  interstitialInFlight = true;
+  try {
+    const ok = await initAdMob();
+    if (!ok) return false;
+    const { AdMob } = await import("@capacitor-community/admob");
+    await AdMob.prepareInterstitial({
+      adId: getInterstitialAdUnitId(),
+      isTesting: useTestAds,
+    });
+    await AdMob.showInterstitial();
+    return true;
+  } catch (err) {
+    console.warn("[AdMob] interstitial unavailable", err);
+    return false;
+  } finally {
+    interstitialInFlight = false;
+  }
+}

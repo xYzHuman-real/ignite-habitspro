@@ -20,6 +20,8 @@ import { useFocusSettings } from "@/lib/use-focus-settings";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { usePremium } from "@/lib/use-premium";
+import { showInterstitialAd } from "@/lib/admob";
 
 type Mode = "focus" | "shortBreak" | "custom";
 
@@ -123,6 +125,13 @@ export default function TimerPage() {
   const { sessions, addSession } = usePomodoroSessions();
   const { currentTheme, ownedThemes, selectTheme } = useFocusThemes();
   const { settings } = useFocusSettings();
+  const { isPremium } = usePremium();
+
+  /** Show an interstitial ad once a focus session ends (finished or stopped early). Premium users are ad-free. */
+  const maybeShowFocusAd = useCallback(() => {
+    if (isPremium) return;
+    setTimeout(() => { void showInterstitialAd(); }, 800);
+  }, [isPremium]);
 
   const todaySessions = sessions.filter((s) => s.session_type === "focus").length;
   const todayMinutes = sessions
@@ -159,9 +168,10 @@ export default function TimerPage() {
       setShowBreakPopup(true);
       setTimerCompleteAnimation(true);
       setTimeout(() => setTimerCompleteAnimation(false), 2000);
+      maybeShowFocusAd();
     }
     stopSound();
-  }, [mode, customMinutes, linkedTask]);
+  }, [mode, customMinutes, linkedTask, maybeShowFocusAd]);
 
   const awardFocusPoints = async (minutes: number) => {
     if (!user) return;
@@ -237,6 +247,7 @@ export default function TimerPage() {
       awardFocusPoints(actualMinutes);
       setCompletedFocusMinutes(actualMinutes);
       setShowBreakPopup(true);
+      maybeShowFocusAd();
     }
     setLinkedTask(null);
     const dur = mode === "custom" ? customMinutes * 60 : PRESET_MODES[mode as Exclude<Mode, "custom">].minutes * 60;
