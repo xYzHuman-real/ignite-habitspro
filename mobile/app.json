@@ -8,6 +8,7 @@
     "scheme": "ignitehabitspro",
     "android": {
       "package": "app.lovable.ignitehabitspro",
+      "googleServicesFile": "./google-services.json",
       "permissions": [
         "android.permission.POST_NOTIFICATIONS",
         "android.permission.PACKAGE_USAGE_STATS",
