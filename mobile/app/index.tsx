@@ -216,7 +216,6 @@ export default function Index() {
         allowUniversalAccessFromFileURLs
         javaScriptEnabled
         domStorageEnabled
-        databaseEnabled
         sharedCookiesEnabled
         thirdPartyCookiesEnabled
         setSupportMultipleWindows={false}
