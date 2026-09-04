@@ -64,12 +64,14 @@ export function TodoCard({ todo, subtasks, onToggle, onDelete, onEdit, onAddSubt
     crossed.current = "none";
   };
 
-  const isOverdue = todo.due_date && !todo.completed && isPast(new Date(todo.due_date)) && !isToday(new Date(todo.due_date));
-  const isFuture = todo.due_date && !todo.completed && !isToday(new Date(todo.due_date)) && new Date(todo.due_date) > new Date();
+  const dueDate = todo.due_date ? new Date(todo.due_date) : null;
+  const validDueDate = dueDate && !Number.isNaN(dueDate.getTime()) ? dueDate : null;
+  const isOverdue = !!validDueDate && !todo.completed && isPast(validDueDate) && !isToday(validDueDate);
+  const isFuture = !!validDueDate && !todo.completed && !isToday(validDueDate) && validDueDate > new Date();
   const completedSubs = subtasks.filter(s => s.completed).length;
   const xpReward = POINTS_MAP[todo.priority] || 10;
   const hasAttachments = (todo.attachments || []).length > 0;
-  const hasExpandable = subtasks.length > 0 || todo.notes || hasAttachments;
+  const hasExpandable = subtasks.length > 0 || !!todo.notes || hasAttachments;
 
   const handleToggle = () => {
     if (isFuture) return;
@@ -81,6 +83,12 @@ export function TodoCard({ todo, subtasks, onToggle, onDelete, onEdit, onAddSubt
     if (!newSubtask.trim()) return;
     onAddSubtask(todo.id, newSubtask);
     setNewSubtask("");
+  };
+
+  const repeatLabel: Record<string, string> = {
+    daily: "Daily",
+    weekly: "Weekly",
+    monthly: "Monthly",
   };
 
   return (
@@ -105,16 +113,14 @@ export function TodoCard({ todo, subtasks, onToggle, onDelete, onEdit, onAddSubt
         onDragEnd={handleDragEnd}
         className={`relative bg-card rounded-2xl shadow-sm border ${isOverdue ? "border-destructive/40" : "border-border/30"} ${todo.completed ? "opacity-50" : ""}`}
       >
-        {/* Priority color bar */}
         <div className={`absolute left-0 top-3 bottom-3 w-1 rounded-full ${PRIORITY_BAR[todo.priority] || PRIORITY_BAR.medium}`} />
 
         <div className="pl-4 pr-3 py-3">
           <div className="flex items-start gap-3">
-            {/* Checkbox */}
             <button
               onClick={handleToggle}
               disabled={isFuture}
-              title={isFuture ? `Available on ${format(new Date(todo.due_date!), "MMM d")}` : undefined}
+              title={isFuture && validDueDate ? `Available on ${format(validDueDate, "MMM d")}` : undefined}
               className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all mt-0.5 shrink-0 ${
                 todo.completed ? "bg-success border-success scale-95" : "border-muted-foreground/25 hover:border-primary"
               } ${isFuture ? "opacity-40 cursor-not-allowed" : ""}`}
@@ -122,25 +128,25 @@ export function TodoCard({ todo, subtasks, onToggle, onDelete, onEdit, onAddSubt
               {todo.completed && <Check className="h-3 w-3 text-success-foreground" />}
             </button>
 
-            {/* Content */}
             <div className="flex-1 min-w-0">
               <p className={`text-sm leading-snug ${todo.completed ? "line-through text-muted-foreground" : "text-foreground font-medium"}`}>
                 {todo.text}
               </p>
 
-              {/* Meta row */}
+              {/* Metadata: make due date + repeat obvious */}
               <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                {todo.due_date && (
-                  <span className={`text-[10px] flex items-center gap-0.5 px-1.5 py-0.5 rounded-md ${
-                    isOverdue ? "bg-destructive/10 text-destructive font-semibold" : "bg-muted/50 text-muted-foreground"
+                {validDueDate && (
+                  <span className={`text-[10px] flex items-center gap-1 px-2 py-1 rounded-md ${
+                    isOverdue ? "bg-destructive/10 text-destructive font-semibold" : isFuture ? "bg-primary/10 text-primary font-semibold" : "bg-muted/60 text-muted-foreground"
                   }`}>
                     <Calendar className="h-2.5 w-2.5" />
-                    {format(new Date(todo.due_date), "MMM d")}
+                    {isToday(validDueDate) ? "Today" : format(validDueDate, "EEE, MMM d")}
                   </span>
                 )}
-                {todo.recurring !== "none" && (
-                  <span className="text-[10px] text-muted-foreground flex items-center gap-0.5 bg-muted/50 px-1.5 py-0.5 rounded-md">
-                    <Repeat className="h-2.5 w-2.5" /> {todo.recurring}
+                {todo.recurring && todo.recurring !== "none" && (
+                  <span className="text-[10px] font-medium text-primary flex items-center gap-1 bg-primary/10 px-2 py-1 rounded-md">
+                    <Repeat className="h-2.5 w-2.5" />
+                    {repeatLabel[todo.recurring] || todo.recurring}
                   </span>
                 )}
                 {(todo.tags || []).map(tag => (
@@ -161,7 +167,6 @@ export function TodoCard({ todo, subtasks, onToggle, onDelete, onEdit, onAddSubt
               </div>
             </div>
 
-            {/* Right section */}
             <div className="flex items-center gap-1 shrink-0">
               {!todo.completed && (
                 <span className="text-[9px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-md flex items-center gap-0.5">
@@ -181,7 +186,6 @@ export function TodoCard({ todo, subtasks, onToggle, onDelete, onEdit, onAddSubt
             </div>
           </div>
 
-          {/* Subtask progress bar */}
           {subtasks.length > 0 && (
             <div className="mt-2 ml-8">
               <div className="h-1 bg-muted/50 rounded-full overflow-hidden">
@@ -196,14 +200,12 @@ export function TodoCard({ todo, subtasks, onToggle, onDelete, onEdit, onAddSubt
           )}
         </div>
 
-        {/* Expanded section */}
         {expanded && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} className="px-4 pb-3 border-t border-border/20">
             {todo.notes && (
               <p className="text-xs text-muted-foreground mt-2.5 bg-muted/30 rounded-xl p-2.5 leading-relaxed">{todo.notes}</p>
             )}
 
-            {/* Attachments */}
             {hasAttachments && (
               <div className="mt-2.5 space-y-1">
                 {todo.attachments.map((att, i) => (
@@ -221,7 +223,6 @@ export function TodoCard({ todo, subtasks, onToggle, onDelete, onEdit, onAddSubt
               </div>
             )}
 
-            {/* Subtasks */}
             <div className="mt-2.5 space-y-1.5">
               {subtasks.map(sub => (
                 <div key={sub.id} className="flex items-center gap-2 group">
