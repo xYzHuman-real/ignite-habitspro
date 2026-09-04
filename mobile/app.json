@@ -17,13 +17,7 @@
       ]
     },
     "plugins": [
-      "expo-router",
-      [
-        "expo-notifications",
-        {
-          "defaultChannel": "default"
-        }
-      ]
+      "expo-router"
     ]
   }
 }
