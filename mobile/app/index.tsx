@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View, Platform } from 'react-native';
+import { ActivityIndicator, BackHandler, StyleSheet, View, Platform, ToastAndroid } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import * as IntentLauncher from 'expo-intent-launcher';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
@@ -15,10 +15,35 @@ function sendToWebView(webView: React.RefObject<WebView | null>, message: object
 export default function Index() {
   const [ready, setReady] = useState(false);
   const webViewRef = useRef<WebView>(null);
+  const canGoBackRef = useRef(false);
+  const lastBackPressRef = useRef(0);
 
   useEffect(() => {
     // Notifications are temporarily disabled in the native shell for crash isolation.
     return undefined;
+  }, []);
+
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (canGoBackRef.current) {
+        webViewRef.current?.goBack();
+        return true;
+      }
+
+      const now = Date.now();
+      if (now - lastBackPressRef.current < 2000) {
+        BackHandler.exitApp();
+        return true;
+      }
+
+      lastBackPressRef.current = now;
+      ToastAndroid.show('Click back twice to exit the app', ToastAndroid.SHORT);
+      return true;
+    });
+
+    return () => subscription.remove();
   }, []);
 
   const handleMessage = async (event: WebViewMessageEvent) => {
@@ -106,6 +131,9 @@ export default function Index() {
         thirdPartyCookiesEnabled
         setSupportMultipleWindows={false}
         onMessage={handleMessage}
+        onNavigationStateChange={(navState) => {
+          canGoBackRef.current = navState.canGoBack;
+        }}
         onLoadEnd={() => setReady(true)}
       />
       {!ready && (
