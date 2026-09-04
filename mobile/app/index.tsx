@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import * as Notifications from 'expo-notifications';
 import * as IntentLauncher from 'expo-intent-launcher';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
 
@@ -18,27 +17,8 @@ export default function Index() {
   const webViewRef = useRef<WebView>(null);
 
   useEffect(() => {
-    try {
-      Notifications.setNotificationHandler({
-        handleNotification: async () => ({
-          shouldShowBanner: true,
-          shouldShowList: true,
-          shouldPlaySound: true,
-          shouldSetBadge: true,
-        }),
-      });
-    } catch (error) {
-      console.warn('[Notifications] initialization failed', error);
-    }
-
-    const responseSubscription = Notifications.addNotificationResponseReceivedListener((response) => {
-      const data = response.notification.request.content.data ?? {};
-      sendToWebView(webViewRef, {
-        type: 'notification_opened',
-        action_url: typeof data.action_url === 'string' ? data.action_url : null,
-      });
-    });
-    return () => responseSubscription.remove();
+    // Notifications are temporarily disabled in the native shell for crash isolation.
+    return undefined;
   }, []);
 
   const handleMessage = async (event: WebViewMessageEvent) => {
@@ -72,31 +52,10 @@ export default function Index() {
       }
 
       if (message.type === 'request_notifications') {
-        await Notifications.setNotificationChannelAsync('default', {
-          name: 'Ignite reminders',
-          importance: Notifications.AndroidImportance.HIGH,
-          sound: 'default',
-          vibrationPattern: [0, 250, 250, 250],
-          lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
-        });
-
-        let permission = await Notifications.getPermissionsAsync();
-        if (!permission.granted) permission = await Notifications.requestPermissionsAsync();
-
-        let nativeToken: string | null = null;
-        if (permission.granted) {
-          try {
-            const token = await Notifications.getDevicePushTokenAsync();
-            nativeToken = typeof token.data === 'string' ? token.data : null;
-          } catch (error) {
-            console.warn('[Notifications] native push token unavailable', error);
-          }
-        }
-
         sendToWebView(webViewRef, {
           type: 'notifications_result',
-          granted: permission.granted,
-          token: nativeToken,
+          granted: false,
+          token: null,
           platform: 'android',
         });
         return;
