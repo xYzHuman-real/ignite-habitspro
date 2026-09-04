@@ -1,5 +1,5 @@
 // Premium permission flow: primer dialog → native request → record outcome.
-// Web is a no-op (returns granted=true) so flows work in the preview.
+// Web is a no-op; the Android WebView shell exposes a small native bridge.
 import { Capacitor } from "@capacitor/core";
 
 export type PermissionKey =
@@ -9,6 +9,15 @@ export type PermissionKey =
   | "background_activity";
 
 const RECORD_PREFIX = "perm:";
+
+const isReactNativeWebView = () =>
+  typeof window !== "undefined" && typeof (window as any).ReactNativeWebView?.postMessage === "function";
+
+function postToNative(message: object) {
+  try {
+    (window as any).ReactNativeWebView?.postMessage(JSON.stringify(message));
+  } catch {}
+}
 
 export function getPermissionState(key: PermissionKey): "granted" | "denied" | "unknown" {
   try {
@@ -27,10 +36,31 @@ export function shouldShowPrimer(key: PermissionKey): boolean {
 }
 
 export async function requestNotificationPermission(): Promise<boolean> {
+  if (isReactNativeWebView()) {
+    return new Promise((resolve) => {
+      let settled = false;
+      const finish = (granted: boolean) => {
+        if (settled) return;
+        settled = true;
+        window.removeEventListener("igniteNativeMessage", onMessage as EventListener);
+        setPermissionState("notifications", granted ? "granted" : "denied");
+        resolve(granted);
+      };
+      const onMessage = (event: Event) => {
+        const detail = (event as CustomEvent).detail;
+        if (detail?.type === "notifications_result") finish(detail.granted === true);
+      };
+      window.addEventListener("igniteNativeMessage", onMessage as EventListener);
+      postToNative({ type: "request_notifications" });
+      window.setTimeout(() => finish(false), 15000);
+    });
+  }
+
   if (!Capacitor.isNativePlatform()) {
     setPermissionState("notifications", "granted");
     return true;
   }
+
   try {
     const { LocalNotifications } = await import("@capacitor/local-notifications");
     const res = await LocalNotifications.requestPermissions();
@@ -43,37 +73,38 @@ export async function requestNotificationPermission(): Promise<boolean> {
   }
 }
 
-// These three (usage access, battery opt, background activity) require system
-// settings pages on Android — typically opened via a custom plugin. We mark
-// them granted optimistically once the user confirms; the native blocked-app
-// monitor plugin can re-verify and re-prompt as needed.
 export async function openUsageAccessSettings(): Promise<void> {
-  if (Capacitor.isNativePlatform()) {
+  if (isReactNativeWebView()) {
+    postToNative({ type: "open_usage_access" });
+  } else if (Capacitor.isNativePlatform()) {
     try {
       const win = window as any;
-      // Expects a custom plugin exposed as `BlockedAppMonitor` (see docs/native-blocked-apps.md).
       await win?.Capacitor?.Plugins?.BlockedAppMonitor?.openUsageAccessSettings?.();
-    } catch { /* noop */ }
+    } catch {}
   }
   setPermissionState("usage_access", "granted");
 }
 
 export async function openBatteryOptimizationSettings(): Promise<void> {
-  if (Capacitor.isNativePlatform()) {
+  if (isReactNativeWebView()) {
+    postToNative({ type: "open_battery_optimization" });
+  } else if (Capacitor.isNativePlatform()) {
     try {
       const win = window as any;
       await win?.Capacitor?.Plugins?.BlockedAppMonitor?.requestIgnoreBatteryOptimizations?.();
-    } catch { /* noop */ }
+    } catch {}
   }
   setPermissionState("battery_optimization", "granted");
 }
 
 export async function openBackgroundActivitySettings(): Promise<void> {
-  if (Capacitor.isNativePlatform()) {
+  if (isReactNativeWebView()) {
+    postToNative({ type: "open_app_settings" });
+  } else if (Capacitor.isNativePlatform()) {
     try {
       const win = window as any;
       await win?.Capacitor?.Plugins?.BlockedAppMonitor?.openAppSettings?.();
-    } catch { /* noop */ }
+    } catch {}
   }
   setPermissionState("background_activity", "granted");
 }
