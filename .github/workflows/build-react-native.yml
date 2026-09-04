@@ -21,22 +21,27 @@ jobs:
         with:
           ref: rn-migration-verified
 
-      - name: Verify React Native project exists
+      - name: Verify source projects
         shell: bash
         run: |
           set -euo pipefail
+          test -s ../package.json
+          test -s ../package-lock.json
+          test -s ../src/App.tsx
           test -s package.json
           test -s app.json
           test -s app/_layout.tsx
           test -s app/index.tsx
-          echo "Verified rn-migration-verified source."
+          echo "Verified original webapp and native shell sources."
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
-          cache-dependency-path: mobile/package.json
+          cache-dependency-path: |
+            package-lock.json
+            mobile/package.json
 
       - name: Setup Java
         uses: actions/setup-java@v5
@@ -44,28 +49,20 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Prepare Supabase environment
-        shell: bash
+      - name: Build the original webapp
+        working-directory: .
         run: |
           set -euo pipefail
-          test -s ../.env
-          cp ../.env .env
-          grep -q '^SUPABASE_URL=' .env
-          grep -q '^SUPABASE_PUBLISHABLE_KEY=' .env
-          SUPABASE_URL_VALUE="$(grep '^SUPABASE_URL=' .env | head -n 1 | cut -d '=' -f 2- | sed 's/^"//;s/"$//')"
-          SUPABASE_KEY_VALUE="$(grep '^SUPABASE_PUBLISHABLE_KEY=' .env | head -n 1 | cut -d '=' -f 2- | sed 's/^"//;s/"$//')"
-          test -n "$SUPABASE_URL_VALUE"
-          test -n "$SUPABASE_KEY_VALUE"
-          {
-            echo "EXPO_PUBLIC_SUPABASE_URL=$SUPABASE_URL_VALUE"
-            echo "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$SUPABASE_KEY_VALUE"
-          } >> "$GITHUB_ENV"
-          echo "Supabase environment prepared successfully."
+          npm ci
+          npm run build -- --base ./
+          test -s dist/index.html
+          echo "Original webapp built successfully."
+          find dist -maxdepth 2 -type f | sed -n '1,80p'
 
-      - name: Install dependencies
+      - name: Install native shell dependencies
         run: npm install
 
-      - name: Typecheck
+      - name: Typecheck native shell
         run: npx tsc --noEmit
 
       - name: Generate clean Android project
@@ -76,6 +73,16 @@ jobs:
           rm -rf android
           npx expo prebuild --platform android --clean --no-install
 
+      - name: Bundle original webapp into Android assets
+        run: |
+          set -euo pipefail
+          rm -rf android/app/src/main/assets/www
+          mkdir -p android/app/src/main/assets/www
+          cp -R ../dist/. android/app/src/main/assets/www/
+          test -s android/app/src/main/assets/www/index.html
+          echo "Bundled original webapp into native APK assets."
+          du -sh android/app/src/main/assets/www
+
       - name: Verify generated Android project
         shell: bash
         run: |
@@ -84,8 +91,8 @@ jobs:
           test -s android/gradlew
           test -x android/gradlew
           test -s android/app/build.gradle
-          echo "Generated Android Gradle project successfully."
-          ls -la android | sed -n '1,80p'
+          test -s android/app/src/main/assets/www/index.html
+          echo "Generated Android Gradle project and web bundle verified."
 
       - name: Build release APK
         working-directory: mobile/android
@@ -114,5 +121,5 @@ jobs:
           set -euo pipefail
           gh release delete react-native-apk-latest --yes --cleanup-tag || true
           gh release create react-native-apk-latest mobile/android/app/build/outputs/apk/release/app-release.apk \
-            --title "Ignite HabitsPro — React Native Android APK" \
-            --notes "Release APK built from rn-migration-verified."
+            --title "Ignite HabitsPro — Android APK" \
+            --notes "Native Android shell bundling the original Ignite HabitsPro webapp UI and functionality."
