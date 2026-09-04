@@ -1,0 +1,28 @@
+{
+  "name": "ignite-habitspro-mobile",
+  "version": "1.0.0",
+  "private": true,
+  "main": "expo-router/entry",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@expo/vector-icons": "^15.0.2",
+    "@react-native-async-storage/async-storage": "^2.2.0",
+    "@supabase/supabase-js": "^2.98.0",
+    "expo": "~57.0.17",
+    "expo-router": "~57.0.17",
+    "expo-status-bar": "~3.0.9",
+    "react": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-safe-area-context": "~5.6.2",
+    "react-native-screens": "~4.19.0",
+    "react-native-url-polyfill": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.3",
+    "typescript": "~5.9.2"
+  }
+}
