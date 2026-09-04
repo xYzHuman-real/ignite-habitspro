@@ -88,7 +88,8 @@ jobs:
           ls -la android | sed -n '1,80p'
 
       - name: Build release APK
-        run: ./android/gradlew assembleRelease --stacktrace --no-daemon
+        working-directory: mobile/android
+        run: ./gradlew assembleRelease --stacktrace --no-daemon
 
       - name: Verify APK
         shell: bash
