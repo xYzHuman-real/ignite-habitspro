@@ -8,15 +8,6 @@ import { WebView, WebViewMessageEvent } from 'react-native-webview';
 const WEB_APP_URL = 'file:///android_asset/www/index.html';
 const APP_PACKAGE = 'app.lovable.ignitehabitspro';
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
-});
-
 function sendToWebView(webView: React.RefObject<WebView | null>, message: object) {
   const script = `window.dispatchEvent(new CustomEvent('igniteNativeMessage',{detail:${JSON.stringify(message)}})); true;`;
   webView.current?.injectJavaScript(script);
@@ -27,6 +18,19 @@ export default function Index() {
   const webViewRef = useRef<WebView>(null);
 
   useEffect(() => {
+    try {
+      Notifications.setNotificationHandler({
+        handleNotification: async () => ({
+          shouldShowBanner: true,
+          shouldShowList: true,
+          shouldPlaySound: true,
+          shouldSetBadge: true,
+        }),
+      });
+    } catch (error) {
+      console.warn('[Notifications] initialization failed', error);
+    }
+
     const responseSubscription = Notifications.addNotificationResponseReceivedListener((response) => {
       const data = response.notification.request.content.data ?? {};
       sendToWebView(webViewRef, {
