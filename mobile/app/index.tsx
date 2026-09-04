@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, BackHandler, StyleSheet, View, Platform, ToastAndroid } from 'react-native';
+import { ActivityIndicator, BackHandler, Linking, StyleSheet, View, Platform, ToastAndroid } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import * as IntentLauncher from 'expo-intent-launcher';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
@@ -107,6 +107,7 @@ export default function Index() {
           { data: `package:${APP_PACKAGE}` },
         );
         sendToWebView(webViewRef, { type: 'settings_opened', setting: 'background_activity' });
+        return;
       }
     } catch (error) {
       console.warn('[Native bridge] request failed', message?.type, error);
@@ -131,6 +132,14 @@ export default function Index() {
         thirdPartyCookiesEnabled
         setSupportMultipleWindows={false}
         onMessage={handleMessage}
+        onShouldStartLoadWithRequest={(request) => {
+          const url = request.url;
+          if (url.startsWith('http://') || url.startsWith('https://')) {
+            Linking.openURL(url).catch((error) => console.warn('[Native link] failed', error));
+            return false;
+          }
+          return true;
+        }}
         onNavigationStateChange={(navState) => {
           canGoBackRef.current = navState.canGoBack;
         }}
