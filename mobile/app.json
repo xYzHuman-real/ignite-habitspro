@@ -22,6 +22,12 @@
         {
           "defaultChannel": "default"
         }
+      ],
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-4277470186530282~4160816796"
+        }
       ]
     ]
   }
