@@ -47,16 +47,20 @@ jobs:
       - name: Prepare Supabase environment
         shell: bash
         run: |
-          set -e
-          test -f ../.env
-          SUPABASE_URL_VALUE=$(sed -n 's/^SUPABASE_URL="\(.*\)"$/\1/p' ../.env | head -n 1)
-          SUPABASE_KEY_VALUE=$(sed -n 's/^SUPABASE_PUBLISHABLE_KEY="\(.*\)"$/\1/p' ../.env | head -n 1)
+          set -euo pipefail
+          test -s ../.env
+          cp ../.env .env
+          grep -q '^SUPABASE_URL=' .env
+          grep -q '^SUPABASE_PUBLISHABLE_KEY=' .env
+          SUPABASE_URL_VALUE="$(grep '^SUPABASE_URL=' .env | head -n 1 | cut -d '=' -f 2- | sed 's/^"//;s/"$//')"
+          SUPABASE_KEY_VALUE="$(grep '^SUPABASE_PUBLISHABLE_KEY=' .env | head -n 1 | cut -d '=' -f 2- | sed 's/^"//;s/"$//')"
           test -n "$SUPABASE_URL_VALUE"
           test -n "$SUPABASE_KEY_VALUE"
-          echo "EXPO_PUBLIC_SUPABASE_URL=$SUPABASE_URL_VALUE" >> "$GITHUB_ENV"
-          echo "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$SUPABASE_KEY_VALUE" >> "$GITHUB_ENV"
-          printf 'EXPO_PUBLIC_SUPABASE_URL="%s"\nEXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY="%s"\n' "$SUPABASE_URL_VALUE" "$SUPABASE_KEY_VALUE" > .env
-          echo "Supabase environment prepared from repository .env."
+          {
+            echo "EXPO_PUBLIC_SUPABASE_URL=$SUPABASE_URL_VALUE"
+            echo "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$SUPABASE_KEY_VALUE"
+          } >> "$GITHUB_ENV"
+          echo "Supabase environment prepared successfully."
 
       - name: Install dependencies
         run: npm install
