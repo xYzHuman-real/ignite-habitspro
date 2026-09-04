@@ -13,24 +13,19 @@ const TAG_COLORS: Record<string, string> = {
   Health: "bg-orange-500/10 text-orange-600 dark:text-orange-400",
   Personal: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
 };
-
-const PRIORITY_BAR: Record<string, string> = {
-  high: "bg-destructive",
-  medium: "bg-primary",
-  low: "bg-blue-400 dark:bg-blue-500",
-};
-
+const PRIORITY_BAR: Record<string, string> = { high: "bg-destructive", medium: "bg-primary", low: "bg-blue-400 dark:bg-blue-500" };
 const POINTS_MAP: Record<string, number> = { high: 15, medium: 10, low: 5 };
+const REPEAT_LABELS: Record<string, string> = { daily: "Daily", weekly: "Weekly", monthly: "Monthly" };
+
+function safeExternalUrl(url: string) {
+  const value = url.trim();
+  if (!value) return "";
+  return /^https?:\/\//i.test(value) ? value : `https://${value}`;
+}
 
 interface TodoCardProps {
-  todo: Todo;
-  subtasks: Subtask[];
-  onToggle: (todo: Todo) => void;
-  onDelete: (id: string) => void;
-  onEdit: (todo: Todo) => void;
-  onAddSubtask: (todoId: string, text: string) => void;
-  onToggleSubtask: (id: string, completed: boolean) => void;
-  onDeleteSubtask: (id: string) => void;
+  todo: Todo; subtasks: Subtask[]; onToggle: (todo: Todo) => void; onDelete: (id: string) => void; onEdit: (todo: Todo) => void;
+  onAddSubtask: (todoId: string, text: string) => void; onToggleSubtask: (id: string, completed: boolean) => void; onDeleteSubtask: (id: string) => void;
 }
 
 export function TodoCard({ todo, subtasks, onToggle, onDelete, onEdit, onAddSubtask, onToggleSubtask, onDeleteSubtask }: TodoCardProps) {
@@ -40,29 +35,12 @@ export function TodoCard({ todo, subtasks, onToggle, onDelete, onEdit, onAddSubt
   const controls = useAnimation();
   const rightBg = useTransform(x, [0, 100], [0, 1]);
   const leftBg = useTransform(x, [-100, 0], [1, 0]);
-
   const crossed = useRef<"none" | "right" | "left">("none");
   x.on("change", (v) => {
     if (v > 60 && crossed.current !== "right") { crossed.current = "right"; hapticLight(); }
     else if (v < -60 && crossed.current !== "left") { crossed.current = "left"; hapticLight(); }
-    else if (v > -30 && v < 30) { crossed.current = "none"; }
+    else if (v > -30 && v < 30) crossed.current = "none";
   });
-
-  const handleDragEnd = (_: any, info: PanInfo) => {
-    const future = todo.due_date && !todo.completed && !isToday(new Date(todo.due_date)) && new Date(todo.due_date) > new Date();
-    if (info.offset.x > 90 && !todo.completed && !future) {
-      controls.start({ x: 0, transition: { type: "spring", stiffness: 500, damping: 40 } });
-      hapticSuccess();
-      onToggle(todo);
-    } else if (info.offset.x < -90) {
-      hapticMedium();
-      controls.start({ x: -400, opacity: 0, transition: { duration: 0.25, ease: [0.4, 0, 0.2, 1] } }).then(() => onDelete(todo.id));
-      return;
-    } else {
-      controls.start({ x: 0, transition: { type: "spring", stiffness: 500, damping: 40 } });
-    }
-    crossed.current = "none";
-  };
 
   const dueDate = todo.due_date ? new Date(todo.due_date) : null;
   const validDueDate = dueDate && !Number.isNaN(dueDate.getTime()) ? dueDate : null;
@@ -73,186 +51,46 @@ export function TodoCard({ todo, subtasks, onToggle, onDelete, onEdit, onAddSubt
   const hasAttachments = (todo.attachments || []).length > 0;
   const hasExpandable = subtasks.length > 0 || !!todo.notes || hasAttachments;
 
-  const handleToggle = () => {
-    if (isFuture) return;
-    hapticSuccess();
-    onToggle(todo);
+  const handleDragEnd = (_: any, info: PanInfo) => {
+    if (info.offset.x > 90 && !todo.completed && !isFuture) {
+      controls.start({ x: 0, transition: { type: "spring", stiffness: 500, damping: 40 } }); hapticSuccess(); onToggle(todo);
+    } else if (info.offset.x < -90) {
+      hapticMedium(); controls.start({ x: -400, opacity: 0, transition: { duration: 0.25, ease: [0.4, 0, 0.2, 1] } }).then(() => onDelete(todo.id)); return;
+    } else controls.start({ x: 0, transition: { type: "spring", stiffness: 500, damping: 40 } });
+    crossed.current = "none";
   };
 
-  const handleAddSubtask = () => {
-    if (!newSubtask.trim()) return;
-    onAddSubtask(todo.id, newSubtask);
-    setNewSubtask("");
-  };
-
-  const repeatLabel: Record<string, string> = {
-    daily: "Daily",
-    weekly: "Weekly",
-    monthly: "Monthly",
-  };
+  const handleToggle = () => { if (isFuture) return; hapticSuccess(); onToggle(todo); };
+  const handleAddSubtask = () => { if (!newSubtask.trim()) return; onAddSubtask(todo.id, newSubtask); setNewSubtask(""); };
 
   return (
     <div className="relative overflow-hidden rounded-2xl">
-      {/* Swipe backgrounds */}
-      <motion.div className="absolute inset-0 bg-success/20 rounded-2xl flex items-center pl-5" style={{ opacity: rightBg }}>
-        <Check className="h-5 w-5 text-success" />
-        <span className="text-xs text-success ml-2 font-medium">Complete</span>
-      </motion.div>
-      <motion.div className="absolute inset-0 bg-destructive/20 rounded-2xl flex items-center justify-end pr-5" style={{ opacity: leftBg }}>
-        <span className="text-xs text-destructive mr-2 font-medium">Delete</span>
-        <Trash2 className="h-5 w-5 text-destructive" />
-      </motion.div>
-
-      <motion.div
-        style={{ x }}
-        animate={controls}
-        drag="x"
-        dragConstraints={{ left: -120, right: 120 }}
-        dragElastic={0.05}
-        dragDirectionLock
-        onDragEnd={handleDragEnd}
-        className={`relative bg-card rounded-2xl shadow-sm border ${isOverdue ? "border-destructive/40" : "border-border/30"} ${todo.completed ? "opacity-50" : ""}`}
-      >
+      <motion.div className="absolute inset-0 bg-success/20 rounded-2xl flex items-center pl-5" style={{ opacity: rightBg }}><Check className="h-5 w-5 text-success" /><span className="text-xs text-success ml-2 font-medium">Complete</span></motion.div>
+      <motion.div className="absolute inset-0 bg-destructive/20 rounded-2xl flex items-center justify-end pr-5" style={{ opacity: leftBg }}><span className="text-xs text-destructive mr-2 font-medium">Delete</span><Trash2 className="h-5 w-5 text-destructive" /></motion.div>
+      <motion.div style={{ x }} animate={controls} drag="x" dragConstraints={{ left: -120, right: 120 }} dragElastic={0.05} dragDirectionLock onDragEnd={handleDragEnd} className={`relative bg-card rounded-2xl shadow-sm border ${isOverdue ? "border-destructive/40" : "border-border/30"} ${todo.completed ? "opacity-50" : ""}`}>
         <div className={`absolute left-0 top-3 bottom-3 w-1 rounded-full ${PRIORITY_BAR[todo.priority] || PRIORITY_BAR.medium}`} />
-
         <div className="pl-4 pr-3 py-3">
           <div className="flex items-start gap-3">
-            <button
-              onClick={handleToggle}
-              disabled={isFuture}
-              title={isFuture && validDueDate ? `Available on ${format(validDueDate, "MMM d")}` : undefined}
-              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all mt-0.5 shrink-0 ${
-                todo.completed ? "bg-success border-success scale-95" : "border-muted-foreground/25 hover:border-primary"
-              } ${isFuture ? "opacity-40 cursor-not-allowed" : ""}`}
-            >
-              {todo.completed && <Check className="h-3 w-3 text-success-foreground" />}
-            </button>
-
+            <button onClick={handleToggle} disabled={isFuture} title={isFuture && validDueDate ? `Available on ${format(validDueDate, "MMM d")}` : undefined} className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all mt-0.5 shrink-0 ${todo.completed ? "bg-success border-success scale-95" : "border-muted-foreground/25 hover:border-primary"} ${isFuture ? "opacity-40 cursor-not-allowed" : ""}`}>{todo.completed && <Check className="h-3 w-3 text-success-foreground" />}</button>
             <div className="flex-1 min-w-0">
-              <p className={`text-sm leading-snug ${todo.completed ? "line-through text-muted-foreground" : "text-foreground font-medium"}`}>
-                {todo.text}
-              </p>
-
-              {/* Metadata: make due date + repeat obvious */}
+              <p className={`text-sm leading-snug ${todo.completed ? "line-through text-muted-foreground" : "text-foreground font-medium"}`}>{todo.text}</p>
               <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                {validDueDate && (
-                  <span className={`text-[10px] flex items-center gap-1 px-2 py-1 rounded-md ${
-                    isOverdue ? "bg-destructive/10 text-destructive font-semibold" : isFuture ? "bg-primary/10 text-primary font-semibold" : "bg-muted/60 text-muted-foreground"
-                  }`}>
-                    <Calendar className="h-2.5 w-2.5" />
-                    {isToday(validDueDate) ? "Today" : format(validDueDate, "EEE, MMM d")}
-                  </span>
-                )}
-                {todo.recurring && todo.recurring !== "none" && (
-                  <span className="text-[10px] font-medium text-primary flex items-center gap-1 bg-primary/10 px-2 py-1 rounded-md">
-                    <Repeat className="h-2.5 w-2.5" />
-                    {repeatLabel[todo.recurring] || todo.recurring}
-                  </span>
-                )}
-                {(todo.tags || []).map(tag => (
-                  <span key={tag} className={`text-[10px] px-1.5 py-0.5 rounded-md font-medium ${TAG_COLORS[tag] || "bg-muted text-muted-foreground"}`}>
-                    {tag}
-                  </span>
-                ))}
-                {subtasks.length > 0 && (
-                  <span className="text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded-md">
-                    {completedSubs}/{subtasks.length}
-                  </span>
-                )}
-                {hasAttachments && (
-                  <span className="text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded-md flex items-center gap-0.5">
-                    <Paperclip className="h-2.5 w-2.5" /> {todo.attachments.length}
-                  </span>
-                )}
+                {validDueDate && <span className={`text-[10px] flex items-center gap-1 px-2 py-1 rounded-md ${isOverdue ? "bg-destructive/10 text-destructive font-semibold" : isFuture ? "bg-primary/10 text-primary font-semibold" : "bg-muted/60 text-muted-foreground"}`}><Calendar className="h-2.5 w-2.5" />{isToday(validDueDate) ? `Today${format(validDueDate, " · h:mm a")}` : format(validDueDate, "EEE, MMM d · h:mm a")}</span>}
+                {todo.recurring && todo.recurring !== "none" && <span className="text-[10px] font-medium text-primary flex items-center gap-1 bg-primary/10 px-2 py-1 rounded-md"><Repeat className="h-2.5 w-2.5" />{REPEAT_LABELS[todo.recurring] || todo.recurring}</span>}
+                {(todo.tags || []).map(tag => <span key={tag} className={`text-[10px] px-1.5 py-0.5 rounded-md font-medium ${TAG_COLORS[tag] || "bg-muted text-muted-foreground"}`}>{tag}</span>)}
+                {subtasks.length > 0 && <span className="text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded-md">{completedSubs}/{subtasks.length}</span>}
+                {hasAttachments && <span className="text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded-md flex items-center gap-0.5"><Paperclip className="h-2.5 w-2.5" /> {todo.attachments.length}</span>}
               </div>
             </div>
-
-            <div className="flex items-center gap-1 shrink-0">
-              {!todo.completed && (
-                <span className="text-[9px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-md flex items-center gap-0.5">
-                  <Zap className="h-2.5 w-2.5" /> +{xpReward}
-                </span>
-              )}
-              <Button variant="ghost" size="icon" onClick={() => onEdit(todo)} className="h-7 w-7 text-muted-foreground hover:text-primary">
-                <Pencil className="h-3 w-3" />
-              </Button>
-              {hasExpandable && (
-                <Button variant="ghost" size="icon" onClick={() => setExpanded(!expanded)} className="h-7 w-7 text-muted-foreground">
-                  <motion.div animate={{ rotate: expanded ? 180 : 0 }}>
-                    <ChevronDown className="h-3 w-3" />
-                  </motion.div>
-                </Button>
-              )}
-            </div>
+            <div className="flex items-center gap-1 shrink-0">{!todo.completed && <span className="text-[9px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-md flex items-center gap-0.5"><Zap className="h-2.5 w-2.5" /> +{xpReward}</span>}<Button variant="ghost" size="icon" onClick={() => onEdit(todo)} className="h-7 w-7 text-muted-foreground hover:text-primary"><Pencil className="h-3 w-3" /></Button>{hasExpandable && <Button variant="ghost" size="icon" onClick={() => setExpanded(!expanded)} className="h-7 w-7 text-muted-foreground"><motion.div animate={{ rotate: expanded ? 180 : 0 }}><ChevronDown className="h-3 w-3" /></motion.div></Button>}</div>
           </div>
-
-          {subtasks.length > 0 && (
-            <div className="mt-2 ml-8">
-              <div className="h-1 bg-muted/50 rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full bg-success rounded-full"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${(completedSubs / subtasks.length) * 100}%` }}
-                  transition={{ duration: 0.3 }}
-                />
-              </div>
-            </div>
-          )}
+          {subtasks.length > 0 && <div className="mt-2 ml-8"><div className="h-1 bg-muted/50 rounded-full overflow-hidden"><motion.div className="h-full bg-success rounded-full" initial={{ width: 0 }} animate={{ width: `${(completedSubs / subtasks.length) * 100}%` }} transition={{ duration: 0.3 }} /></div></div>}
         </div>
-
-        {expanded && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} className="px-4 pb-3 border-t border-border/20">
-            {todo.notes && (
-              <p className="text-xs text-muted-foreground mt-2.5 bg-muted/30 rounded-xl p-2.5 leading-relaxed">{todo.notes}</p>
-            )}
-
-            {hasAttachments && (
-              <div className="mt-2.5 space-y-1">
-                {todo.attachments.map((att, i) => (
-                  <a
-                    key={i}
-                    href={att.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 bg-primary/5 hover:bg-primary/10 rounded-xl px-3 py-2 text-xs text-primary transition-colors"
-                  >
-                    <ExternalLink className="h-3 w-3 shrink-0" />
-                    <span className="truncate">{att.name}</span>
-                  </a>
-                ))}
-              </div>
-            )}
-
-            <div className="mt-2.5 space-y-1.5">
-              {subtasks.map(sub => (
-                <div key={sub.id} className="flex items-center gap-2 group">
-                  <button
-                    onClick={() => onToggleSubtask(sub.id, sub.completed)}
-                    className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${sub.completed ? "bg-success border-success" : "border-muted-foreground/25"}`}
-                  >
-                    {sub.completed && <Check className="h-2.5 w-2.5 text-success-foreground" />}
-                  </button>
-                  <span className={`text-xs flex-1 ${sub.completed ? "line-through text-muted-foreground" : "text-foreground"}`}>{sub.text}</span>
-                  <Button variant="ghost" size="icon" onClick={() => onDeleteSubtask(sub.id)} className="h-5 w-5 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive">
-                    <X className="h-3 w-3" />
-                  </Button>
-                </div>
-              ))}
-              <div className="flex gap-1.5 mt-1">
-                <Input
-                  value={newSubtask}
-                  onChange={e => setNewSubtask(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && handleAddSubtask()}
-                  placeholder="Add subtask..."
-                  className="h-7 text-xs rounded-lg"
-                />
-                <Button size="icon" variant="ghost" onClick={handleAddSubtask} className="h-7 w-7 shrink-0">
-                  <Plus className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            </div>
-          </motion.div>
-        )}
+        {expanded && <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} className="px-4 pb-3 border-t border-border/20">
+          {todo.notes && <p className="text-xs text-muted-foreground mt-2.5 bg-muted/30 rounded-xl p-2.5 leading-relaxed">{todo.notes}</p>}
+          {hasAttachments && <div className="mt-2.5 space-y-1">{todo.attachments.map((att, i) => { const url = safeExternalUrl(att.url); return <a key={i} href={url} target="_blank" rel="noopener noreferrer" onClick={(e) => { e.stopPropagation(); }} className="flex items-center gap-2 bg-primary/5 hover:bg-primary/10 rounded-xl px-3 py-2 text-xs text-primary transition-colors"><ExternalLink className="h-3 w-3 shrink-0" /><span className="truncate">{att.name}</span></a>; })}</div>}
+          <div className="mt-2.5 space-y-1.5">{subtasks.map(sub => <div key={sub.id} className="flex items-center gap-2 group"><button onClick={() => onToggleSubtask(sub.id, sub.completed)} className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${sub.completed ? "bg-success border-success" : "border-muted-foreground/25"}`}>{sub.completed && <Check className="h-2.5 w-2.5 text-success-foreground" />}</button><span className={`text-xs flex-1 ${sub.completed ? "line-through text-muted-foreground" : "text-foreground"}`}>{sub.text}</span><Button variant="ghost" size="icon" onClick={() => onDeleteSubtask(sub.id)} className="h-5 w-5 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"><X className="h-3 w-3" /></Button></div>)}<div className="flex gap-1.5 mt-1"><Input value={newSubtask} onChange={e => setNewSubtask(e.target.value)} onKeyDown={e => e.key === "Enter" && handleAddSubtask()} placeholder="Add subtask..." className="h-7 text-xs rounded-lg" /><Button size="icon" variant="ghost" onClick={handleAddSubtask} className="h-7 w-7 shrink-0"><Plus className="h-3.5 w-3.5" /></Button></div></div>
+        </motion.div>}
       </motion.div>
     </div>
   );
