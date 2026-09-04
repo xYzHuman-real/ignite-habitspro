@@ -46,15 +46,17 @@ jobs:
 
       - name: Prepare Supabase environment
         shell: bash
-        env:
-          SUPABASE_URL_VALUE: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY_VALUE: ${{ secrets.SUPABASE_KEY }}
         run: |
           set -e
+          test -f ../.env
+          SUPABASE_URL_VALUE=$(sed -n 's/^SUPABASE_URL="\(.*\)"$/\1/p' ../.env | head -n 1)
+          SUPABASE_KEY_VALUE=$(sed -n 's/^SUPABASE_PUBLISHABLE_KEY="\(.*\)"$/\1/p' ../.env | head -n 1)
           test -n "$SUPABASE_URL_VALUE"
           test -n "$SUPABASE_KEY_VALUE"
           echo "EXPO_PUBLIC_SUPABASE_URL=$SUPABASE_URL_VALUE" >> "$GITHUB_ENV"
           echo "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$SUPABASE_KEY_VALUE" >> "$GITHUB_ENV"
+          printf 'EXPO_PUBLIC_SUPABASE_URL="%s"\nEXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY="%s"\n' "$SUPABASE_URL_VALUE" "$SUPABASE_KEY_VALUE" > .env
+          echo "Supabase environment prepared from repository .env."
 
       - name: Install dependencies
         run: npm install
