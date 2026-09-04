@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "481470229858",
+    "project_id": "ignite-habitspro-ef6b4",
+    "storage_bucket": "ignite-habitspro-ef6b4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:481470229858:android:0aeeb089ee6becf1bc903b",
+        "android_client_info": {
+          "package_name": "app.lovable.ignitehabitspro"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBCrz6kUL3kpbxomxQxePJ7Hz7T3eXQfZI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
