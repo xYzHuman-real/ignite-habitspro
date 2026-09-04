@@ -1,0 +1,108 @@
+name: Build React Native Android APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build native Android release APK
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: mobile
+
+    steps:
+      - name: Checkout verified migration branch
+        uses: actions/checkout@v4
+
+      - name: Verify React Native project exists
+        shell: bash
+        run: |
+          set -e
+          test -s mobile/package.json
+          test -s mobile/app.json
+          test -s mobile/app/_layout.tsx
+          test -s mobile/app/index.tsx
+          echo "Verified mobile React Native project is present."
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: mobile/package.json
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Prepare Supabase environment
+        shell: bash
+        env:
+          SUPABASE_URL_VALUE: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY_VALUE: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          set -e
+          test -n "$SUPABASE_URL_VALUE"
+          test -n "$SUPABASE_KEY_VALUE"
+          {
+            echo "EXPO_PUBLIC_SUPABASE_URL=$SUPABASE_URL_VALUE"
+            echo "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$SUPABASE_KEY_VALUE"
+          } >> "$GITHUB_ENV"
+
+      - name: Install React Native dependencies
+        run: npm install
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Generate Android native project
+        env:
+          CI: 1
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Verify generated Android project
+        shell: bash
+        run: |
+          set -e
+          test -s android/settings.gradle
+          test -s android/app/build.gradle
+          test -d android/app/src/main
+          echo "Verified generated Android project."
+
+      - name: Build release APK
+        working-directory: mobile/android
+        run: ./gradlew assembleRelease --stacktrace --no-daemon
+
+      - name: Verify release APK
+        shell: bash
+        run: |
+          set -e
+          test -s mobile/android/app/build/outputs/apk/release/app-release.apk
+          ls -lh mobile/android/app/build/outputs/apk/release/app-release.apk
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ignite-habitspro-react-native-release
+          path: mobile/android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish APK to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          gh release delete react-native-apk-latest --yes --cleanup-tag || true
+          gh release create react-native-apk-latest mobile/android/app/build/outputs/apk/release/app-release.apk \
+            --title "Ignite HabitsPro — React Native Android APK" \
+            --notes "Native React Native release APK built from the verified rn-migration-verified branch at commit ${{ github.sha }}."
+          echo "## React Native Android APK" >> "$GITHUB_STEP_SUMMARY"
+          echo "Release APK built from **rn-migration-verified** at commit **${{ github.sha }}**." >> "$GITHUB_STEP_SUMMARY"
