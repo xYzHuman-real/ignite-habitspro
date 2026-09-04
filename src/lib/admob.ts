@@ -1,24 +1,26 @@
 import { Capacitor } from "@capacitor/core";
 
-/**
- * AdMob configuration — keep IDs here so they can be swapped easily.
- * Test IDs are used automatically outside of production builds.
- */
 export const ADMOB_CONFIG = {
   androidAppId: "ca-app-pub-4277470186530282~4160816796",
   rewardedAdUnitId: {
     android: "ca-app-pub-4277470186530282/5380394113",
-    // Google's official test unit — used in dev/preview builds
     test: "ca-app-pub-3940256099942544/5224354917",
   },
-  /** Points granted per successfully completed rewarded ad */
   rewardPoints: 10,
 } as const;
 
-export const isNativeAdMob = () =>
-  Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android";
+const isReactNativeWebView = () =>
+  typeof window !== "undefined" && typeof (window as any).ReactNativeWebView?.postMessage === "function";
 
-/** Live IDs only in production builds; test ads everywhere else. */
+function postToNative(message: object) {
+  try {
+    (window as any).ReactNativeWebView?.postMessage(JSON.stringify(message));
+  } catch {}
+}
+
+export const isNativeAdMob = () =>
+  (Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android") || isReactNativeWebView();
+
 export const useTestAds = !import.meta.env.PROD;
 
 export const getRewardedAdUnitId = () =>
@@ -26,15 +28,17 @@ export const getRewardedAdUnitId = () =>
 
 let initialized = false;
 
-/** Initialize the Mobile Ads SDK once at app start. Safe no-op on web. */
 export async function initAdMob(): Promise<boolean> {
-  if (!isNativeAdMob() || initialized) return initialized;
+  if (isReactNativeWebView()) {
+    if (initialized) return true;
+    postToNative({ type: "initialize_ads" });
+    initialized = true;
+    return true;
+  }
+  if (!Capacitor.isNativePlatform() || initialized) return initialized;
   try {
     const { AdMob } = await import("@capacitor-community/admob");
-    await AdMob.initialize({
-      initializeForTesting: useTestAds,
-      testingDevices: [],
-    });
+    await AdMob.initialize({ initializeForTesting: useTestAds, testingDevices: [] });
     initialized = true;
   } catch (err) {
     console.warn("[AdMob] initialization failed", err);
@@ -43,10 +47,8 @@ export async function initAdMob(): Promise<boolean> {
   return initialized;
 }
 
-/** Interstitial ad unit IDs (shown after a focus session ends). */
 export const INTERSTITIAL_AD_UNIT = {
   android: "ca-app-pub-4277470186530282/9115549012",
-  // Google's official test interstitial unit
   test: "ca-app-pub-3940256099942544/1033173712",
 } as const;
 
@@ -55,21 +57,34 @@ export const getInterstitialAdUnitId = () =>
 
 let interstitialInFlight = false;
 
-/**
- * Prepare + show an interstitial ad. Fails silently on web or on any error
- * so the user flow is never blocked.
- */
 export async function showInterstitialAd(): Promise<boolean> {
   if (!isNativeAdMob() || interstitialInFlight) return false;
   interstitialInFlight = true;
   try {
+    if (isReactNativeWebView()) {
+      await initAdMob();
+      return await new Promise<boolean>((resolve) => {
+        let settled = false;
+        const finish = (shown: boolean) => {
+          if (settled) return;
+          settled = true;
+          window.removeEventListener("igniteNativeMessage", onMessage as EventListener);
+          resolve(shown);
+        };
+        const onMessage = (event: Event) => {
+          const detail = (event as CustomEvent).detail;
+          if (detail?.type === "interstitial_result") finish(detail.shown === true);
+        };
+        window.addEventListener("igniteNativeMessage", onMessage as EventListener);
+        postToNative({ type: "show_interstitial" });
+        window.setTimeout(() => finish(false), 30000);
+      });
+    }
+
     const ok = await initAdMob();
     if (!ok) return false;
     const { AdMob } = await import("@capacitor-community/admob");
-    await AdMob.prepareInterstitial({
-      adId: getInterstitialAdUnitId(),
-      isTesting: useTestAds,
-    });
+    await AdMob.prepareInterstitial({ adId: getInterstitialAdUnitId(), isTesting: useTestAds });
     await AdMob.showInterstitial();
     return true;
   } catch (err) {
