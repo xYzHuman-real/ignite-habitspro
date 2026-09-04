@@ -24,7 +24,7 @@ jobs:
       - name: Verify React Native project exists
         shell: bash
         run: |
-          set -e
+          set -euo pipefail
           test -s package.json
           test -s app.json
           test -s app/_layout.tsx
@@ -68,10 +68,24 @@ jobs:
       - name: Typecheck
         run: npx tsc --noEmit
 
-      - name: Generate Android project
+      - name: Generate clean Android project
         env:
           CI: 1
-        run: npx expo prebuild --platform android --no-install
+        run: |
+          set -euo pipefail
+          rm -rf android
+          npx expo prebuild --platform android --clean --no-install
+
+      - name: Verify generated Android project
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s android/settings.gradle
+          test -s android/gradlew
+          test -x android/gradlew
+          test -s android/app/build.gradle
+          echo "Generated Android Gradle project successfully."
+          ls -la android | sed -n '1,80p'
 
       - name: Build release APK
         run: ./android/gradlew assembleRelease --stacktrace --no-daemon
@@ -79,7 +93,7 @@ jobs:
       - name: Verify APK
         shell: bash
         run: |
-          set -e
+          set -euo pipefail
           test -s android/app/build/outputs/apk/release/app-release.apk
           ls -lh android/app/build/outputs/apk/release/app-release.apk
 
@@ -96,7 +110,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          set -e
+          set -euo pipefail
           gh release delete react-native-apk-latest --yes --cleanup-tag || true
           gh release create react-native-apk-latest mobile/android/app/build/outputs/apk/release/app-release.apk \
             --title "Ignite HabitsPro — React Native Android APK" \
