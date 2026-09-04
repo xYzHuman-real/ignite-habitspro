@@ -53,14 +53,14 @@ jobs:
         working-directory: .
         run: |
           set -euo pipefail
-          npm ci
+          npm install --no-audit --no-fund
           npm run build -- --base ./
           test -s dist/index.html
           echo "Original webapp built successfully."
           find dist -maxdepth 2 -type f | sed -n '1,80p'
 
       - name: Install native shell dependencies
-        run: npm install
+        run: npm install --no-audit --no-fund
 
       - name: Typecheck native shell
         run: npx tsc --noEmit
