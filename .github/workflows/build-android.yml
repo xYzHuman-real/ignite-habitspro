@@ -1,35 +1,19 @@
-name: Build React Native Release APK
+name: Build Android APK
 
 on:
   workflow_dispatch:
-    inputs:
-      branch:
-        description: "Git branch to build"
-        required: true
-        default: "codex/react-native-migration"
-        type: string
 
 permissions:
   contents: write
 
 jobs:
   build:
-    name: React Native Release APK
+    name: Build installable Android APK
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout React Native app
+      - name: Checkout current app
         uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.branch }}
-
-      - name: Verify React Native project
-        shell: bash
-        run: |
-          set -e
-          test -f mobile/package.json
-          test -f mobile/app.json
-          echo "React Native project found."
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -42,75 +26,54 @@ jobs:
           distribution: temurin
           java-version: 21
 
-      - name: Prepare Expo environment
-        shell: bash
-        run: |
-          set -e
-          test -f .env
-          SUPABASE_URL_VALUE=$(sed -n 's/^SUPABASE_URL="\(.*\)"$/\1/p' .env | head -n 1)
-          SUPABASE_KEY_VALUE=$(sed -n 's/^SUPABASE_PUBLISHABLE_KEY="\(.*\)"$/\1/p' .env | head -n 1)
-          test -n "$SUPABASE_URL_VALUE"
-          test -n "$SUPABASE_KEY_VALUE"
-          printf 'EXPO_PUBLIC_SUPABASE_URL="%s"\nEXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY="%s"\n' "$SUPABASE_URL_VALUE" "$SUPABASE_KEY_VALUE" > mobile/.env
-
-      - name: Install React Native dependencies
-        working-directory: mobile
+      - name: Install dependencies
         run: npm install
 
-      - name: Validate Expo project
-        working-directory: mobile
-        run: npx expo-doctor
+      - name: Build web app
+        run: npm run build
 
-      - name: Generate Android project with Expo
-        working-directory: mobile
-        env:
-          CI: 1
-          EXPO_PROJECT_ROOT: ${{ github.workspace }}/mobile
-        run: npx expo prebuild --platform android --clean
+      - name: Add Android platform
+        run: npx cap add android
 
-      - name: Verify Expo Android autolinking
-        working-directory: mobile/android
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Verify web assets are packaged
         shell: bash
         run: |
           set -e
-          grep -n "expo-autolinking-settings" settings.gradle
-          grep -n "expoAutolinking.useExpoModules" settings.gradle
-          grep -n "expoAutolinking.useExpoVersionCatalog" settings.gradle
+          test -s dist/index.html
+          test -d android/app/src/main/assets/public
+          test -s android/app/src/main/assets/public/index.html
+          echo "Web assets successfully copied into Android project."
 
-      - name: Verify production JavaScript export
-        working-directory: mobile
-        run: npx expo export --platform android --clear
+      - name: Build debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug --stacktrace --no-daemon
 
-      - name: Build release APK
-        working-directory: mobile/android
-        env:
-          EXPO_PROJECT_ROOT: ${{ github.workspace }}/mobile
-        run: ./gradlew :app:assembleRelease --stacktrace --no-daemon
-
-      - name: Verify release APK
+      - name: Verify APK
         shell: bash
         run: |
           set -e
-          test -s mobile/android/app/build/outputs/apk/release/app-release.apk
-          ls -lh mobile/android/app/build/outputs/apk/release/app-release.apk
+          test -s android/app/build/outputs/apk/debug/app-debug.apk
+          ls -lh android/app/build/outputs/apk/debug/app-debug.apk
 
-      - name: Upload release APK artifact
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ignite-habitspro-release-apk
-          path: mobile/android/app/build/outputs/apk/release/app-release.apk
+          name: ignite-habitspro-android-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
 
-      - name: Publish release APK to GitHub Release
+      - name: Publish APK to GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -e
-          gh release delete rn-release-apk-latest --yes --cleanup-tag || true
-          gh release create rn-release-apk-latest mobile/android/app/build/outputs/apk/release/app-release.apk \
-            --title "Ignite HabitsPro — React Native Release APK" \
-            --notes "Release APK built from branch ${{ inputs.branch }} at commit ${{ github.sha }}."
-          echo "## Release APK" >> "$GITHUB_STEP_SUMMARY"
-          echo "Built from branch **${{ inputs.branch }}**." >> "$GITHUB_STEP_SUMMARY"
-          echo "Release: https://github.com/${{ github.repository }}/releases/tag/rn-release-apk-latest" >> "$GITHUB_STEP_SUMMARY"
+          gh release delete android-apk-latest --yes --cleanup-tag || true
+          gh release create android-apk-latest android/app/build/outputs/apk/debug/app-debug.apk \
+            --title "Ignite HabitsPro — Android APK" \
+            --notes "Installable Android APK built from the current main branch at commit ${{ github.sha }}."
+          echo "## Android APK" >> "$GITHUB_STEP_SUMMARY"
+          echo "Installable APK built from **main** at commit **${{ github.sha }}**." >> "$GITHUB_STEP_SUMMARY"
