@@ -23,10 +23,10 @@ jobs:
         shell: bash
         run: |
           set -e
-          test -s mobile/package.json
-          test -s mobile/app.json
-          test -s mobile/app/_layout.tsx
-          test -s mobile/app/index.tsx
+          test -s package.json
+          test -s app.json
+          test -s app/_layout.tsx
+          test -s app/index.tsx
           echo "Verified mobile React Native project is present."
 
       - name: Setup Node.js
@@ -77,15 +77,14 @@ jobs:
           echo "Verified generated Android project."
 
       - name: Build release APK
-        working-directory: mobile/android
-        run: ./gradlew assembleRelease --stacktrace --no-daemon
+        run: ./android/gradlew assembleRelease --stacktrace --no-daemon
 
       - name: Verify release APK
         shell: bash
         run: |
           set -e
-          test -s mobile/android/app/build/outputs/apk/release/app-release.apk
-          ls -lh mobile/android/app/build/outputs/apk/release/app-release.apk
+          test -s android/app/build/outputs/apk/release/app-release.apk
+          ls -lh android/app/build/outputs/apk/release/app-release.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
@@ -96,6 +95,7 @@ jobs:
           retention-days: 14
 
       - name: Publish APK to GitHub Release
+        working-directory: .
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
