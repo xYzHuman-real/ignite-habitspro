@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bell, Eye, BatteryCharging, Activity, Check } from "lucide-react";
+import { Bell, Eye, BatteryCharging, Activity } from "lucide-react";
 import { PermissionPrimer } from "./PermissionPrimer";
 import {
   PermissionKey,
@@ -90,7 +90,8 @@ interface Props {
 }
 
 export function PermissionPrimerFlow({ onFinish }: Props) {
-  const native = Capacitor.isNativePlatform();
+  const reactNativeShell = typeof window !== "undefined" && typeof (window as any).ReactNativeWebView?.postMessage === "function";
+  const native = Capacitor.isNativePlatform() || reactNativeShell;
   const steps = STEPS.filter((s) => native || !s.nativeOnly);
   const [index, setIndex] = useState(0);
 
