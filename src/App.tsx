@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { Layout } from "@/components/Layout";
 import Dashboard from "./pages/Dashboard";
@@ -44,8 +44,8 @@ const Refer = lazy(() => import("./pages/Refer"));
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 60 * 1000, // 1 minute
-      gcTime: 5 * 60 * 1000, // 5 minutes
+      staleTime: 60 * 1000,
+      gcTime: 5 * 60 * 1000,
       refetchOnWindowFocus: false,
       retry: 1,
     },
@@ -127,7 +127,6 @@ const App = () => {
     initAdMob();
   }, []);
 
-
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
@@ -138,7 +137,7 @@ const App = () => {
         {!showSplash && !showOnboarding && showPermissions && (
           <PermissionPrimerFlow onFinish={handlePermissionsFinish} />
         )}
-        <BrowserRouter>
+        <HashRouter>
           <AuthProvider>
             <Suspense fallback={<RouteFallback />}>
               <Routes>
@@ -150,7 +149,7 @@ const App = () => {
               </Routes>
             </Suspense>
           </AuthProvider>
-        </BrowserRouter>
+        </HashRouter>
       </TooltipProvider>
     </QueryClientProvider>
   );
