@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Settings, Shield, ShieldCheck, ShieldOff, Plus, X, Volume2, MessageSquare, Palette } from "lucide-react";
+import { Settings, Shield, ShieldCheck, ShieldOff, Plus, X, Volume2, MessageSquare, Palette, Search, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,18 +13,66 @@ import { useFocusSettings } from "@/lib/use-focus-settings";
 import { useFocusThemes } from "@/lib/use-focus-themes";
 import { cn } from "@/lib/utils";
 
+interface InstalledApp {
+  name: string;
+  packageName: string;
+  icon?: string;
+}
+
 export function FocusSettingsHub() {
-  const { settings, toggleBlockedApp, toggleWhitelistedApp, addCustomApp, removeApp, setSoundVolume, APP_CATALOG, POPULAR_APPS } = useFocusSettings();
-  const categories = Array.from(new Set(APP_CATALOG.map((a) => a.category)));
+  const { settings, toggleBlockedApp, toggleBlockedPackage, toggleWhitelistedApp, addCustomApp, removeApp, setSoundVolume, APP_CATALOG, POPULAR_APPS } = useFocusSettings();
   const { ownedThemes, currentTheme, selectTheme } = useFocusThemes();
   const [customApp, setCustomApp] = useState("");
   const [open, setOpen] = useState(false);
+  const [appSearch, setAppSearch] = useState("");
+  const [installedApps, setInstalledApps] = useState<InstalledApp[]>([]);
+  const [loadingApps, setLoadingApps] = useState(false);
+
+  const loadInstalledApps = () => {
+    setLoadingApps(true);
+    setAppSearch("");
+    const native = (window as any).igniteNative;
+    if (native?.getInstalledApps) {
+      native.getInstalledApps();
+    } else {
+      setInstalledApps(APP_CATALOG.map((app) => ({ name: app.name, packageName: app.pkg })));
+      setLoadingApps(false);
+    }
+  };
+
+  useEffect(() => {
+    const onNativeMessage = (event: Event) => {
+      const detail = (event as CustomEvent).detail;
+      if (detail?.type !== "installed_apps_result") return;
+      const apps = Array.isArray(detail.apps) ? detail.apps.filter((app: any) => app?.name && app?.packageName) : [];
+      setInstalledApps(apps);
+      setLoadingApps(false);
+    };
+    window.addEventListener("igniteNativeMessage", onNativeMessage);
+    return () => window.removeEventListener("igniteNativeMessage", onNativeMessage);
+  }, []);
+
+  useEffect(() => {
+    if (open) loadInstalledApps();
+  }, [open]);
+
+  const filteredApps = useMemo(() => {
+    const query = appSearch.trim().toLowerCase();
+    if (!query) return installedApps;
+    return installedApps.filter((app) => app.name.toLowerCase().includes(query));
+  }, [installedApps, appSearch]);
 
   const handleAddCustom = () => {
     if (customApp.trim()) {
       addCustomApp(customApp.trim());
       setCustomApp("");
     }
+  };
+
+  const isPackageBlocked = (app: InstalledApp) => {
+    if (settings.blockedAppPackages.includes(app.packageName)) return true;
+    const catalog = APP_CATALOG.find((entry) => entry.pkg === app.packageName);
+    return !settings.blockedAppPackages.length && !!catalog && settings.blockedApps.includes(catalog.name);
   };
 
   return (
@@ -48,39 +96,74 @@ export function FocusSettingsHub() {
               <ShieldOff className="h-4 w-4 text-destructive" /> Distraction Blocklist
             </h3>
             <p className="text-xs text-muted-foreground mb-3">
-              Tap apps to add them to your blocklist. During focus, opening these triggers a return-to-focus overlay. Detection uses Android package queries (Play Store compliant — no QUERY_ALL_PACKAGES).
+              Choose apps installed on your phone. During focus, selected apps trigger the return-to-focus guard.
             </p>
-            <div className="space-y-3 mb-3">
-              {categories.map((cat) => (
-                <div key={cat}>
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{cat}</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {APP_CATALOG.filter((a) => a.category === cat).map((entry) => {
-                      const isBlocked = settings.blockedApps.includes(entry.name);
-                      return (
-                        <button
-                          key={entry.pkg}
-                          onClick={() => toggleBlockedApp(entry.name)}
-                          className={cn(
-                            "px-2.5 py-1 rounded-full text-xs font-medium transition-all border",
-                            isBlocked
-                              ? "bg-destructive/15 border-destructive/30 text-destructive"
-                              : "bg-muted/50 border-border text-muted-foreground hover:bg-muted"
-                          )}
-                        >
-                          {isBlocked ? "🚫 " : ""}{entry.name}
-                        </button>
-                      );
-                    })}
-                  </div>
+
+            <div className="rounded-xl border border-border bg-muted/20 overflow-hidden">
+              <div className="p-2.5 border-b border-border flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input
+                    value={appSearch}
+                    onChange={(e) => setAppSearch(e.target.value)}
+                    placeholder="Search installed apps..."
+                    className="h-9 pl-8 text-sm"
+                  />
                 </div>
-              ))}
+                <Button type="button" size="sm" variant="outline" className="h-9" onClick={loadInstalledApps} disabled={loadingApps}>
+                  {loadingApps ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Refresh"}
+                </Button>
+              </div>
+
+              <div className="max-h-64 overflow-y-auto p-1.5">
+                {loadingApps && installedApps.length === 0 ? (
+                  <div className="py-8 text-center text-xs text-muted-foreground flex items-center justify-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" /> Loading apps installed on this phone...
+                  </div>
+                ) : filteredApps.length === 0 ? (
+                  <div className="py-8 text-center text-xs text-muted-foreground">
+                    No matching installed apps found.
+                  </div>
+                ) : (
+                  filteredApps.map((app) => {
+                    const blocked = isPackageBlocked(app);
+                    return (
+                      <button
+                        key={app.packageName}
+                        type="button"
+                        onClick={() => toggleBlockedPackage(app)}
+                        className={cn(
+                          "w-full flex items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-colors",
+                          blocked ? "bg-destructive/10" : "hover:bg-muted/60"
+                        )}
+                      >
+                        {app.icon ? (
+                          <img src={app.icon} alt="" className="h-9 w-9 rounded-[10px] shrink-0" />
+                        ) : (
+                          <div className="h-9 w-9 rounded-[10px] bg-muted flex items-center justify-center text-sm font-semibold shrink-0">
+                            {app.name.slice(0, 1).toUpperCase()}
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate">{app.name}</p>
+                          <p className="text-[10px] text-muted-foreground truncate">{app.packageName}</p>
+                        </div>
+                        <Switch checked={blocked} onCheckedChange={() => toggleBlockedPackage(app)} onClick={(e) => e.stopPropagation()} />
+                      </button>
+                    );
+                  })
+                )}
+              </div>
             </div>
 
+            <p className="text-[11px] text-muted-foreground mt-2">
+              {settings.blockedAppPackages.length} app{settings.blockedAppPackages.length === 1 ? "" : "s"} selected for blocking.
+            </p>
+
             {/* Custom app input */}
-            <div className="flex gap-2">
+            <div className="flex gap-2 mt-3">
               <Input
-                placeholder="Add custom app..."
+                placeholder="Add custom app name..."
                 value={customApp}
                 onChange={(e) => setCustomApp(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleAddCustom()}
