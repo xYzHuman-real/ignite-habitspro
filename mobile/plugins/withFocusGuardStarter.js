@@ -9,8 +9,13 @@ import android.app.AppOpsManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.util.Base64;
+import java.io.ByteArrayOutputStream;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.util.ArrayList;
@@ -22,8 +27,11 @@ import java.util.Set;
 
 public class FocusGuardStarterActivity extends Activity {
   private static final String LIST_ACTION = "app.lovable.ignitehabitspro.GET_INSTALLED_APPS";
+  private static final String ICON_ACTION = "app.lovable.ignitehabitspro.GET_APP_ICON";
   private static final String STOP_ACTION = "app.lovable.ignitehabitspro.STOP_FOCUS_GUARD";
   private static final String APPS_EXTRA = "app.lovable.ignitehabitspro.installedApps";
+  private static final String ICON_EXTRA = "app.lovable.ignitehabitspro.appIcon";
+  private static final String ICON_PACKAGE_EXTRA = "app.lovable.ignitehabitspro.appPackage";
 
   private boolean usageAccessGranted() {
     try {
@@ -31,6 +39,35 @@ public class FocusGuardStarterActivity extends Activity {
       int mode = ops.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, android.os.Process.myUid(), getPackageName());
       return mode == AppOpsManager.MODE_ALLOWED;
     } catch (Exception e) { return false; }
+  }
+
+  private String drawableToDataUri(Drawable drawable) {
+    try {
+      int size = 96;
+      Bitmap bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+      Canvas canvas = new Canvas(bitmap);
+      drawable.setBounds(0, 0, size, size);
+      drawable.draw(canvas);
+      ByteArrayOutputStream out = new ByteArrayOutputStream();
+      bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+      bitmap.recycle();
+      return "data:image/png;base64," + Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP);
+    } catch (Exception e) { return null; }
+  }
+
+  private void returnAppIcon(String pkg) {
+    Intent out = new Intent();
+    String icon = null;
+    try {
+      if (pkg != null && !pkg.equals(getPackageName())) {
+        PackageManager pm = getPackageManager();
+        Drawable drawable = pm.getApplicationIcon(pkg);
+        icon = drawableToDataUri(drawable);
+      }
+    } catch (Exception ignored) {}
+    out.putExtra(ICON_EXTRA, icon == null ? "" : icon);
+    setResult(Activity.RESULT_OK, out);
+    finish();
   }
 
   private void returnInstalledApps() {
@@ -79,6 +116,7 @@ public class FocusGuardStarterActivity extends Activity {
     String action = source.getAction();
 
     if (LIST_ACTION.equals(action)) { returnInstalledApps(); return; }
+    if (ICON_ACTION.equals(action)) { returnAppIcon(source.getStringExtra(ICON_PACKAGE_EXTRA)); return; }
 
     if (STOP_ACTION.equals(action)) {
       Intent stop = new Intent(this, FocusGuardService.class); stop.setAction("stop"); startService(stop); finish(); return;
