@@ -8,9 +8,6 @@ const WEB_APP_URL = 'file:///android_asset/www/index.html';
 const APP_PACKAGE = 'app.lovable.ignitehabitspro';
 const INSTALLED_APPS_ACTION = 'app.lovable.ignitehabitspro.GET_INSTALLED_APPS';
 const INSTALLED_APPS_EXTRA = 'app.lovable.ignitehabitspro.installedApps';
-const APP_ICON_ACTION = 'app.lovable.ignitehabitspro.GET_APP_ICON';
-const APP_ICON_EXTRA = 'app.lovable.ignitehabitspro.appIcon';
-const APP_ICON_PACKAGE_EXTRA = 'app.lovable.ignitehabitspro.appPackage';
 const APP_PACKAGES: Record<string, string> = {
   Instagram: 'com.instagram.android', Facebook: 'com.facebook.katana', 'X (Twitter)': 'com.twitter.android', Snapchat: 'com.snapchat.android', Reddit: 'com.reddit.frontpage', Pinterest: 'com.pinterest', LinkedIn: 'com.linkedin.android',
   YouTube: 'com.google.android.youtube', 'YouTube Shorts': 'com.google.android.apps.youtube.creator', TikTok: 'com.zhiliaoapp.musically',
@@ -75,15 +72,7 @@ export default function Index() {
       for (const app of baseApps) {
         if (!app?.name || !app?.packageName) continue;
         let icon: string | undefined;
-        try {
-          const iconResult = await IntentLauncher.startActivityAsync(APP_ICON_ACTION, {
-            packageName: APP_PACKAGE,
-            className: '.FocusGuardStarterActivity',
-            extra: { [APP_ICON_PACKAGE_EXTRA]: app.packageName },
-          });
-          const rawIcon = iconResult?.extra?.[APP_ICON_EXTRA];
-          if (typeof rawIcon === 'string' && rawIcon.startsWith('data:image/')) icon = rawIcon;
-        } catch {}
+        try { icon = await IntentLauncher.getApplicationIconAsync(app.packageName) || undefined; } catch {}
         apps.push({ name: app.name, packageName: app.packageName, icon });
       }
       sendToWebView(webViewRef, { type: 'installed_apps_result', apps });
