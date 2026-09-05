@@ -1,11 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Settings, Shield, ShieldCheck, ShieldOff, Plus, X, Volume2, MessageSquare, Palette, Search, Loader2 } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { Settings, Shield, ShieldCheck, ShieldOff, Plus, X, Volume2, Palette, Search, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -128,12 +125,14 @@ export function FocusSettingsHub() {
                   filteredApps.map((app) => {
                     const blocked = isPackageBlocked(app);
                     return (
-                      <button
+                      <div
                         key={app.packageName}
-                        type="button"
+                        role="button"
+                        tabIndex={0}
                         onClick={() => toggleBlockedPackage(app)}
+                        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleBlockedPackage(app); } }}
                         className={cn(
-                          "w-full flex items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-colors",
+                          "w-full flex items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-colors cursor-pointer",
                           blocked ? "bg-destructive/10" : "hover:bg-muted/60"
                         )}
                       >
@@ -149,7 +148,7 @@ export function FocusSettingsHub() {
                           <p className="text-[10px] text-muted-foreground truncate">{app.packageName}</p>
                         </div>
                         <Switch checked={blocked} onCheckedChange={() => toggleBlockedPackage(app)} onClick={(e) => e.stopPropagation()} />
-                      </button>
+                      </div>
                     );
                   })
                 )}
