@@ -6,6 +6,8 @@ import { WebView, WebViewMessageEvent } from 'react-native-webview';
 
 const WEB_APP_URL = 'file:///android_asset/www/index.html';
 const APP_PACKAGE = 'app.lovable.ignitehabitspro';
+const INSTALLED_APPS_ACTION = 'app.lovable.ignitehabitspro.GET_INSTALLED_APPS';
+const INSTALLED_APPS_EXTRA = 'app.lovable.ignitehabitspro.installedApps';
 const APP_PACKAGES: Record<string, string> = {
   Instagram: 'com.instagram.android', Facebook: 'com.facebook.katana', 'X (Twitter)': 'com.twitter.android', Snapchat: 'com.snapchat.android', Reddit: 'com.reddit.frontpage', Pinterest: 'com.pinterest', LinkedIn: 'com.linkedin.android',
   YouTube: 'com.google.android.youtube', 'YouTube Shorts': 'com.google.android.apps.youtube.creator', TikTok: 'com.zhiliaoapp.musically',
@@ -40,8 +42,9 @@ export default function Index() {
   }, []);
 
   const startFocusGuard = async (message: any) => {
+    const configuredPackages: string[] = message?.settings?.blockedAppPackages || [];
     const names: string[] = message?.settings?.blockedApps || [];
-    const packages = names.map(name => APP_PACKAGES[name]).filter(Boolean);
+    const packages = configuredPackages.length ? configuredPackages : names.map(name => APP_PACKAGES[name]).filter(Boolean);
     if (!packages.length || !message?.timerState?.endTime) return;
     try {
       await IntentLauncher.startActivityAsync('app.lovable.ignitehabitspro.START_FOCUS_GUARD', {
@@ -60,6 +63,34 @@ export default function Index() {
     catch (error) { console.warn('[Focus Guard] unable to stop', error); }
   };
 
+  const getInstalledApps = async () => {
+    try {
+      const result = await IntentLauncher.startActivityAsync(INSTALLED_APPS_ACTION, {
+        packageName: APP_PACKAGE,
+        className: '.FocusGuardStarterActivity',
+      });
+      const raw = result?.extra?.[INSTALLED_APPS_EXTRA];
+      const baseApps = typeof raw === 'string' ? JSON.parse(raw) : [];
+      const apps: Array<{ name: string; packageName: string; icon?: string }> = [];
+      for (let start = 0; start < baseApps.length; start += 12) {
+        const batch = baseApps.slice(start, start + 12);
+        const enriched = await Promise.all(batch.map(async (app: { name: string; packageName: string }) => {
+          try {
+            const icon = await IntentLauncher.getApplicationIconAsync(app.packageName);
+            return { ...app, icon: icon || undefined };
+          } catch {
+            return app;
+          }
+        }));
+        apps.push(...enriched);
+      }
+      sendToWebView(webViewRef, { type: 'installed_apps_result', apps });
+    } catch (error) {
+      console.warn('[Focus Guard] unable to discover installed apps', error);
+      sendToWebView(webViewRef, { type: 'installed_apps_result', apps: [] });
+    }
+  };
+
   const handleMessage = async (event: WebViewMessageEvent) => {
     if (Platform.OS !== 'android') return;
     let message: any;
@@ -69,6 +100,7 @@ export default function Index() {
       if (message.type === 'show_interstitial') { sendToWebView(webViewRef, { type: 'interstitial_result', shown: false }); return; }
       if (message.type === 'show_rewarded') { sendToWebView(webViewRef, { type: 'rewarded_result', rewarded: false, amount: 0, rewardType: null }); return; }
       if (message.type === 'request_notifications') { sendToWebView(webViewRef, { type: 'notifications_result', granted: false, token: null, platform: 'android' }); return; }
+      if (message.type === 'get_installed_apps') { await getInstalledApps(); return; }
       if (message.type === 'open_usage_access') { await IntentLauncher.startActivityAsync(IntentLauncher.ActivityAction.USAGE_ACCESS_SETTINGS); sendToWebView(webViewRef, { type: 'settings_opened', setting: 'usage_access' }); return; }
       if (message.type === 'open_overlay_permission') { await IntentLauncher.startActivityAsync(IntentLauncher.ActivityAction.MANAGE_OVERLAY_PERMISSION, { data: `package:${APP_PACKAGE}` }); sendToWebView(webViewRef, { type: 'settings_opened', setting: 'overlay_permission' }); return; }
       if (message.type === 'focus_guard_sync') { await startFocusGuard(message); return; }
