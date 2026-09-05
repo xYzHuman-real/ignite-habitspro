@@ -21,7 +21,8 @@
     },
     "plugins": [
       "expo-router",
-      "./plugins/withFocusGuard"
+      "./plugins/withFocusGuard",
+      "./plugins/withFocusGuardStarter"
     ]
   }
 }
