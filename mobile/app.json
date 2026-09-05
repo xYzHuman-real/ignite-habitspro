@@ -13,11 +13,15 @@
         "android.permission.POST_NOTIFICATIONS",
         "android.permission.PACKAGE_USAGE_STATS",
         "android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS",
-        "android.permission.SCHEDULE_EXACT_ALARM"
+        "android.permission.SCHEDULE_EXACT_ALARM",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_SPECIAL_USE"
       ]
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "./plugins/withFocusGuard"
     ]
   }
 }
