@@ -52,15 +52,12 @@ export default function Index() {
           'app.lovable.ignitehabitspro.endTime': message.timerState.endTime,
         },
       });
-    } catch (error) {
-      console.warn('[Focus Guard] unable to start', error);
-    }
+    } catch (error) { console.warn('[Focus Guard] unable to start', error); }
   };
 
   const stopFocusGuard = async () => {
-    try {
-      await IntentLauncher.startActivityAsync('app.lovable.ignitehabitspro.STOP_FOCUS_GUARD', { packageName: APP_PACKAGE, className: '.FocusGuardStarterActivity' });
-    } catch (error) { console.warn('[Focus Guard] unable to stop', error); }
+    try { await IntentLauncher.startActivityAsync('app.lovable.ignitehabitspro.STOP_FOCUS_GUARD', { packageName: APP_PACKAGE, className: '.FocusGuardStarterActivity' }); }
+    catch (error) { console.warn('[Focus Guard] unable to stop', error); }
   };
 
   const handleMessage = async (event: WebViewMessageEvent) => {
@@ -78,21 +75,10 @@ export default function Index() {
       if (message.type === 'focus_guard_stop') { await stopFocusGuard(); return; }
       if (message.type === 'open_battery_optimization') { await IntentLauncher.startActivityAsync(IntentLauncher.ActivityAction.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, { data: `package:${APP_PACKAGE}` }); sendToWebView(webViewRef, { type: 'settings_opened', setting: 'battery_optimization' }); return; }
       if (message.type === 'open_app_settings') { await IntentLauncher.startActivityAsync(IntentLauncher.ActivityAction.APPLICATION_DETAILS_SETTINGS, { data: `package:${APP_PACKAGE}` }); sendToWebView(webViewRef, { type: 'settings_opened', setting: 'background_activity' }); return; }
-    } catch (error) {
-      console.warn('[Native bridge] request failed', message?.type, error);
-      sendToWebView(webViewRef, { type: 'native_error', request: message?.type ?? 'unknown' });
-    }
+    } catch (error) { console.warn('[Native bridge] request failed', message?.type, error); sendToWebView(webViewRef, { type: 'native_error', request: message?.type ?? 'unknown' }); }
   };
 
-  return (
-    <View style={styles.container}>
-      <StatusBar style="auto" />
-      <WebView ref={webViewRef} source={{ uri: WEB_APP_URL }} style={styles.webview} originWhitelist={['*']} allowFileAccess allowFileAccessFromFileURLs allowUniversalAccessFromFileURLs javaScriptEnabled domStorageEnabled sharedCookiesEnabled thirdPartyCookiesEnabled setSupportMultipleWindows={false} onMessage={handleMessage}
-        onShouldStartLoadWithRequest={(request) => { const url = request.url; if (url.startsWith('http://') || url.startsWith('https://')) { Linking.openURL(url).catch((error) => console.warn('[Native link] failed', error)); return false; } return true; }}
-        onNavigationStateChange={(navState) => { canGoBackRef.current = navState.canGoBack; }} onLoadEnd={() => setReady(true)} />
-      {!ready && <View style={styles.loading} pointerEvents="none"><ActivityIndicator size="large" /></View>}
-    </View>
-  );
+  return <View style={styles.container}><StatusBar style="auto" /><WebView ref={webViewRef} source={{ uri: WEB_APP_URL }} style={styles.webview} originWhitelist={['*']} allowFileAccess allowFileAccessFromFileURLs allowUniversalAccessFromFileURLs javaScriptEnabled domStorageEnabled sharedCookiesEnabled thirdPartyCookiesEnabled setSupportMultipleWindows={false} mediaPlaybackRequiresUserAction={false} onMessage={handleMessage} onShouldStartLoadWithRequest={(request) => { const url = request.url; if (url.startsWith('http://') || url.startsWith('https://')) { Linking.openURL(url).catch((error) => console.warn('[Native link] failed', error)); return false; } return true; }} onNavigationStateChange={(navState) => { canGoBackRef.current = navState.canGoBack; }} onLoadEnd={() => setReady(true)} />{!ready && <View style={styles.loading} pointerEvents="none"><ActivityIndicator size="large" /></View>}</View>;
 }
 
 const styles = StyleSheet.create({ container: { flex: 1 }, webview: { flex: 1, backgroundColor: '#1a1a2e' }, loading: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', backgroundColor: '#1a1a2e' } });
