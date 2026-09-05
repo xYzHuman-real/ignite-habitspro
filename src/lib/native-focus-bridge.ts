@@ -12,6 +12,7 @@ export function installNativeFocusBridge() {
   (window as any).igniteNative = {
     openUsageAccess: () => post({ type: "open_usage_access" }),
     openOverlayPermission: () => post({ type: "open_overlay_permission" }),
+    getInstalledApps: () => post({ type: "get_installed_apps" }),
   };
 
   const storage = window.localStorage;
